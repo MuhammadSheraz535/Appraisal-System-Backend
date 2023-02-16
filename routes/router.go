@@ -2,7 +2,10 @@ package routes
 
 import "github.com/gin-gonic/gin"
 
-func Allroutes() {
+func NewRouter() *gin.Engine {
 	router := gin.Default()
-	router.Run(":8080")
+
+	// TODO: Define/Call routes here
+
+	return router
 }
