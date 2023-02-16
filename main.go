@@ -1,13 +1,23 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"log"
+
+	"github.com/joho/godotenv"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
+	"github.com/mrehanabbasi/appraisal-system-backend/routes"
 )
 
 func main() {
-	router := gin.Default()
+	// Load environment variables from .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+
+	// Connect to the database
 	database.Connect()
 
-	router.Run(":8080")
+	// Register all the routes
+	routes.Allroutes()
 }
