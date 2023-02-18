@@ -10,7 +10,8 @@ import (
 
 var DB *gorm.DB
 
-func Connect() {
+
+func Connect() *gorm.DB {
 	dbUsername := os.Getenv("DB_USERNAME")
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbURL := os.Getenv("DB_URL")
@@ -23,5 +24,5 @@ func Connect() {
 	if err != nil {
 		panic(err)
 	}
-	DB = db
+	return db
 }

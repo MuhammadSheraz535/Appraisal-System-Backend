@@ -26,5 +26,5 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	server.Run(":" + port)
+	server.Run("localhost:" + port)
 }
