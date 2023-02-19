@@ -69,17 +69,16 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	err := models.GetUser(uc.Db, &user, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.AbortWithStatus(http.StatusNotFound)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
 			return
 		}
 
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
-		return
+		
 	}
 	c.BindJSON(&user)
 	err = models.UpdateUser(uc.Db, &user)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
 		return
 	}
 	c.JSON(http.StatusOK, user)

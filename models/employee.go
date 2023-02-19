@@ -4,16 +4,24 @@ import (
 	"gorm.io/gorm"
 )
 
+type Employee struct {
+	ID         uint       `json:"employee_id" gorm:"PrimaryKey"`
+	Name       string     `gorm:"size:255;not null" json:"name"`
+	Email      string     `gorm:"size:100;not null" json:"email"`
+	Role       Role       `json:"role"  gorm:"foreignKey:ID"`
+	Supervisor Supervisor `json:"supervisor" gorm:"foreignKey:ID;references:ID"`
+}
+
 type Role struct {
-	ID       int    `json:"role_id" gorm:"PrimaryKey"`
+	ID       uint   `json:"role_id" gorm:"PrimaryKey"`
 	Role     string `json:"employee_role"`
 	IsActive bool   `json:"is_active"`
 }
-type Employee struct {
-	ID    uint   `json:"employee_id" gorm:"PrimaryKey"`
-	Name  string `gorm:"size:255;not null" json:"name"`
-	Email string `gorm:"size:100;not null" json:"email"`
-	Role  Role   `json:"role"  gorm:"foreignKey:ID"`
+type Supervisor struct {
+	ID         uint   `json:"supervisor_id" gorm:"PrimaryKey"`
+	Name       string `json:"supervisor_name"`
+	Email      string `json:"supervisor_email"`
+	EmployeeID uint   `json:"-"`
 }
 
 // create a user
@@ -27,7 +35,7 @@ func CreateUser(db *gorm.DB, User *Employee) (err error) {
 
 // get all users
 func GetUsers(db *gorm.DB, User *[]Employee) (err error) {
-	err = db.Preload("Role").Find(&User).Error
+	err = db.Preload("Role").Preload("Supervisor").Find(&User).Error
 	if err != nil {
 		return err
 	}
@@ -38,7 +46,7 @@ func GetUsers(db *gorm.DB, User *[]Employee) (err error) {
 
 // get user by id
 func GetUser(db *gorm.DB, User *Employee, id int) (err error) {
-	err = db.Preload("Role").Where("id = ?", id).First(&User).Error
+	err = db.Preload("Role").Preload("Supervisor").Where("id = ?", id).First(&User).Error
 	if err != nil {
 		return err
 	}
@@ -47,8 +55,8 @@ func GetUser(db *gorm.DB, User *Employee, id int) (err error) {
 
 // update user
 func UpdateUser(db *gorm.DB, User *Employee) (err error) {
-	db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&User).Save(&User)
-	return nil
+	err = db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&User).Save(&User).Error
+	return err
 }
 
 // delete user
