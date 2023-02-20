@@ -62,6 +62,55 @@ func (uc *UserController) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+
+// get user by employee name
+func (uc *UserController) GetUserByName(c *gin.Context) {
+	name := c.Param("name")
+	var user []models.Employee
+	err := models.GetUserByName(uc.Db, &user, name)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+			return
+		}
+
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	c.JSON(http.StatusOK, user)
+}
+// get user by supervisor name
+func (uc *UserController) GetSupervisorByName(c *gin.Context) {
+	name := c.Param("name")
+	var user []models.Supervisor
+	err := models.GetSupervisorByName(uc.Db, &user, name)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+			return
+		}
+
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	c.JSON(http.StatusOK, user)
+}
+// get user by role
+func (uc *UserController) GetByRole(c *gin.Context) {
+	name := c.Param("name")
+	var user []models.Role
+	err := models.GetByRole(uc.Db, &user, name)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+			return
+		}
+
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	c.JSON(http.StatusOK, user)
+}
 // update user
 func (uc *UserController) UpdateUser(c *gin.Context) {
 	var user models.Employee
@@ -73,7 +122,6 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 			return
 		}
 
-		
 	}
 	c.BindJSON(&user)
 	err = models.UpdateUser(uc.Db, &user)
