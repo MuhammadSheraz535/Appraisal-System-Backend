@@ -17,5 +17,5 @@ type Supervisor struct {
 	ID         uint   `json:"supervisor_id" gorm:"PrimaryKey"`
 	Name       string `json:"supervisor_name"`
 	Email      string `json:"supervisor_email"`
-	EmployeeID uint   `json:"-"`
+	EmployeeID uint   `json:"-,omitempty"`
 }
