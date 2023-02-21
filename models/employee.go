@@ -10,12 +10,12 @@ type Employee struct {
 
 type Role struct {
 	ID       uint   `json:"role_id" gorm:"PrimaryKey"`
-	Role     string `json:"role"`
+	Role     string `json:"employee_role"`
 	IsActive bool   `json:"is_active"`
 }
 type Supervisor struct {
 	ID         uint   `json:"supervisor_id" gorm:"PrimaryKey"`
-	Name       string `json:"name"`
+	Name       string `json:"supervisor_name"`
 	Email      string `json:"supervisor_email"`
 	EmployeeID uint   `json:"-"`
 }

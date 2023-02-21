@@ -12,40 +12,40 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserController struct {
+type EmployeeController struct {
 	Db *gorm.DB
 }
 
-func New() *UserController {
+func New() *EmployeeController {
 	db := database.DB
 	db.AutoMigrate(&models.Employee{})
-	return &UserController{Db: db}
+	return &EmployeeController{Db: db}
 }
 
-// create a user
-func CreateUser(db *gorm.DB, User *models.Employee) (err error) {
-	err = db.Create(&User).Error
+// create a employee
+func CreateEmployee(db *gorm.DB, Employee *models.Employee) (err error) {
+	err = db.Create(&Employee).Error
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// create user
-func (uc *UserController) CreateUser(c *gin.Context) {
-	var user models.Employee
-	c.ShouldBindJSON(&user)
-	err := CreateUser(uc.Db, &user)
+// create employee
+func (uc *EmployeeController) CreateEmployee(c *gin.Context) {
+	var employee models.Employee
+	c.BindJSON(&employee)
+	err := CreateEmployee(uc.Db, &employee)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, employee)
 }
 
-// get all users
-func GetUsers(db *gorm.DB, User *[]models.Employee) (err error) {
-	err = db.Preload("Role").Preload("Supervisor").Find(&User).Error
+// get all employee
+func GetEmployees(db *gorm.DB, Employee *[]models.Employee) (err error) {
+	err = db.Preload("Role").Preload("Supervisor").Find(&Employee).Error
 	if err != nil {
 		return err
 	}
@@ -54,31 +54,31 @@ func GetUsers(db *gorm.DB, User *[]models.Employee) (err error) {
 
 }
 
-// get all users
-func (uc *UserController) GetUsers(c *gin.Context) {
-	var user []models.Employee
-	err := GetUsers(uc.Db, &user)
+// get all employee
+func (uc *EmployeeController) GetEmployees(c *gin.Context) {
+	var employee []models.Employee
+	err := GetEmployees(uc.Db, &employee)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, employee)
 }
 
-// get user by id
-func GetUser(db *gorm.DB, User *models.Employee, id int) (err error) {
-	err = db.Preload("Role").Preload("Supervisor").Where("id = ?", id).First(&User).Error
+// get employee by id
+func GetEmployee(db *gorm.DB, Employee *models.Employee, id int) (err error) {
+	err = db.Preload("Role").Preload("Supervisor").Where("id = ?", id).First(&Employee).Error
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// get user by id
-func (uc *UserController) GetUser(c *gin.Context) {
+// get employee by id
+func (uc *EmployeeController) GetEmployee(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	var user models.Employee
-	err := GetUser(uc.Db, &user, id)
+	var employee models.Employee
+	err := GetEmployee(uc.Db, &employee, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
@@ -88,24 +88,24 @@ func (uc *UserController) GetUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, employee)
 }
 
-// get user by employee name
-func GetUserByName(db *gorm.DB, User *[]models.Employee, name string) (err error) {
+// get employee list by employee name
+func GetEmployeeByName(db *gorm.DB, Employee *[]models.Employee, name string) (err error) {
 
-	err = db.Preload("Role").Preload("Supervisor").Where("name = ?", name).Statement.Find(&User).Error
+	err = db.Preload("Role").Preload("Supervisor").Where("name = ?", name).Statement.Find(&Employee).Error
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// get user by employee name
-func (uc *UserController) GetUserByName(c *gin.Context) {
+// get employee list by name
+func (uc *EmployeeController) GetEmployeeByName(c *gin.Context) {
 	name := c.Param("name")
-	var user []models.Employee
-	err := GetUserByName(uc.Db, &user, name)
+	var employee []models.Employee
+	err := GetEmployeeByName(uc.Db, &employee, name)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
@@ -115,25 +115,25 @@ func (uc *UserController) GetUserByName(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, employee)
 }
 
-// - _role_: Share employee list with the specified role.
+// get employee list  by role
 
-func GetByRole(db *gorm.DB, User *[]models.Role, name string) (err error) {
+func GetByRole(db *gorm.DB, USER *[]models.Role, name string) (err error) {
 
-	err = db.Where("role = ?", name).Find(&User).Error
+	err = db.Where("role = ?", name).Find(&USER).Error
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// get user by role
-func (uc *UserController) GetByRole(c *gin.Context) {
+// get employee list by role
+func (uc *EmployeeController) GetByRole(c *gin.Context) {
 	name := c.Param("name")
-	var user []models.Role
-	err := GetByRole(uc.Db, &user, name)
+	var employee []models.Role
+	err := GetByRole(uc.Db, &employee, name)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
@@ -143,24 +143,24 @@ func (uc *UserController) GetByRole(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, employee)
 }
 
-// get user by supervisor name
-func GetSupervisorByName(db *gorm.DB, User *[]models.Supervisor, name string) (err error) {
+// get supervisor list by supervisor name
+func GetSupervisorByName(db *gorm.DB, USER *[]models.Supervisor, name string) (err error) {
 
-	err = db.Where("name = ?", name).Find(&User).Error
+	err = db.Where("name = ?", name).Find(&USER).Error
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// get user by supervisor name
-func (uc *UserController) GetSupervisorByName(c *gin.Context) {
+// get supervisor list by supervisor name
+func (uc *EmployeeController) GetSupervisorByName(c *gin.Context) {
 	name := c.Param("name")
-	var user []models.Supervisor
-	err := GetSupervisorByName(uc.Db, &user, name)
+	var Supervisor []models.Supervisor
+	err := GetSupervisorByName(uc.Db, &Supervisor, name)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
@@ -170,20 +170,20 @@ func (uc *UserController) GetSupervisorByName(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, Supervisor)
 }
 
-// update user
-func UpdateUser(db *gorm.DB, User *models.Employee) (err error) {
-	err = db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&User).Save(&User).Error
+// update Employee
+func UpdateEmployee(db *gorm.DB, Employee *models.Employee) (err error) {
+	err = db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&Employee).Save(&Employee).Error
 	return err
 }
 
-// update user
-func (uc *UserController) UpdateUser(c *gin.Context) {
-	var user models.Employee
+// update Employee
+func (uc *EmployeeController) UpdateEmployee(c *gin.Context) {
+	var employee models.Employee
 	id, _ := strconv.Atoi(c.Param("id"))
-	err := GetUser(uc.Db, &user, id)
+	err := GetEmployee(uc.Db, &employee, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
@@ -191,29 +191,29 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		}
 
 	}
-	c.ShouldBindJSON(&user)
-	err = UpdateUser(uc.Db, &user)
+	c.ShouldBindJSON(&employee)
+	err = UpdateEmployee(uc.Db, &employee)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
 		return
 	}
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, employee)
 }
 
-// delete user
-func DeleteUser(db *gorm.DB, User *models.Employee, id int) (int64, error) {
-	db = db.Debug().Model(&User).Where("id = ?", id).Take(&User).Delete(&User)
+// delete Employee
+func DeleteEmployee(db *gorm.DB, Employee *models.Employee, id int) (int64, error) {
+	db = db.Debug().Model(&Employee).Where("id = ?", id).Take(&Employee).Delete(&Employee)
 	if db.Error != nil {
 		return 0, db.Error
 	}
 	return db.RowsAffected, nil
 }
 
-// delete user
-func (uc *UserController) DeleteUser(c *gin.Context) {
-	var user models.Employee
+// delete Employee
+func (uc *EmployeeController) DeleteEmployee(c *gin.Context) {
+	var employee models.Employee
 	id, _ := strconv.Atoi(c.Param("id"))
-	_, err := DeleteUser(uc.Db, &user, id)
+	_, err := DeleteEmployee(uc.Db, &employee, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
 		return
