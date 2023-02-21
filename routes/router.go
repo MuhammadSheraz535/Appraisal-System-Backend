@@ -9,7 +9,6 @@ func NewRouter() *gin.Engine {
 	r := gin.Default()
 	v1 := r.Group("/v1")
 
-	// TODO:Call routes here
 
 	uc := controller.New()
 	v1.POST("/employees", uc.CreateUser)
