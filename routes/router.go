@@ -27,4 +27,3 @@ func AttachRoutes(db *gorm.DB) *gin.Engine {
 
 	return router
 }
-

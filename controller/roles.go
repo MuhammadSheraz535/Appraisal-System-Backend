@@ -50,16 +50,35 @@ func (r *RoleController) GetRoleByID(c *gin.Context) {
 	c.JSON(http.StatusOK, role)
 }
 
+// func (r *RoleController) CreateRole(c *gin.Context) {
+// 	var role models.Role
+// 	if role.RoleName == "" {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "role_name cannot be empty"})
+// 		return
+// 	}
+// 	if err := c.ShouldBindJSON(&role); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	if err := r.db.Create(&role).Error; err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusCreated, gin.H{"data": role})
+// }
+
 func (r *RoleController) CreateRole(c *gin.Context) {
 	var role models.Role
 
 	if err := c.ShouldBindJSON(&role); err != nil {
-		c.AbortWithStatus(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	if err := r.db.Create(&role).Error; err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -70,18 +89,17 @@ func (r *RoleController) UpdateRole(c *gin.Context) {
 	var role models.Role
 
 	if err := r.db.First(&role, c.Param("id")).Error; err != nil {
-		c.AbortWithStatus(http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
 	if err := c.ShouldBindJSON(&role); err != nil {
-		c.AbortWithStatus(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	if err := r.db.Save(&role).Error; err != nil {
-
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -90,7 +108,7 @@ func (r *RoleController) UpdateRole(c *gin.Context) {
 
 func (r *RoleController) DeleteRole(c *gin.Context) {
 	if err := r.db.Delete(&models.Role{}, c.Param("id")).Error; err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.Status(http.StatusNoContent)
