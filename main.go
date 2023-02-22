@@ -17,10 +17,10 @@ func main() {
 	}
 
 	// Connect to the database
-	db := database.Connect()
+	database.Connect()
 
 	// Register all the routes
-	server := routes.AttachRoutes(db)
+	server := routes.NewRouter()
 
 	port := os.Getenv("PORT")
 	if port == "" {

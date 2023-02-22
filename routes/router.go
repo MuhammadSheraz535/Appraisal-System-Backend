@@ -2,12 +2,11 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 
-	"github.com/mrehanabbasi/appraisal-system-backend/controller"
+	controllers "github.com/mrehanabbasi/appraisal-system-backend/controller"
 )
 
-func AttachRoutes(db *gorm.DB) *gin.Engine {
+func NewRouter() *gin.Engine {
 
 	router := gin.Default()
 
