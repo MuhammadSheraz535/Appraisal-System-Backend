@@ -82,12 +82,12 @@ func (r *RoleController) GetRoleByID(c *gin.Context) {
 	c.JSON(http.StatusOK, role)
 }
 
-func CreateRole(db *gorm.DB, role models.Role) (err error) {
-	err = db.Create(&role).Error
+func CreateRole(db *gorm.DB, role models.Role) (models.Role, error) {
+	err := db.Create(&role).Error
 	if err != nil {
-		return err
+		return models.Role{}, err
 	}
-	return nil
+	return role, nil
 }
 
 func (r *RoleController) CreateRole(c *gin.Context) {
@@ -102,13 +102,15 @@ func (r *RoleController) CreateRole(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RoleName"})
 		return
 	}
-	err = CreateRole(r.Db, role)
+	role, err = CreateRole(r.Db, role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, role)
 }
+
+
 
 func UpdateRole(db *gorm.DB, role *models.Role) (err error) {
 	err = db.Save(&role).Error
@@ -154,7 +156,7 @@ func DeleteRole(db *gorm.DB, role *models.Role, id int) error {
 func (r *RoleController) DeleteRole(c *gin.Context) {
 	var role models.Role
 	id, _ := strconv.Atoi(c.Param("id"))
-	role.ID = uint(id) // Initialize role object with ID value
+	role.ID = uint(id)
 	err := DeleteRole(r.Db, &role, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -162,4 +164,3 @@ func (r *RoleController) DeleteRole(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
-
