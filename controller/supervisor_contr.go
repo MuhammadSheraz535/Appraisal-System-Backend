@@ -3,6 +3,7 @@ package controller
 import (
 	"errors"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -77,22 +78,42 @@ func GetSupervisorsByName(db *gorm.DB, supervisor *[]models.Supervisor, name str
 
 func (sc *SupervisorController) GetSupervisors(c *gin.Context) {
 	name := c.Query("_name")
-	var supervisor []models.Supervisor
-
 	if name != "" {
-		err := GetSupervisorsByName(sc.Db, &supervisor, name)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-	} else {
-		err := GetSupervisors(sc.Db, &supervisor)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if !isValidName(name) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid name"})
 			return
 		}
 	}
+	var supervisor []models.Supervisor
+	if sc.Db == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database instance cannot be nil"})
+		return
+	}
+	var err error
+	if name != "" {
+		err = GetSupervisorsByName(sc.Db, &supervisor, name)
+	} else {
+		err = GetSupervisors(sc.Db, &supervisor)
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	c.JSON(http.StatusOK, supervisor)
+}
+
+// Validation Function for Checking letter, sapce and Name's Length for Query Parameter
+func isValidName(name string) bool {
+	// Name must contain only letters and spaces
+	validNameRegex := regexp.MustCompile(`^[a-zA-Z\s]+$`)
+	if !validNameRegex.MatchString(name) {
+		return false
+	}
+	// Name must not exceed 60 characters as defined in Name Column in Database
+	if len(name) > 60 {
+		return false
+	}
+	return true
 }
 
 // get supervisor by id
