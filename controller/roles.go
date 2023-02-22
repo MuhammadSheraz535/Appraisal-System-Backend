@@ -89,20 +89,26 @@ func CreateRole(db *gorm.DB, role models.Role) (err error) {
 	return nil
 }
 
+
 func (r *RoleController) CreateRole(c *gin.Context) {
-	var role models.Role
-	err := c.ShouldBindJSON(&role)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	err = CreateRole(r.Db, role)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, role)
+    var role models.Role
+    err := c.ShouldBindJSON(&role)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    if role.RoleName != "Admin" && role.RoleName != "User" && role.RoleName != "SuperAdmin" && role.RoleName != "Manager" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RoleName"})
+        return
+    }
+    err = CreateRole(r.Db, role)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(http.StatusOK, role)
 }
+
 
 func UpdateRole(db *gorm.DB, role *models.Role) (err error) {
 	err = db.Save(&role).Error
