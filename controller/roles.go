@@ -143,21 +143,23 @@ func (r *RoleController) UpdateRole(c *gin.Context) {
 	c.JSON(http.StatusOK, role)
 }
 
-func DeleteRole(db *gorm.DB, role *models.Role, id int) (int64, error) {
+func DeleteRole(db *gorm.DB, role *models.Role, id int) error {
 	db.Where("id = ?", id).Delete(&role)
 	if db.Error != nil {
-		return 0, db.Error
+		return db.Error
 	}
-	return db.RowsAffected, nil
+	return nil
 }
 
 func (r *RoleController) DeleteRole(c *gin.Context) {
 	var role models.Role
 	id, _ := strconv.Atoi(c.Param("id"))
-	_, err := DeleteRole(r.Db, &role, id)
+	role.ID = uint(id) // Initialize role object with ID value
+	err := DeleteRole(r.Db, &role, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
+
