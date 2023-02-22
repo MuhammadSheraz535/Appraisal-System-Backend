@@ -23,6 +23,11 @@ func NewSupervisorController() *SupervisorController {
 
 // create Supervisor type Employee
 func CreateSupervisor(db *gorm.DB, supervisor *models.Supervisor) (err error) {
+	var count int64
+	db.Model(&models.Supervisor{}).Where("email=? AND s_id=?", supervisor.Email, supervisor.S_ID).Count(&count)
+	if count > 0 {
+		return errors.New("supervisor with the same email and supervisor ID already exists")
+	}
 	err = db.Create(supervisor).Error
 	if err != nil {
 		return err
@@ -141,19 +146,19 @@ func (sc *SupervisorController) UpdateSupervisor(c *gin.Context) {
 }
 
 // delete Supervisor
-func DeleteEmployee(db *gorm.DB, Employee *models.Supervisor, id int) (int64, error) {
+func DeleteEmployee(db *gorm.DB, Employee *models.Supervisor, id int) (err error) {
 	db = db.Debug().Model(&Employee).Where("id = ?", id).Take(&Employee).Delete(&Employee)
 	if db.Error != nil {
-		return 0, db.Error
+		return db.Error
 	}
-	return db.RowsAffected, nil
+	return nil
 }
 
 // delete Supervisor
 func (uc *SupervisorController) DeleteEmployee(c *gin.Context) {
 	var supervisor models.Supervisor
 	id, _ := strconv.Atoi(c.Param("id"))
-	_, err := DeleteEmployee(uc.Db, &supervisor, id)
+	err := DeleteEmployee(uc.Db, &supervisor, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
 		return
