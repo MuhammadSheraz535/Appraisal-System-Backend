@@ -90,25 +90,6 @@ func CreateRole(db *gorm.DB, role models.Role) (err error) {
 	return nil
 }
 
-// func (r *RoleController) CreateRole(c *gin.Context) {
-//     var role models.Role
-//     err := c.ShouldBindJSON(&role)
-//     if err != nil {
-//         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-//         return
-//     }
-//     if role.RoleName != "Management" && role.RoleName != "Supervisor" && role.RoleName != "HR" && role.RoleName != "Employee" {
-//         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RoleName"})
-//         return
-//     }
-//     err = CreateRole(r.Db, role)
-//     if err != nil {
-//         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-//         return
-//     }
-//     c.JSON(http.StatusOK, role)
-// }
-
 func (r *RoleController) CreateRole(c *gin.Context) {
 	var role models.Role
 	err := c.ShouldBindJSON(&role)
@@ -143,9 +124,17 @@ func (r *RoleController) UpdateRole(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-
 	}
-	c.ShouldBindJSON(&role)
+	err = c.ShouldBindJSON(&role)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	roleName := strings.ToLower(string(role.RoleName))
+	if roleName != "management" && roleName != "supervisor" && roleName != "hr" && roleName != "employee" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RoleName"})
+		return
+	}
 	err = UpdateRole(r.Db, &role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
