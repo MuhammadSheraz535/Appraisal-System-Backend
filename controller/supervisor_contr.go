@@ -81,7 +81,7 @@ func (sc *SupervisorController) GetSupervisors(c *gin.Context) {
 	c.JSON(http.StatusOK, supervisor)
 }
 
-// get employee by id
+// get supervisor by id
 func GetSupervisorByID(db *gorm.DB, supervisor *models.Supervisor, id int) (err error) {
 	err = db.Where("e_id = ?", id).First(&supervisor).Error
 	if err != nil {
@@ -90,7 +90,7 @@ func GetSupervisorByID(db *gorm.DB, supervisor *models.Supervisor, id int) (err 
 	return nil
 }
 
-// get employee by id
+// get supervisor by id
 func (uc *SupervisorController) GetSupervisorByID(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("e_id"))
 	var supervisor models.Supervisor
@@ -109,7 +109,11 @@ func (uc *SupervisorController) GetSupervisorByID(c *gin.Context) {
 
 // update Supervisor
 func UpdateSupervisor(db *gorm.DB, User *models.Supervisor) (err error) {
-	db.Save(User)
+	err = db.Save(User).Error
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
