@@ -16,9 +16,9 @@ func NewRouter() *gin.Engine {
 	{
 		roles := v1.Group("/roles")
 		{
-			roles.GET("", roleController.GetAllRoles)
+			roles.GET("/", roleController.GetAllRoles)
 			roles.GET(":id", roleController.GetRoleByID)
-			roles.POST("", roleController.CreateRole)
+			roles.POST("/", roleController.CreateRole)
 			roles.PUT(":id", roleController.UpdateRole)
 			roles.DELETE(":id", roleController.DeleteRole)
 		}
