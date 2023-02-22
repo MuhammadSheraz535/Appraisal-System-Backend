@@ -11,7 +11,7 @@ func AttachRoutes(db *gorm.DB) *gin.Engine {
 
 	router := gin.Default()
 
-	roleController := controllers.NewRoleController(db)
+	roleController := controllers.NewRoleController()
 
 	v1 := router.Group("/v1")
 	{

@@ -24,5 +24,5 @@ func Connect() *gorm.DB  {
 		panic(err)
 	}
 	DB = db
-	return db
+	return DB
 }

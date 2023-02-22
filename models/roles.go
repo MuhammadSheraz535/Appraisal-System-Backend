@@ -10,7 +10,7 @@ const (
 )
 
 type Role struct {
-	ID       uint     `gorm:"column:id;primaryKey" json:"id"`
-	RoleName RoleName `gorm:"column:role_name"`
-	IsActive bool     `gorm:"column:is_active"`
+	ID       uint     `gorm:"primaryKey" json:"role_id"`
+	RoleName RoleName `gorm:"size:100; not null" json:"role_name"`
+	IsActive bool     `gorm:"not null" json:"is_active"`
 }
