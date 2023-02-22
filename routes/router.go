@@ -16,7 +16,6 @@ func NewRouter() *gin.Engine {
 	v1.GET("/supervisors/:id", sc.GetSupervisorByID)
 	v1.PUT("/supervisors/:id", sc.UpdateSupervisor)
 	v1.DELETE("/supervisors/:id", sc.DeleteEmployee)
-	v1.GET("/supervisor/:name", sc.GetSupervisorByName)
 
 	return router
 }

@@ -195,30 +195,3 @@ func (uc *SupervisorController) DeleteEmployee(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Supervisor deleted successfully"})
 }
-
-// get supervisor list by supervisor name
-func GetSupervisorByName(db *gorm.DB, USER *[]models.Supervisor, name string) (err error) {
-
-	err = db.Where("name = ?", name).Find(&USER).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// get supervisor list by supervisor name
-func (uc *SupervisorController) GetSupervisorByName(c *gin.Context) {
-	name := c.Param("name")
-	var Supervisor []models.Supervisor
-	err := GetSupervisorByName(uc.Db, &Supervisor, name)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
-			return
-		}
-
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, Supervisor)
-}
