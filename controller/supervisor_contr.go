@@ -24,9 +24,9 @@ func NewSupervisorController() *SupervisorController {
 // create Supervisor type Employee
 func CreateSupervisor(db *gorm.DB, supervisor *models.Supervisor) (err error) {
 	var count int64
-	db.Model(&models.Supervisor{}).Where("email=? AND s_id=?", supervisor.Email, supervisor.S_ID).Count(&count)
+	db.Model(&models.Supervisor{}).Where("email=? OR s_id=?", supervisor.Email, supervisor.S_ID).Count(&count)
 	if count > 0 {
-		return errors.New("supervisor with the same email and supervisor ID already exists")
+		return errors.New("supervisor with the same email or supervisor ID already exists")
 	}
 	err = db.Create(supervisor).Error
 	if err != nil {
