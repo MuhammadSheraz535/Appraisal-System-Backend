@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
@@ -52,6 +53,10 @@ func (sc *SupervisorController) CreateSupervisor(c *gin.Context) {
 
 // get All Supervisor //Now it gives all employees
 func GetSupervisors(db *gorm.DB, supervisor *[]models.Supervisor) (err error) {
+	//Check before querying the database supervisor slice cannot be nil
+	if supervisor == nil {
+		return errors.New("supervisor slice pointer cannot be nil")
+	}
 	err = db.Find(supervisor).Error
 	if err != nil {
 		return err
@@ -59,6 +64,10 @@ func GetSupervisors(db *gorm.DB, supervisor *[]models.Supervisor) (err error) {
 	return nil
 }
 func GetSupervisorsByName(db *gorm.DB, supervisor *[]models.Supervisor, name string) error {
+	//check the white space provide instad of name of supervisor
+	if strings.TrimSpace(name) == "" {
+		return errors.New("name cannot be empty")
+	}
 	err := db.Where("name LIKE ?", "%"+name+"%").Find(supervisor).Error
 	if err != nil {
 		return err
