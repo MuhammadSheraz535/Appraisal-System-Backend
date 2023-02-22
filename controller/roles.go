@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -20,39 +22,49 @@ func NewRoleController() *RoleController {
 	return &RoleController{Db: db}
 }
 
-func (r *RoleController) GetAllRoles(c *gin.Context) {
-	var roles []models.Role
-
-	// Apply filters if any
-	roleName := c.Query("role_name")
-	isActive := c.Query("is_active")
-	query := r.Db.Model(&models.Role{})
-	if roleName != "" {
-		query = query.Where("role_name = ?", roleName)
-	}
-	if isActive != "" {
-		query = query.Where("is_active = ?", isActive)
+func GetAllRoles(db *gorm.DB, Role *[]models.Role) (err error) {
+	err = db.Find(&Role).Error
+	if err != nil {
+		return err
 	}
 
-	if err := query.Find(&roles).Error; err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
+	return nil
 
-	c.JSON(http.StatusOK, roles)
 }
 
-func (r *RoleController) GetRoleByID(c *gin.Context) {
-	var role models.Role
-
-	if err := r.Db.First(&role, c.Param("role_id")).Error; err != nil {
-		c.AbortWithStatus(http.StatusNotFound)
+func (r *RoleController) GetAllRoles(c *gin.Context) {
+	var role []models.Role
+	err := GetAllRoles(r.Db, &role)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
 	c.JSON(http.StatusOK, role)
 }
 
+func GetRoleByID(db *gorm.DB, role *models.Role, id int) (err error) {
+	err = db.Where("id = ?", id).First(&role).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *RoleController) GetRoleByID(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var role models.Role
+	err := GetRoleByID(r.Db, &role, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, role)
+}
 
 func CreateRole(db *gorm.DB, role models.Role) (err error) {
 	err = db.Create(&role).Error
@@ -77,31 +89,46 @@ func (r *RoleController) CreateRole(c *gin.Context) {
 	c.JSON(http.StatusOK, role)
 }
 
+func UpdateRole(db *gorm.DB, role *models.Role) (err error) {
+	err = db.Save(&role).Error
+	return err
+}
+
 func (r *RoleController) UpdateRole(c *gin.Context) {
 	var role models.Role
+	id, _ := strconv.Atoi(c.Param("id"))
+	err := GetRoleByID(r.Db, &role, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 
-	if err := r.Db.First(&role, c.Param("id")).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
 	}
-
-	if err := c.ShouldBindJSON(&role); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := r.Db.Save(&role).Error; err != nil {
+	c.ShouldBindJSON(&role)
+	err = UpdateRole(r.Db, &role)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
 	c.JSON(http.StatusOK, role)
 }
 
+func DeleteRole(db *gorm.DB, role *models.Role, id int) (int64, error) {
+	db.Where("id = ?", id).Delete(&role)
+	if db.Error != nil {
+		return 0, db.Error
+	}
+	return db.RowsAffected, nil
+}
+
 func (r *RoleController) DeleteRole(c *gin.Context) {
-	if err := r.Db.Delete(&models.Role{}, c.Param("id")).Error; err != nil {
+	var role models.Role
+	id, _ := strconv.Atoi(c.Param("id"))
+	_, err := DeleteRole(r.Db, &role, id)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.Status(http.StatusNoContent)
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
