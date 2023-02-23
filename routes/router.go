@@ -7,17 +7,14 @@ import (
 
 func NewRouter() *gin.Engine {
 	router := gin.Default()
-	v1 := router.Group("/v1")
+	v1 := router.Group("/v1/employees")
 
-	uc := controller.New()
-	v1.POST("/employees", uc.CreateEmployee)
-	v1.GET("/employees", uc.GetEmployees)
-	v1.GET("/employees/:id", uc.GetEmployee)
-	v1.GET("/employee/:name", uc.GetEmployeeByName)
-	v1.PUT("/employees/:id", uc.UpdateEmployee)
-	v1.DELETE("/employees/:id", uc.DeleteEmployee)
-	v1.GET("/supervisor/:name", uc.GetSupervisorByName)
-	v1.GET("/role/:name", uc.GetByRole)
+	ec := controller.NewEmployeeController()
+	v1.POST("", ec.CreateEmployee)
+	v1.GET("", ec.GetEmployees)
+	v1.GET("/:id", ec.GetEmployee)
+	v1.PUT("/:id", ec.UpdateEmployee)
+	v1.DELETE("/:id", ec.DeleteEmployee)
 
 	return router
 }
