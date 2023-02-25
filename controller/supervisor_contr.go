@@ -19,7 +19,7 @@ func NewSupervisorController() *SupervisorController {
 	return &SupervisorController{db: db}
 }
 
-// Get Supervisors from Employee Tab
+// Get Supervisors from Employee Table
 
 func (sc *SupervisorController) ConvertSupervisorToEmployee(c *gin.Context) {
 	// Get the supervisor data from the request body
