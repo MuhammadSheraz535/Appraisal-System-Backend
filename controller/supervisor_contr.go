@@ -123,6 +123,8 @@ func (sc *SupervisorController) UpdateSupervisor(c *gin.Context) {
 	// Return the updated supervisor
 	c.JSON(http.StatusOK, supervisor)
 }
+
+// Delete the supervisor from employee table
 func (sc *SupervisorController) DeleteSupervisor(c *gin.Context) {
 	// Get the supervisor ID from the request parameters
 	supervisorId := c.Param("id")
