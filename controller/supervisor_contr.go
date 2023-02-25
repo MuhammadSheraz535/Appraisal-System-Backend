@@ -23,7 +23,7 @@ func NewSupervisorController() *SupervisorController {
 
 func (sc *SupervisorController) ConvertSupervisorToEmployee(c *gin.Context) {
 	// Get the supervisor data from the request body
-	var req models.SupervisorRequest
+	var req models.Supervisor
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -106,7 +106,7 @@ func (sc *SupervisorController) UpdateSupervisor(c *gin.Context) {
 	}
 
 	// Get the updated supervisor data from the request body
-	var req models.SupervisorRequest
+	var req models.Supervisor
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
