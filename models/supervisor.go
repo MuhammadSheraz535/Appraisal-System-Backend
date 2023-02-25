@@ -1,8 +1,12 @@
 package models
 
-type Supervisor struct {
-	ID    uint   `json:"employee_id" gorm:"PrimaryKey"`
-	Name  string `gorm:"size:60;not null" json:"name"`
-	Email string `gorm:"size:40;not null;unique" json:"email"`
-	S_ID  uint   `json:"supervisor_id" gorm:"foreignKey:ID;references:ID"`
+type Employee struct {
+	ID    uint   `json:"id" gorm:"primaryKey"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
+}
+type SupervisorRequest struct {
+	Name  string `json:"name" binding:"required,min=3,max=60"`
+	Email string `json:"email" binding:"required,email"`
 }
