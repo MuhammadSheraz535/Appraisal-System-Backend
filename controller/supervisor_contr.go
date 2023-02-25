@@ -1,11 +1,7 @@
-package controller
+package controllers
 
 import (
-	"errors"
 	"net/http"
-	"regexp"
-	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
@@ -14,184 +10,129 @@ import (
 )
 
 type SupervisorController struct {
-	Db *gorm.DB
+	db *gorm.DB
 }
 
 func NewSupervisorController() *SupervisorController {
 	db := database.DB
-	db.AutoMigrate(&models.Supervisor{})
-	return &SupervisorController{Db: db}
+	db.AutoMigrate(&models.Employee{})
+	return &SupervisorController{db: db}
 }
 
-// create Supervisor type Employee
-func CreateSupervisor(db *gorm.DB, supervisor *models.Supervisor) (err error) {
-	var count int64
-	db.Model(&models.Supervisor{}).Where("email=? OR s_id=?", supervisor.Email, supervisor.S_ID).Count(&count)
-	if count > 0 {
-		return errors.New("supervisor with the same email or supervisor ID already exists")
-	}
-	err = db.Create(supervisor).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// Get Supervisors from Employee Tab
 
-// create Supervisor Employee
-func (sc *SupervisorController) CreateSupervisor(c *gin.Context) {
-	var supervisor models.Supervisor
-	err := c.ShouldBindJSON(&supervisor)
-	if err != nil {
+func (sc *SupervisorController) ConvertSupervisorToEmployee(c *gin.Context) {
+	// Get the supervisor data from the request body
+	var req models.SupervisorRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
-	err = CreateSupervisor(sc.Db, &supervisor)
-	if err != nil {
+	// Check if the email already exists in the employees table
+	var existingSupervisor models.Employee
+	if err := sc.db.Where("email = ?", req.Email).First(&existingSupervisor).Error; err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email already exists"})
+		return
+	}
+	// Create a new Employee object with role set as "supervisor"
+	employee := models.Employee{
+		Name:  req.Name,
+		Email: req.Email,
+		Role:  "supervisor",
+	}
+
+	// Save the employee to the employees table
+	if err := sc.db.Create(&employee).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, supervisor)
+
+	// Set the role to "supervisor" in the response
+	employee.Role = "supervisor"
+
+	// Return the created employee
+	c.JSON(http.StatusCreated, employee)
 }
 
-// get All Supervisor //Now it gives all employees
-func GetSupervisors(db *gorm.DB, supervisor *[]models.Supervisor) (err error) {
-	//Check before querying the database supervisor slice cannot be nil
-	if supervisor == nil {
-		return errors.New("supervisor slice pointer cannot be nil")
-	}
-	err = db.Find(supervisor).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
-func GetSupervisorsByName(db *gorm.DB, supervisor *[]models.Supervisor, name string) error {
-	//check the white space provide instad of name of supervisor
-	if strings.TrimSpace(name) == "" {
-		return errors.New("name cannot be empty")
-	}
-	err := db.Where("name LIKE ?", "%"+name+"%").Find(supervisor).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
+// GET Supervisors from employee table(with query parameter)
 func (sc *SupervisorController) GetSupervisors(c *gin.Context) {
-	name := c.Query("_name")
+	name := c.Query("name")
+
+	var supervisors []models.Employee
 	if name != "" {
-		if !isValidName(name) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid name"})
+		// Get supervisors that match the specified name
+		if err := sc.db.Where("role = ? AND name LIKE ?", "supervisor", "%"+name+"%").Find(&supervisors).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-	}
-	var supervisor []models.Supervisor
-	if sc.Db == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "database instance cannot be nil"})
-		return
-	}
-	var err error
-	if name != "" {
-		err = GetSupervisorsByName(sc.Db, &supervisor, name)
 	} else {
-		err = GetSupervisors(sc.Db, &supervisor)
-	}
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, supervisor)
-}
-
-// Validation Function for Checking letter, sapce and Name's Length for Query Parameter
-func isValidName(name string) bool {
-	// Name must contain only letters and spaces
-	validNameRegex := regexp.MustCompile(`^[a-zA-Z\s]+$`)
-	if !validNameRegex.MatchString(name) {
-		return false
-	}
-	// Name must not exceed 60 characters as defined in Name Column in Database
-	if len(name) > 60 {
-		return false
-	}
-	return true
-}
-
-// get supervisor by id
-func GetSupervisorByID(db *gorm.DB, supervisor *models.Supervisor, id int) (err error) {
-	err = db.Where("e_id = ?", id).First(&supervisor).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// get supervisor by id
-func (uc *SupervisorController) GetSupervisorByID(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("e_id"))
-	var supervisor models.Supervisor
-	err := GetSupervisorByID(uc.Db, &supervisor, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+		// Get all supervisors
+		if err := sc.db.Where("role = ?", "supervisor").Find(&supervisors).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+	}
 
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// Return the list of supervisors
+	c.JSON(http.StatusOK, supervisors)
+}
+
+// Get Supervisor by ID
+func (sc *SupervisorController) GetSupervisorById(c *gin.Context) {
+	// Get the supervisor ID from the request parameters
+	supervisorId := c.Param("id")
+
+	// Query the employees table for an employee with the specified ID and role "supervisor"
+	var supervisor models.Employee
+	if err := sc.db.Where("id = ? AND role = ?", supervisorId, "supervisor").First(&supervisor).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "supervisor not found"})
 		return
 	}
+
+	// Return the supervisor
 	c.JSON(http.StatusOK, supervisor)
 }
 
-// update Supervisor
-func UpdateSupervisor(db *gorm.DB, User *models.Supervisor) (err error) {
-	err = db.Save(User).Error
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// update Supervisor Employee user
+// Update Supervisor by ID
 func (sc *SupervisorController) UpdateSupervisor(c *gin.Context) {
-	var user models.Supervisor
-	id, _ := strconv.Atoi(c.Param("id"))
-	err := GetSupervisorByID(sc.Db, &user, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.AbortWithStatus(http.StatusNotFound)
-			return
-		}
+	// Get the supervisor ID from the request parameters
+	supervisorId := c.Param("id")
 
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+	// Query the employees table for an employee with the specified ID and role "supervisor"
+	var supervisor models.Employee
+	if err := sc.db.Where("id = ? AND role = ?", supervisorId, "supervisor").First(&supervisor).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "supervisor not found"})
 		return
 	}
-	c.BindJSON(&user)
-	err = UpdateSupervisor(sc.Db, &user)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+
+	// Get the updated supervisor data from the request body
+	var req models.SupervisorRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, user)
+
+	// Update the supervisor's name and email in the employees table
+	supervisor.Name = req.Name
+	supervisor.Email = req.Email
+	if err := sc.db.Save(&supervisor).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Return the updated supervisor
+	c.JSON(http.StatusOK, supervisor)
 }
+func (sc *SupervisorController) DeleteSupervisor(c *gin.Context) {
+	// Get the supervisor ID from the request parameters
+	supervisorId := c.Param("id")
 
-// delete Supervisor
-func DeleteEmployee(db *gorm.DB, Employee *models.Supervisor, id int) (err error) {
-	db = db.Debug().Model(&Employee).Where("id = ?", id).Take(&Employee).Delete(&Employee)
-	if db.Error != nil {
-		return db.Error
-	}
-	return nil
-}
-
-// delete Supervisor
-func (uc *SupervisorController) DeleteEmployee(c *gin.Context) {
-	var supervisor models.Supervisor
-	id, _ := strconv.Atoi(c.Param("id"))
-	err := DeleteEmployee(uc.Db, &supervisor, id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
+	// Delete the supervisor with the specified ID from the employees table
+	if err := sc.db.Where("id = ? AND role = ?", supervisorId, "supervisor").Delete(&models.Employee{}).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "supervisor not found"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Supervisor deleted successfully"})
+
+	// Return a success response
+	c.JSON(http.StatusOK, gin.H{"message": "supervisor deleted successfully"})
 }
