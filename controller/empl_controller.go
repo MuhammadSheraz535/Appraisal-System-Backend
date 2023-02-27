@@ -25,11 +25,12 @@ func NewEmployeeController() *EmployeeController {
 
 // create a employee
 func CreateEmployee(db *gorm.DB, employee *models.Employee) (err error) {
+
 	if db.Table("employees").Where("email = ?", employee.Email).Find(&employee).RowsAffected > 0 {
 		return errors.New("email is already registered")
 	}
 
-	if err = db.Create(&employee).Error; err != nil {
+	if err = db.Table("employees").Create(&employee).Error; err != nil {
 		return err
 	}
 	return nil
@@ -59,7 +60,7 @@ func GetEmployees(db *gorm.DB, queryParams url.Values, employees *[]models.Emplo
 			query = query.Where(key+" = ?", value)
 		}
 	}
-	err = query.Preload("Role").Table("employees").Find(&employees).Error
+	err = query.Table("employees").Find(&employees).Error
 	if err != nil {
 		return err
 	}
@@ -83,7 +84,7 @@ func (uc *EmployeeController) GetEmployees(c *gin.Context) {
 
 // get employee by id
 func GetEmployee(db *gorm.DB, Employee *models.Employee, id int) (err error) {
-	err = db.Preload("Role").Table("employees").Where("id = ?", id).First(&Employee).Error
+	err = db.Table("employees").Where("id = ?", id).First(&Employee).Error
 	if err != nil {
 		return err
 	}
@@ -109,7 +110,7 @@ func (ec *EmployeeController) GetEmployee(c *gin.Context) {
 
 // update Employee
 func UpdateEmployee(db *gorm.DB, Employee *models.Employee) (err error) {
-	err = db.Session(&gorm.Session{FullSaveAssociations: true}).Table("employees").Updates(&Employee).Save(&Employee).Error
+	err = db.Model(&Employee).Updates(&Employee).Save(&Employee).Error
 	return err
 }
 
@@ -144,7 +145,7 @@ func DeleteEmployee(db *gorm.DB, Employee *models.Employee, id int) (int64, erro
 	if db.Error != nil {
 		return 0, db.Error
 	}
-		return db.RowsAffected, nil
+	return db.RowsAffected, nil
 
 }
 
