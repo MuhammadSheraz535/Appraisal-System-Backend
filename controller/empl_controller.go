@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -23,12 +24,12 @@ func NewEmployeeController() *EmployeeController {
 }
 
 // create a employee
-func CreateEmployee(db *gorm.DB, Employee *models.Employee) (err error) {
-	if db.Where("email = ?", Employee.Email).Find(&Employee).RowsAffected > 0 {
+func CreateEmployee(db *gorm.DB, employee *models.Employee) (err error) {
+	if db.Table("employees").Where("email = ?", employee.Email).Find(&employee).RowsAffected > 0 {
 		return errors.New("email is already registered")
 	}
 
-	if err = db.Create(&Employee).Error; err != nil {
+	if err = db.Create(&employee).Error; err != nil {
 		return err
 	}
 	return nil
@@ -47,53 +48,42 @@ func (ec *EmployeeController) CreateEmployee(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, employee)
+	c.JSON(http.StatusCreated, employee)
 }
 
 // get all employee
-func GetEmployees(db *gorm.DB, name, role string) ([]models.Employee, error) {
+func GetEmployees(db *gorm.DB, queryParams url.Values, employees *[]models.Employee) (err error) {
+	query := db.Table("employees").Model(&employees)
+	for key, values := range queryParams {
+		for _, value := range values {
+			query = query.Where(key+" = ?", value)
+		}
+	}
+	err = query.Preload("Role").Table("employees").Find(&employees).Error
+	if err != nil {
+		return err
+	}
 
+	return nil
+
+}
+
+// get all employee
+func (uc *EmployeeController) GetEmployees(c *gin.Context) {
 	var employees []models.Employee
-	query := db.Model(&models.Employee{})
-	
-	if name != "" {
-		query = query.Where("name LIKE ?", name)
-		
-	}
+	params := c.Request.URL.Query()
+	err := GetEmployees(uc.Db, params, &employees)
 
-	// Apply role filter if provided
-	if role != "" {
-		query = query.Where("role LIKE ?", role)
-		
-	}
-	err := query.Find(&employees).Error
-    if err != nil {
-        return nil, err
-    }
-
-	return employees, nil
-
-}
-
-// get all employee
-func (ec *EmployeeController) GetEmployees(c *gin.Context) {
-
-	// Parse query parameters
-	name := c.Query("name")
-	role := c.Query("role")
-
-	employees, err := GetEmployees(ec.Db, name, role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
 	c.JSON(http.StatusOK, employees)
 }
 
 // get employee by id
 func GetEmployee(db *gorm.DB, Employee *models.Employee, id int) (err error) {
-	err = db.Preload("Role").Where("id = ?", id).First(&Employee).Error
+	err = db.Preload("Role").Table("employees").Where("id = ?", id).First(&Employee).Error
 	if err != nil {
 		return err
 	}
@@ -119,7 +109,7 @@ func (ec *EmployeeController) GetEmployee(c *gin.Context) {
 
 // update Employee
 func UpdateEmployee(db *gorm.DB, Employee *models.Employee) (err error) {
-	err = db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&Employee).Save(&Employee).Error
+	err = db.Session(&gorm.Session{FullSaveAssociations: true}).Table("employees").Updates(&Employee).Save(&Employee).Error
 	return err
 }
 
@@ -142,7 +132,7 @@ func (ec *EmployeeController) UpdateEmployee(c *gin.Context) {
 	}
 	err = UpdateEmployee(ec.Db, &employee)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
+		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, employee)
@@ -150,11 +140,11 @@ func (ec *EmployeeController) UpdateEmployee(c *gin.Context) {
 
 // delete Employee
 func DeleteEmployee(db *gorm.DB, Employee *models.Employee, id int) (int64, error) {
-	db = db.Debug().Model(&Employee).Where("id = ?", id).Take(&Employee).Delete(&Employee)
+	db = db.Table("employees").Debug().Model(&Employee).Where("id = ?", id).Take(&Employee).Unscoped().Delete(&Employee)
 	if db.Error != nil {
 		return 0, db.Error
 	}
-	return db.RowsAffected, nil
+		return db.RowsAffected, nil
 
 }
 
@@ -164,9 +154,9 @@ func (ec *EmployeeController) DeleteEmployee(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	_, err := DeleteEmployee(ec.Db, &employee, id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
-}
 
+	c.JSON(http.StatusOK, gin.H{"message": "Employee deleted successfully"})
+}
