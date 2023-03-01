@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -97,8 +96,8 @@ func (r *RoleController) CreateRole(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	roleName := strings.ToLower(string(role.RoleName))
-	if roleName != "management" && roleName != "supervisor" && roleName != "hr" && roleName != "employee" {
+	roleName := role.RoleName
+	if roleName != "Management" && roleName != "Supervisor" && roleName != "HR" && roleName != "Employee" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RoleName"})
 		return
 	}
@@ -109,8 +108,6 @@ func (r *RoleController) CreateRole(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, role)
 }
-
-
 
 func UpdateRole(db *gorm.DB, role *models.Role) (err error) {
 	err = db.Save(&role).Error
@@ -132,7 +129,7 @@ func (r *RoleController) UpdateRole(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	roleName := strings.ToLower(string(role.RoleName))
+	roleName := role.RoleName
 	if roleName != "management" && roleName != "supervisor" && roleName != "hr" && roleName != "employee" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RoleName"})
 		return
