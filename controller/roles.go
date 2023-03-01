@@ -22,14 +22,12 @@ func NewRoleController() *RoleController {
 	return &RoleController{Db: db}
 }
 
-func GetAllRoles(db *gorm.DB, Role *[]models.Role) (err error) {
-	err = db.Find(&Role).Error
+func GetAllRoles(db *gorm.DB, role *[]models.Role) (err error) {
+	err = db.Table("roles").Find(&role).Error
 	if err != nil {
 		return err
 	}
-
 	return nil
-
 }
 
 func (r *RoleController) GetAllRoles(c *gin.Context) {
@@ -58,7 +56,7 @@ func (r *RoleController) GetAllRoles(c *gin.Context) {
 }
 
 func GetRoleByID(db *gorm.DB, role *models.Role, id int) (err error) {
-	err = db.Where("id = ?", id).First(&role).Error
+	err = db.Table("roles").Where("id = ?", id).First(&role).Error
 	if err != nil {
 		return err
 	}
@@ -82,9 +80,8 @@ func (r *RoleController) GetRoleByID(c *gin.Context) {
 }
 
 func CreateRole(db *gorm.DB, role models.Role) (models.Role, error) {
-	err := db.Create(&role).Error
-	if err != nil {
-		return models.Role{}, err
+	if err := db.Table("roles").Create(&role).Error; err != nil {
+		return role, err
 	}
 	return role, nil
 }
@@ -110,7 +107,7 @@ func (r *RoleController) CreateRole(c *gin.Context) {
 }
 
 func UpdateRole(db *gorm.DB, role *models.Role) (err error) {
-	err = db.Save(&role).Error
+	err = db.Table("roles").Updates(&role).Save(&role).Error
 	return err
 }
 
@@ -130,7 +127,7 @@ func (r *RoleController) UpdateRole(c *gin.Context) {
 		return
 	}
 	roleName := role.RoleName
-	if roleName != "management" && roleName != "supervisor" && roleName != "hr" && roleName != "employee" {
+	if roleName != "Management" && roleName != "Supervisor" && roleName != "HR" && roleName != "Employee" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RoleName"})
 		return
 	}
@@ -143,7 +140,7 @@ func (r *RoleController) UpdateRole(c *gin.Context) {
 }
 
 func DeleteRole(db *gorm.DB, role *models.Role, id int) error {
-	db.Where("id = ?", id).Delete(&role)
+	db.Table("roles").Where("id = ?", id).Delete(&role)
 	if db.Error != nil {
 		return db.Error
 	}
