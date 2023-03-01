@@ -24,6 +24,5 @@ func Connect() *gorm.DB {
 	if err != nil {
 		panic(err)
 	}
-
 	return DB
 }
