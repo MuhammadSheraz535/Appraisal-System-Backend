@@ -39,16 +39,22 @@ func CreateEmployee(db *gorm.DB, employee *models.Employee) (err error) {
 // create employee
 func (ec *EmployeeController) CreateEmployee(c *gin.Context) {
 	var employee models.Employee
+
 	err := c.ShouldBindJSON(&employee)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if employee.Role == "" {
+		employee.Role = "Employee"
+	}
+
 	err = CreateEmployee(ec.Db, &employee)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusCreated, employee)
 }
 
@@ -159,5 +165,5 @@ func (ec *EmployeeController) DeleteEmployee(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Employee deleted successfully"})
+	c.Status(http.StatusNoContent)
 }
