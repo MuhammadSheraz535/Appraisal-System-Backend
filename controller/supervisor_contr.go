@@ -19,7 +19,7 @@ func NewSupervisorController() *SupervisorController {
 	return &SupervisorController{db: db}
 }
 
-// Get Supervisors from Employee Table
+// Create Supervisors from Employee Table
 
 func (sc *SupervisorController) ConvertSupervisorToEmployee(c *gin.Context) {
 	// Get the supervisor data from the request body
@@ -28,17 +28,27 @@ func (sc *SupervisorController) ConvertSupervisorToEmployee(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Get the supervisor role from the roles table
+	var supervisorRole models.Role
+	if err := sc.db.Table("roles").Where("role_name = ?", models.SupervisorRole).First(&supervisorRole).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "supervisor role does not exist"})
+		return
+	}
+
 	// Check if the email already exists in the employees table
 	var existingSupervisor models.Employee
 	if err := sc.db.Table("employees").Where("email = ?", req.Email).First(&existingSupervisor).Error; err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "email already exists"})
 		return
 	}
+
 	// Create a new Employee object with role set as "supervisor"
 	employee := models.Employee{
-		Name:  req.Name,
-		Email: req.Email,
-		Role:  "supervisor",
+		Name:   req.Name,
+		Email:  req.Email,
+		Role:   string(supervisorRole.RoleName),
+		RoleID: supervisorRole.ID,
 	}
 
 	// Save the employee to the employees table
@@ -48,7 +58,7 @@ func (sc *SupervisorController) ConvertSupervisorToEmployee(c *gin.Context) {
 	}
 
 	// Set the role to "supervisor" in the response
-	employee.Role = "supervisor"
+	employee.Role = string(supervisorRole.RoleName)
 
 	// Return the created employee
 	c.JSON(http.StatusCreated, employee)
