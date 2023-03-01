@@ -136,5 +136,5 @@ func (sc *SupervisorController) DeleteSupervisor(c *gin.Context) {
 	}
 
 	// Return a success response
-	c.JSON(http.StatusOK, gin.H{"message": "supervisor deleted successfully"})
+	c.JSON(http.StatusNoContent, gin.H{})
 }
