@@ -93,11 +93,12 @@ func (r *RoleController) CreateRole(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	roleName := role.RoleName
-	if roleName != "Management" && roleName != "Supervisor" && roleName != "HR" && roleName != "Employee" {
+
+	if err := r.Db.Table("roles").Where("role_name = ?", role.RoleName).First(&role).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RoleName"})
 		return
 	}
+
 	role, err = CreateRole(r.Db, role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -126,11 +127,12 @@ func (r *RoleController) UpdateRole(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	roleName := role.RoleName
-	if roleName != "Management" && roleName != "Supervisor" && roleName != "HR" && roleName != "Employee" {
+
+	if err := r.Db.Table("roles").Where("role_name = ?", role.RoleName).First(&role).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RoleName"})
 		return
 	}
+
 	err = UpdateRole(r.Db, &role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
