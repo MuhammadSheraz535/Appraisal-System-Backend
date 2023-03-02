@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -29,21 +28,6 @@ func GetAllRoles(db *gorm.DB, role *[]models.Role) (err error) {
 		return err
 	}
 	return nil
-}
-
-func IsValidRoleName(db *gorm.DB, roleName models.RoleName) bool {
-	var roles []models.Role
-	if err := db.Find(&roles).Error; err != nil {
-		return false
-	}
-
-	for _, r := range roles {
-		if r.RoleName == roleName {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (r *RoleController) GetAllRoles(c *gin.Context) {
@@ -96,9 +80,6 @@ func (r *RoleController) GetRoleByID(c *gin.Context) {
 }
 
 func CreateRole(db *gorm.DB, role models.Role) (models.Role, error) {
-	if !IsValidRoleName(db, role.RoleName) {
-		return role, fmt.Errorf("invalid role name")
-	}
 
 	if err := db.Table("roles").Create(&role).Error; err != nil {
 		return role, err
@@ -124,9 +105,6 @@ func (r *RoleController) CreateRole(c *gin.Context) {
 }
 
 func UpdateRole(db *gorm.DB, role *models.Role) error {
-	if !IsValidRoleName(db, role.RoleName) {
-		return fmt.Errorf("invalid role name")
-	}
 
 	err := db.Table("roles").Updates(role).Error
 	if err != nil {
