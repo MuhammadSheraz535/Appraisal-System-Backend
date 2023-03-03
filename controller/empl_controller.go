@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"net/http"
-	"net/url"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -22,6 +21,7 @@ func NewEmployeeController() *EmployeeController {
 	db.AutoMigrate(&models.Employee{})
 	return &EmployeeController{Db: db}
 }
+
 
 // create a employee
 func CreateEmployee(db *gorm.DB, employee *models.Employee) (err error) {
@@ -59,16 +59,24 @@ func (ec *EmployeeController) CreateEmployee(c *gin.Context) {
 }
 
 // get all employee
-func GetEmployees(db *gorm.DB, queryParams url.Values, employees *[]models.Employee) (err error) {
-	query := db.Table("employees").Model(&employees)
-	for key, values := range queryParams {
-		for _, value := range values {
-			query = query.Where(key+" = ?", value)
-		}
-	}
-	err = query.Table("employees").Find(&employees).Error
-	if err != nil {
+func GetEmployees(db *gorm.DB, name, role string, employees *[]models.Employee) (err error) {
+
+	if name != "" && role != "" {
+		err = db.Table("employees").Where("name = ? AND role = ?", name, role).Find(&employees).Error
 		return err
+	} else if name != "" {
+		err = db.Table("employees").Where("name LIKE ?", "%"+name+"%").Find(&employees).Error
+		return err
+
+	} else if role != "" {
+		err = db.Table("employeea").Where("role LIKE ?", "%"+role+"%").Find(&employees).Error
+		return err
+
+	} else {
+		err = db.Table("employees").Find(&employees).Error
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -78,8 +86,9 @@ func GetEmployees(db *gorm.DB, queryParams url.Values, employees *[]models.Emplo
 // get all employee
 func (uc *EmployeeController) GetEmployees(c *gin.Context) {
 	var employees []models.Employee
-	params := c.Request.URL.Query()
-	err := GetEmployees(uc.Db, params, &employees)
+	name := c.Query("name")
+	role := c.Query("role")
+	err := GetEmployees(uc.Db, name, role, &employees)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
