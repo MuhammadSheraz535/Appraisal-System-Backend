@@ -1,7 +1,5 @@
 package models
 
-type RoleName string
-
 
 type Role struct {
 	ID       uint     `gorm:"primaryKey" json:"role_id"`
