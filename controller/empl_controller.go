@@ -18,8 +18,21 @@ type EmployeeController struct {
 
 func NewEmployeeController() *EmployeeController {
 	db := database.DB
-	db.AutoMigrate(&models.Employee{})
+	db.AutoMigrate(&models.Employee{},&models.Role{})
 	return &EmployeeController{Db: db}
+}
+
+//  function to get the RoleId from the database based on the given role name
+func getRoleIdFromDb(db *gorm.DB, roleName string) (uint, error) {
+    var role *models.Role
+    if err := db.Table("roles").Where("role_name = ?", roleName).First(&role).Error; err != nil {
+        if err == gorm.ErrRecordNotFound {
+            return 0, errors.New("invalid role specified")
+        }
+        return 0, err
+    }
+
+    return role.ID, nil
 }
 
 
@@ -45,8 +58,15 @@ func (ec *EmployeeController) CreateEmployee(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if employee.Role == "" {
-		employee.Role = "Employee"
+	 // If a role is provided in the request, check if it exists in the DB and assign RoleId from the database
+	 if roleName := employee.Role; roleName != "" {
+		roleId, err := getRoleIdFromDb(ec.Db, roleName)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, err.Error())
+			return
+		}
+
+		employee.RoleID = roleId
 	}
 
 	err = CreateEmployee(ec.Db, &employee)
@@ -69,7 +89,7 @@ func GetEmployees(db *gorm.DB, name, role string, employees *[]models.Employee) 
 		return err
 
 	} else if role != "" {
-		err = db.Table("employeea").Where("role LIKE ?", "%"+role+"%").Find(&employees).Error
+		err = db.Table("employees").Where("role LIKE ?", "%"+role+"%").Find(&employees).Error
 		return err
 
 	} else {
@@ -145,6 +165,16 @@ func (ec *EmployeeController) UpdateEmployee(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+	 // If a role is provided in the request, check if it exists in the DB and assign RoleId from the database
+	 if roleName := employee.Role; roleName != "" {
+		roleId, err := getRoleIdFromDb(ec.Db, roleName)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, err.Error())
+			return
+		}
+
+		employee.RoleID = roleId
 	}
 	err = UpdateEmployee(ec.Db, &employee)
 	if err != nil {
