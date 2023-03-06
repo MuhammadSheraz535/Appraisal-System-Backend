@@ -20,6 +20,7 @@ func NewSupervisorController() *SupervisorController {
 }
 
 // Create Supervisors from Employee Table
+const supervisorRoleName = "supervisor"
 
 func (sc *SupervisorController) ConvertSupervisorToEmployee(c *gin.Context) {
 	// Get the supervisor data from the request body
@@ -31,7 +32,7 @@ func (sc *SupervisorController) ConvertSupervisorToEmployee(c *gin.Context) {
 
 	// Get the supervisor role from the roles table
 	var supervisorRole models.Role
-	if err := sc.db.Table("roles").Where("role_name = ?", models.SupervisorRole).First(&supervisorRole).Error; err != nil {
+	if err := sc.db.Table("roles").Where("role_name = ?", supervisorRoleName).First(&supervisorRole).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "supervisor role does not exist"})
 		return
 	}
@@ -47,7 +48,7 @@ func (sc *SupervisorController) ConvertSupervisorToEmployee(c *gin.Context) {
 	employee := models.Employee{
 		Name:   req.Name,
 		Email:  req.Email,
-		Role:   string(supervisorRole.RoleName),
+		Role:   supervisorRoleName,
 		RoleID: supervisorRole.ID,
 	}
 
@@ -58,7 +59,7 @@ func (sc *SupervisorController) ConvertSupervisorToEmployee(c *gin.Context) {
 	}
 
 	// Set the role to "supervisor" in the response
-	employee.Role = string(supervisorRole.RoleName)
+	employee.Role = supervisorRoleName
 
 	// Return the created employee
 	c.JSON(http.StatusCreated, employee)
@@ -71,13 +72,13 @@ func (sc *SupervisorController) GetSupervisors(c *gin.Context) {
 	var supervisors []models.Employee
 	if name != "" {
 		// Get supervisors that match the specified name
-		if err := sc.db.Table("employees").Where("role = ? AND name LIKE ?", "supervisor", "%"+name+"%").Find(&supervisors).Error; err != nil {
+		if err := sc.db.Table("employees").Where("role = ? AND name LIKE ?", supervisorRoleName, "%"+name+"%").Find(&supervisors).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	} else {
 		// Get all supervisors
-		if err := sc.db.Table("employees").Where("role = ?", "supervisor").Find(&supervisors).Error; err != nil {
+		if err := sc.db.Table("employees").Where("role = ?", supervisorRoleName).Find(&supervisors).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -94,7 +95,7 @@ func (sc *SupervisorController) GetSupervisorById(c *gin.Context) {
 
 	// Query the employees table for an employee with the specified ID and role "supervisor"
 	var supervisor models.Employee
-	if err := sc.db.Table("employees").Where("id = ? AND role = ?", supervisorId, "supervisor").First(&supervisor).Error; err != nil {
+	if err := sc.db.Table("employees").Where("id = ? AND role = ?", supervisorId, supervisorRoleName).First(&supervisor).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "supervisor not found"})
 		return
 	}
@@ -110,7 +111,7 @@ func (sc *SupervisorController) UpdateSupervisor(c *gin.Context) {
 
 	// Query the employees table for an employee with the specified ID and role "supervisor"
 	var supervisor models.Employee
-	if err := sc.db.Table("employees").Where("id = ? AND role = ?", supervisorId, "supervisor").First(&supervisor).Error; err != nil {
+	if err := sc.db.Table("employees").Where("id = ? AND role = ?", supervisorId, supervisorRoleName).First(&supervisor).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "supervisor not found"})
 		return
 	}
@@ -140,7 +141,7 @@ func (sc *SupervisorController) DeleteSupervisor(c *gin.Context) {
 	supervisorId := c.Param("id")
 
 	// Delete the supervisor with the specified ID from the employees table
-	if err := sc.db.Table("employees").Where("id = ? AND role = ?", supervisorId, "supervisor").Delete(&models.Employee{}).Error; err != nil {
+	if err := sc.db.Table("employees").Where("id = ? AND role = ?", supervisorId, supervisorRoleName).Delete(&models.Employee{}).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "supervisor not found"})
 		return
 	}
