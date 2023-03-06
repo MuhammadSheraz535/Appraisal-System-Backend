@@ -19,8 +19,9 @@ func NewSupervisorController() *SupervisorController {
 	return &SupervisorController{db: db}
 }
 
-// Create Supervisors from Employee Table
 const supervisorRoleName = "supervisor"
+
+// Create Supervisors from Employee Table
 
 func (sc *SupervisorController) ConvertSupervisorToEmployee(c *gin.Context) {
 	// Get the supervisor data from the request body
