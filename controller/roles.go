@@ -139,9 +139,9 @@ func (r *RoleController) UpdateRole(c *gin.Context) {
 }
 
 func DeleteRole(db *gorm.DB, role *models.Role, id int) error {
-	db.Table("roles").Where("id = ?", id).Delete(&role)
-	if db.Error != nil {
-		return db.Error
+	err := db.Table("roles").Where("id = ?", id).Delete(&role).Error
+	if err != nil {
+		return err
 	}
 	return nil
 }
