@@ -18,23 +18,22 @@ type EmployeeController struct {
 
 func NewEmployeeController() *EmployeeController {
 	db := database.DB
-	db.AutoMigrate(&models.Employee{},&models.Role{})
+	db.AutoMigrate(&models.Employee{}, &models.Role{})
 	return &EmployeeController{Db: db}
 }
 
-//  function to get the RoleId from the database based on the given role name
+// function to get the RoleId from the database based on the given role name
 func getRoleIdFromDb(db *gorm.DB, roleName string) (uint, error) {
-    var role *models.Role
-    if err := db.Table("roles").Where("role_name = ?", roleName).First(&role).Error; err != nil {
-        if err == gorm.ErrRecordNotFound {
-            return 0, errors.New("invalid role specified")
-        }
-        return 0, err
-    }
+	var role *models.Role
+	if err := db.Table("roles").Where("role_name = ?", roleName).First(&role).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return 0, errors.New("invalid role specified")
+		}
+		return 0, err
+	}
 
-    return role.ID, nil
+	return role.ID, nil
 }
-
 
 // create a employee
 func CreateEmployee(db *gorm.DB, employee *models.Employee) (err error) {
@@ -58,8 +57,12 @@ func (ec *EmployeeController) CreateEmployee(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	 // If a role is provided in the request, check if it exists in the DB and assign RoleId from the database
-	 if roleName := employee.Role; roleName != "" {
+	if employee.Role == "" {
+		employee.Role = "Employee"
+
+	}
+	// If a role is provided in the request, check if it exists in the DB and assign RoleId from the database
+	if roleName := employee.Role; roleName != "" {
 		roleId, err := getRoleIdFromDb(ec.Db, roleName)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, err.Error())
@@ -166,8 +169,8 @@ func (ec *EmployeeController) UpdateEmployee(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	 // If a role is provided in the request, check if it exists in the DB and assign RoleId from the database
-	 if roleName := employee.Role; roleName != "" {
+	// If a role is provided in the request, check if it exists in the DB and assign RoleId from the database
+	if roleName := employee.Role; roleName != "" {
 		roleId, err := getRoleIdFromDb(ec.Db, roleName)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, err.Error())
