@@ -9,8 +9,9 @@ import (
 )
 
 var DB *gorm.DB
+var err error
 
-func Connect() {
+func Connect() *gorm.DB {
 	dbUsername := os.Getenv("DB_USERNAME")
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbURL := os.Getenv("DB_URL")
@@ -19,9 +20,9 @@ func Connect() {
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbUsername, dbPassword, dbURL, dbPort, dbName)
 
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
-	DB = db
+	return DB
 }
