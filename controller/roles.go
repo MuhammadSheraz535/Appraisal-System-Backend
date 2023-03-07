@@ -84,7 +84,6 @@ func CreateRole(db *gorm.DB, role models.Role) (models.Role, error) {
 	if err := db.Table("roles").Create(&role).Error; err != nil {
 		return role, err
 	}
-
 	return role, nil
 }
 
