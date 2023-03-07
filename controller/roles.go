@@ -80,7 +80,13 @@ func (r *RoleController) GetRoleByID(c *gin.Context) {
 }
 
 func CreateRole(db *gorm.DB, role models.Role) (models.Role, error) {
-
+	var count int64
+	if err := db.Table("roles").Where("role_name = ?", role.RoleName).Count(&count).Error; err != nil {
+		return role, err
+	}
+	if count > 0 {
+		return role, errors.New("role name already exists")
+	}
 	if err := db.Table("roles").Create(&role).Error; err != nil {
 		return role, err
 	}
@@ -104,12 +110,16 @@ func (r *RoleController) CreateRole(c *gin.Context) {
 }
 
 func UpdateRole(db *gorm.DB, role *models.Role) error {
-
-	err := db.Table("roles").Updates(role).Error
-	if err != nil {
+	var count int64
+	if err := db.Table("roles").Where("role_name=?", role.RoleName).Count(&count).Error; err != nil {
 		return err
 	}
-
+	if count > 0 {
+		return errors.New("role name already exists")
+	}
+	if err := db.Table("roles").Updates(role).Error; err != nil {
+		return err
+	}
 	return nil
 }
 
