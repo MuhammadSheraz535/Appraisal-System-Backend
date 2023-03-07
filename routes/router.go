@@ -7,15 +7,20 @@ import (
 
 func NewRouter() *gin.Engine {
 	router := gin.Default()
-	v1 := router.Group("/v1")
+
 	// TODO: Define/Call routes here
 	sc := controllers.NewSupervisorController()
 
-	v1.POST("/supervisors", sc.ConvertSupervisorToEmployee)
-	v1.GET("/supervisors", sc.GetSupervisors)
-	v1.GET("/supervisors/:id", sc.GetSupervisorById)
-	v1.PUT("/supervisors/:id", sc.UpdateSupervisor)
-	v1.DELETE("/supervisors/:id", sc.DeleteSupervisor)
-
+	v1 := router.Group("/v1")
+	{
+		supervisors := v1.Group("/supervisors")
+		{
+			supervisors.POST("/", sc.ConvertSupervisorToEmployee)
+			supervisors.GET("/", sc.GetSupervisors)
+			supervisors.GET(":id", sc.GetSupervisorById)
+			supervisors.PUT(":id", sc.UpdateSupervisor)
+			supervisors.DELETE(":id", sc.DeleteSupervisor)
+		}
+	}
 	return router
 }
