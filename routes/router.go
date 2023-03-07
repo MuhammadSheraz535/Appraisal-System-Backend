@@ -3,14 +3,12 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/mrehanabbasi/appraisal-system-backend/controller"
-
 	controllers "github.com/mrehanabbasi/appraisal-system-backend/controller"
 )
 
 func NewRouter() *gin.Engine {
 
-	sc := controller.NewSupervisorController()
+	sc := controllers.NewSupervisorController()
 
 	router := gin.Default()
 	ec := controllers.NewEmployeeController()
@@ -26,7 +24,7 @@ func NewRouter() *gin.Engine {
 			employee.DELETE("/:id", ec.DeleteEmployee)
 		}
 	}
-	roleController := controller.NewRoleController()
+	roleController := controllers.NewRoleController()
 
 	v1 = router.Group("/v1")
 	{
