@@ -38,11 +38,11 @@ func (r *RoleController) GetAllRoles(c *gin.Context) {
 	isActive := c.Query("is_active")
 
 	if roleName != "" && isActive != "" {
-		err = r.Db.Where("role_name = ? AND is_active = ?", roleName, isActive).Find(&role).Error
+		err = r.Db.Table("roles").Where("role_name = ? AND is_active = ?", roleName, isActive).Find(&role).Error
 	} else if roleName != "" {
-		err = r.Db.Where("role_name = ?", roleName).Find(&role).Error
+		err = r.Db.Table("roles").Where("role_name = ?", roleName).Find(&role).Error
 	} else if isActive != "" {
-		err = r.Db.Where("is_active = ?", isActive).Find(&role).Error
+		err = r.Db.Table("roles").Where("is_active = ?", isActive).Find(&role).Error
 	} else {
 		err = GetAllRoles(r.Db, &role)
 	}
