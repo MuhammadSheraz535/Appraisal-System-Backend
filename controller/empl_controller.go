@@ -74,7 +74,7 @@ func (ec *EmployeeController) CreateEmployee(c *gin.Context) {
 
 	err = CreateEmployee(ec.Db, &employee)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

@@ -9,6 +9,7 @@ import (
 )
 
 var DB *gorm.DB
+var err error
 
 func Connect() {
 	dbUsername := os.Getenv("DB_USERNAME")
@@ -19,10 +20,10 @@ func Connect() {
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Local", dbUsername, dbPassword, dbURL, dbPort)
 
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
 
-	DB = db.Exec("CREATE DATABASE IF NOT EXISTS " + dbName + ";").Exec("USE " + dbName + ";")
+	DB.Exec("CREATE DATABASE IF NOT EXISTS " + dbName + ";").Exec("USE " + dbName + ";")
 }
