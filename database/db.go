@@ -24,5 +24,5 @@ func Connect() {
 		panic(err)
 	}
 
-	DB = db.Exec("CREATE DATABASE IF NOT EXISTS " + dbName + ";")
+	DB = db.Exec("CREATE DATABASE IF NOT EXISTS " + dbName + ";").Exec("USE " + dbName + ";")
 }
