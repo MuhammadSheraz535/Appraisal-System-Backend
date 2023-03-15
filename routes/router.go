@@ -3,13 +3,12 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 
-	controllers "github.com/mrehanabbasi/appraisal-system-backend/controller"
 	"github.com/mrehanabbasi/appraisal-system-backend/service"
 )
 
 func NewRouter() *gin.Engine {
 
-	sc := controllers.NewSupervisorController()
+	sc := service.NewSupervisorService()
 
 	router := gin.Default()
 	ec := service.NewEmployeeService()
