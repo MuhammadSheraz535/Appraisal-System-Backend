@@ -16,7 +16,7 @@ type KPIController struct {
 
 func NewKPIController() *KPIController {
 	db := database.DB
-	db.AutoMigrate(&models.Role{})
+	db.AutoMigrate(&models.KPI{})
 	return &KPIController{Db: db}
 }
 
