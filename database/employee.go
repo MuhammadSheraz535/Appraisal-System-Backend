@@ -92,3 +92,13 @@ func DeleteEmployee(db *gorm.DB, Employee *models.Employee, id int) (int64, erro
 	return db.RowsAffected, nil
 
 }
+func ChecKSupervisorExist(db *gorm.DB, id uint) error {
+	var supervisor models.Employee
+	if err := db.Table("employees").Where("id = ? AND role = ?", id, "supervisor").First(&supervisor).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return errors.New("supervisor not found")
+		}
+		return err
+	}
+	return err
+}
