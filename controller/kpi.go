@@ -48,3 +48,78 @@ func (r *KPIController) GetKPIs(c *gin.Context) {
 
 	c.JSON(http.StatusOK, kpis)
 }
+
+func (r *KPIController) GetKPIByID(c *gin.Context) {
+	id := c.Param("id")
+
+	// Get KPI by ID
+	kpi := models.KPI{}
+	if err := r.Db.Where("id = ?", id).First(&kpi).Error; err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	c.JSON(http.StatusOK, kpi)
+}
+
+// CreateKPI creates a new KPI
+func (r *KPIController) CreateKPI(c *gin.Context) {
+	kpi := models.KPI{}
+
+	// Bind request body to KPI model
+	if err := c.BindJSON(&kpi); err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	// Create KPI
+	if err := r.Db.Create(&kpi).Error; err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusCreated, kpi)
+}
+
+// UpdateKPI updates an existing KPI
+func (r *KPIController) UpdateKPI(c *gin.Context) {
+	id := c.Param("id")
+
+	kpi := models.KPI{}
+
+	// Get KPI by ID
+	if err := r.Db.Where("id = ?", id).First(&kpi).Error; err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	// Bind request body to KPI model and update fields
+	if err := c.BindJSON(&kpi); err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	// Update KPI
+	if err := r.Db.Save(&kpi).Error; err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, kpi)
+}
+
+func (r *KPIController) DeleteKPI(c *gin.Context) {
+	id := c.Param("id")
+	kpi := models.KPI{}
+	// Get KPI by ID
+	if err := r.Db.Where("id = ?", id).First(&kpi).Error; err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	// Delete KPI
+	if err := r.Db.Delete(&kpi).Error; err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
