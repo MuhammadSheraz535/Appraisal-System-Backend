@@ -23,6 +23,7 @@ func NewEmployeeService() *EmployeeService {
 }
 
 // create employee
+
 func (ec *EmployeeService) CreateEmployee(c *gin.Context) {
 	var employee models.Employee
 
@@ -44,6 +45,14 @@ func (ec *EmployeeService) CreateEmployee(c *gin.Context) {
 		}
 
 		employee.RoleID = roleId
+	}
+	// checking supervisor exist in employee table
+	if supID := employee.SupervisorID; supID != 0 {
+		err := database.ChecKSupervisorExist(ec.Db, supID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, err.Error())
+			return
+		}
 	}
 
 	err = database.CreateEmployee(ec.Db, &employee)
