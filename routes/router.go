@@ -8,46 +8,22 @@ import (
 
 func NewRouter() *gin.Engine {
 
-	sc := controllers.NewSupervisorController()
-
 	router := gin.Default()
-	ec := controllers.NewEmployeeController()
+
+	KPIController := controllers.NewKPIController()
 
 	v1 := router.Group("/v1")
 	{
-		employee := v1.Group("/employees")
+		roles := v1.Group("/kpis")
 		{
-			employee.POST("", ec.CreateEmployee)
-			employee.GET("", ec.GetEmployees)
-			employee.GET("/:id", ec.GetEmployee)
-			employee.PUT("/:id", ec.UpdateEmployee)
-			employee.DELETE("/:id", ec.DeleteEmployee)
-		}
-	}
-	roleController := controllers.NewRoleController()
-
-	v1 = router.Group("/v1")
-	{
-		roles := v1.Group("/roles")
-		{
-			roles.GET("/", roleController.GetAllRoles)
-			roles.GET(":id", roleController.GetRoleByID)
-			roles.POST("/", roleController.CreateRole)
-			roles.PUT(":id", roleController.UpdateRole)
-			roles.DELETE(":id", roleController.DeleteRole)
+			roles.GET("/", KPIController.GetKPIs)
+			roles.GET(":id", KPIController.GetKPIByID)
+			roles.POST("/", KPIController.CreateKPI)
+			roles.PUT(":id", KPIController.UpdateKPI)
+			roles.DELETE(":id", KPIController.DeleteKPI)
 		}
 	}
 
-	v1 = router.Group("/v1")
-	{
-		supervisors := v1.Group("/supervisors")
-		{
-			supervisors.POST("/", sc.ConvertSupervisorToEmployee)
-			supervisors.GET("/", sc.GetSupervisors)
-			supervisors.GET(":id", sc.GetSupervisorById)
-			supervisors.PUT(":id", sc.UpdateSupervisor)
-			supervisors.DELETE(":id", sc.DeleteSupervisor)
-		}
-	}
 	return router
 }
+
