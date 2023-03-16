@@ -16,7 +16,7 @@ func NewRouter() *gin.Engine {
 	{
 		roles := v1.Group("/kpis")
 		{
-			roles.GET("/", KPIController.GetKPIs)
+			roles.GET("/", KPIController.GetAllKPI)
 			roles.GET(":id", KPIController.GetKPIByID)
 			roles.POST("/", KPIController.CreateKPI)
 			roles.PUT(":id", KPIController.UpdateKPI)
@@ -26,4 +26,3 @@ func NewRouter() *gin.Engine {
 
 	return router
 }
-
