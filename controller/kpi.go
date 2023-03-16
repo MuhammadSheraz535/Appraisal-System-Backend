@@ -20,6 +20,14 @@ func NewKPIController() *KPIController {
 	return &KPIController{Db: db}
 }
 
+func GetKPIs(db *gorm.DB, KPI *[]models.KPI) (err error) {
+	err = db.Table("kpis").Find(&KPI).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *KPIController) GetKPIs(c *gin.Context) {
 	name := c.Query("name")
 	assignType := c.Query("assign_type")
@@ -49,6 +57,14 @@ func (r *KPIController) GetKPIs(c *gin.Context) {
 	c.JSON(http.StatusOK, kpis)
 }
 
+func GetKPIByID(db *gorm.DB, KPI *models.KPI, id int) (err error) {
+	err = db.Table("kpis").Where("id = ?", id).First(&KPI).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *KPIController) GetKPIByID(c *gin.Context) {
 	id := c.Param("id")
 
@@ -60,6 +76,14 @@ func (r *KPIController) GetKPIByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, kpi)
+}
+
+func CreateKPI(db *gorm.DB, KPI models.KPI) (models.KPI, error) {
+	err := db.Table("kpis").Create(&KPI).Error
+	if err != nil {
+		return KPI, err
+	}
+	return KPI, nil
 }
 
 // CreateKPI creates a new KPI
@@ -79,6 +103,14 @@ func (r *KPIController) CreateKPI(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, kpi)
+}
+
+func UpdateKPI(db *gorm.DB, KPI *models.KPI) error {
+	err := db.Table("kpis").Updates(KPI).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // UpdateKPI updates an existing KPI
@@ -106,6 +138,14 @@ func (r *KPIController) UpdateKPI(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, kpi)
+}
+
+func DeleteKPI(db *gorm.DB, KPI *models.KPI, id int) error {
+	err := db.Table("kpis").Where("id = ?", id).Delete(&KPI).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *KPIController) DeleteKPI(c *gin.Context) {
