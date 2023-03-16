@@ -39,7 +39,7 @@ func (s *StringSlice) Scan(src interface{}) error {
 type KPI struct {
 	ID              uint               `gorm:"primaryKey" json:"kpi_id"`
 	KPIName         string             `gorm:"size:100;not null" json:"kpi_name"`
-	AssignType      StringSlice        `gorm:"type:json;not null" json:"assign_type"`
+	AssignType      string        `gorm:"type:json;not null" json:"assign_type"`
 	Measured        []MeasuredData     `gorm:"-" json:"measured_data,omitempty"`
 	Observatory     string             `gorm:"not null" json:"obs_data,omitempty"`
 	Questionaire    []QuestionaireData `gorm:"-" json:"questionaire_data,omitempty"`
