@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"github.com/mrehanabbasi/appraisal-system-backend/controller"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 )
@@ -39,7 +40,7 @@ func (sc *SupervisorService) ConvertSupervisorToEmployee(c *gin.Context) {
 	}
 
 	// Create a new employee with supervisor role
-	employee, err := database.CreateSupervisor(sc.db, req.Name, req.Email, supervisorRoleName, supervisorRole.ID)
+	employee, err := controller.CreateSupervisor(sc.db, req.Name, req.Email, supervisorRoleName, supervisorRole.ID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -56,7 +57,7 @@ func (sc *SupervisorService) ConvertSupervisorToEmployee(c *gin.Context) {
 func (sc *SupervisorService) GetSupervisors(c *gin.Context) {
 	name := c.Query("name")
 
-	supervisors, err := database.NewSupervisorService().GetSupervisorsWithQuery(name)
+	supervisors, err := controller.GetSupervisorsWithQuery(sc.db, name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -72,7 +73,7 @@ func (sc *SupervisorService) GetSupervisorById(c *gin.Context) {
 	supervisorId := c.Param("id")
 
 	// Get the supervisor from the database
-	supervisor, err := database.NewSupervisorService().GetSupervisorByIdDB(supervisorId)
+	supervisor, err := controller.GetSupervisorByIdDB(sc.db, supervisorId)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "supervisor not found"})
 		return
@@ -95,7 +96,7 @@ func (sc *SupervisorService) UpdateSupervisor(c *gin.Context) {
 	}
 
 	// Update the supervisor in the database
-	if err := database.NewSupervisorService().UpdateSupervisorInDatabase(supervisorId, req); err != nil {
+	if err := controller.UpdateSupervisorInDatabase(sc.db, supervisorId, req); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "supervisor not found"})
 			return
@@ -121,7 +122,7 @@ func (sc *SupervisorService) DeleteSupervisor(c *gin.Context) {
 	supervisorId := c.Param("id")
 
 	// Call the database function to delete the supervisor
-	if err := database.NewSupervisorService().DeleteSupervisorFromDB(supervisorId); err != nil {
+	if err := controller.DeleteSupervisorFromDB(sc.db, supervisorId); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "supervisor not found"})
 		return
 	}

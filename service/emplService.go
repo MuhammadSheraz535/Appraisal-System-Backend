@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mrehanabbasi/appraisal-system-backend/controller"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"gorm.io/gorm"
@@ -38,7 +39,7 @@ func (ec *EmployeeService) CreateEmployee(c *gin.Context) {
 	}
 	// If a role is provided in the request, check if it exists in the DB and assign RoleId from the database
 	if roleName := employee.Role; roleName != "" {
-		roleId, err := database.GetRoleIdFromDb(ec.Db, roleName)
+		roleId, err := controller.GetRoleIdFromDb(ec.Db, roleName)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, err.Error())
 			return
@@ -48,14 +49,14 @@ func (ec *EmployeeService) CreateEmployee(c *gin.Context) {
 	}
 	// checking supervisor exist in employee table
 	if supID := employee.SupervisorID; supID != 0 {
-		err := database.ChecKSupervisorExist(ec.Db, supID)
+		err := controller.ChecKSupervisorExist(ec.Db, supID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, err.Error())
 			return
 		}
 	}
 
-	err = database.CreateEmployee(ec.Db, &employee)
+	err = controller.CreateEmployee(ec.Db, &employee)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -69,7 +70,7 @@ func (uc *EmployeeService) GetEmployees(c *gin.Context) {
 	var employees []models.Employee
 	name := c.Query("name")
 	role := c.Query("role")
-	err := database.GetEmployees(uc.Db, name, role, &employees)
+	err := controller.GetEmployees(uc.Db, name, role, &employees)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -82,7 +83,7 @@ func (uc *EmployeeService) GetEmployees(c *gin.Context) {
 func (ec *EmployeeService) GetEmployee(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	var employee models.Employee
-	err := database.GetEmployee(ec.Db, &employee, id)
+	err := controller.GetEmployee(ec.Db, &employee, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
@@ -99,7 +100,7 @@ func (ec *EmployeeService) GetEmployee(c *gin.Context) {
 func (ec *EmployeeService) UpdateEmployee(c *gin.Context) {
 	var employee models.Employee
 	id, _ := strconv.Atoi(c.Param("id"))
-	err := database.GetEmployee(ec.Db, &employee, id)
+	err := controller.GetEmployee(ec.Db, &employee, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
@@ -114,7 +115,7 @@ func (ec *EmployeeService) UpdateEmployee(c *gin.Context) {
 	}
 	// If a role is provided in the request, check if it exists in the DB and assign RoleId from the database
 	if roleName := employee.Role; roleName != "" {
-		roleId, err := database.GetRoleIdFromDb(ec.Db, roleName)
+		roleId, err := controller.GetRoleIdFromDb(ec.Db, roleName)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, err.Error())
 			return
@@ -122,7 +123,7 @@ func (ec *EmployeeService) UpdateEmployee(c *gin.Context) {
 
 		employee.RoleID = roleId
 	}
-	err = database.UpdateEmployee(ec.Db, &employee)
+	err = controller.UpdateEmployee(ec.Db, &employee)
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
@@ -134,7 +135,7 @@ func (ec *EmployeeService) UpdateEmployee(c *gin.Context) {
 func (ec *EmployeeService) DeleteEmployee(c *gin.Context) {
 	var employee models.Employee
 	id, _ := strconv.Atoi(c.Param("id"))
-	_, err := database.DeleteEmployee(ec.Db, &employee, id)
+	_, err := controller.DeleteEmployee(ec.Db, &employee, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
