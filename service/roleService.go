@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"github.com/mrehanabbasi/appraisal-system-backend/controller"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 )
@@ -36,7 +37,7 @@ func (r *RoleService) GetAllRoles(c *gin.Context) {
 	} else if isActive != "" {
 		err = r.Db.Table("roles").Where("is_active = ?", isActive).Find(&role).Error
 	} else {
-		err = database.GetAllRoles(r.Db, &role)
+		err = controller.GetAllRoles(r.Db, &role)
 	}
 
 	if err != nil {
@@ -50,7 +51,7 @@ func (r *RoleService) GetAllRoles(c *gin.Context) {
 func (r *RoleService) GetRoleByID(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	var role models.Role
-	err := database.GetRoleByID(r.Db, &role, id)
+	err := controller.GetRoleByID(r.Db, &role, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
@@ -71,7 +72,7 @@ func (r *RoleService) CreateRole(c *gin.Context) {
 		return
 	}
 
-	role, err = database.CreateRole(r.Db, role)
+	role, err = controller.CreateRole(r.Db, role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -82,7 +83,7 @@ func (r *RoleService) CreateRole(c *gin.Context) {
 func (r *RoleService) UpdateRole(c *gin.Context) {
 	var role models.Role
 	id, _ := strconv.Atoi(c.Param("id"))
-	err := database.GetRoleByID(r.Db, &role, id)
+	err := controller.GetRoleByID(r.Db, &role, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -95,7 +96,7 @@ func (r *RoleService) UpdateRole(c *gin.Context) {
 		return
 	}
 
-	err = database.UpdateRole(r.Db, &role)
+	err = controller.UpdateRole(r.Db, &role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -107,7 +108,7 @@ func (r *RoleService) DeleteRole(c *gin.Context) {
 	var role models.Role
 	id, _ := strconv.Atoi(c.Param("id"))
 	role.ID = uint(id)
-	err := database.DeleteRole(r.Db, &role, id)
+	err := controller.DeleteRole(r.Db, &role, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
