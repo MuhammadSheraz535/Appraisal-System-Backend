@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -19,293 +17,190 @@ type KPIController struct {
 
 func NewKPIController() *KPIController {
 	db := database.DB
-	db.AutoMigrate(&models.KPI{}, &models.MeasuredData{}, &models.QuestionaireData{})
+	db.AutoMigrate(&models.KPI{}, models.MeasuredData{}, models.QuestionaireData{})
 	return &KPIController{Db: db}
 }
 
-func CreateKPI(db *gorm.DB, KPI models.KPI) (models.KPI, error) {
-	// Serialize the KPI struct to JSON
-	data, err := json.Marshal(KPI)
-	if err != nil {
-		return KPI, err
+func CreateKPI(db *gorm.DB, kpi models.KPI) (models.KPI, error) {
+	if err := db.Create(&kpi).Error; err != nil {
+		return kpi, err
 	}
-
-	// Deserialize the JSON to a new KPI struct with StringSlice fields
-	var newKPI models.KPI
-	err = json.Unmarshal(data, &newKPI)
-	if err != nil {
-		return KPI, err
-	}
-
-	// Create the new KPI in the database
-	err = db.Table("kpis").Create(&newKPI).Error
-	if err != nil {
-		return KPI, err
-	}
-
-	return newKPI, nil
+	return kpi, nil
 }
 
-// CreateKPI creates a new KPI
 func (r *KPIController) CreateKPI(c *gin.Context) {
-	kpi := models.KPI{}
-
-	// Bind request body to KPI model
-	if err := c.BindJSON(&kpi); err != nil {
-		c.AbortWithStatus(http.StatusBadRequest)
-		return
-	}
-
-	// Convert RolesApplicable to JSON strings
-
-	rolesApplicableJSON, err := json.Marshal(kpi.RolesApplicable)
+	var kpi models.KPI
+	err := c.ShouldBindJSON(&kpi)
 	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-	kpi.RolesApplicable = nil
-
-	// Create new KPI
-	if err := r.Db.Create(&kpi).Error; err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Set RolesApplicable fields to original string slices
-
-	kpi.RolesApplicable = []string{}
-	if err := json.Unmarshal(rolesApplicableJSON, &kpi.RolesApplicable); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+	kpi, err = CreateKPI(r.Db, kpi)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusCreated, kpi)
+	c.JSON(http.StatusOK, kpi)
 }
 
-// GetAllKPI retrieves all KPIs from the database
-func GetAllKPI(db *gorm.DB) ([]models.KPI, error) {
-	kpis := []models.KPI{}
+func GetAllKPI(db *gorm.DB, queryParams map[string]string) ([]models.KPI, error) {
+	var kpis []models.KPI
 
-	// Retrieve all KPIs from the database
-	if err := db.Table("kpis").Find(&kpis).Error; err != nil {
-		return nil, err
+	query := db
+	if kpiName, ok := queryParams["kpi_name"]; ok {
+		query = query.Where("kpi_name = ?", kpiName)
 	}
 
-	// Convert RolesApplicable to JSON strings for serialization
-	for i := range kpis {
+	if assignType, ok := queryParams["assign_type"]; ok {
+		query = query.Where("assign_type = ?", assignType)
+	}
 
-		rolesApplicableJSON, err := json.Marshal(kpis[i].RolesApplicable)
-		if err != nil {
-			return nil, err
-		}
-		kpis[i].RolesApplicable = nil
+	if rolesApplicable, ok := queryParams["roles_applicable"]; ok {
+		query = query.Where("roles_applicable LIKE ?", "%"+rolesApplicable+"%")
+	}
 
-		// Set RolesApplicable fields to original string slices
-
-		kpis[i].RolesApplicable = []string{}
-		if err := json.Unmarshal(rolesApplicableJSON, &kpis[i].RolesApplicable); err != nil {
-			return nil, err
-		}
+	if err := query.Find(&kpis).Error; err != nil {
+		return kpis, err
 	}
 
 	return kpis, nil
 }
 
-// GetAllKPI retrieves all KPIs from the database
 func (r *KPIController) GetAllKPI(c *gin.Context) {
-	kpis := []models.KPI{}
+	queryParams := make(map[string]string)
 
-	// Retrieve query parameters
-	kpiName := c.Query("KPIName")
-	assignType := c.Query("AssignType")
-	rolesApplicable := c.Query("RolesApplicable")
-
-	// Build query based on query parameters
-	query := r.Db
-	if kpiName != "" {
-		query = query.Where("kpi_name LIKE ?", fmt.Sprintf("%%%s%%", kpiName))
-	}
-	if assignType != "" {
-		query = query.Where("assign_type LIKE ?", fmt.Sprintf("%%%s%%", assignType))
-	}
-	if rolesApplicable != "" {
-		query = query.Where("roles_applicable LIKE ?", fmt.Sprintf("%%%s%%", rolesApplicable))
+	if kpiName := c.Query("kpi_name"); kpiName != "" {
+		queryParams["kpi_name"] = kpiName
 	}
 
-	// Retrieve all KPIs from the database that match the query
-	if err := query.Find(&kpis).Error; err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+	if assignType := c.Query("assign_type"); assignType != "" {
+		queryParams["assign_type"] = assignType
+	}
+
+	if rolesApplicable := c.Query("roles_applicable"); rolesApplicable != "" {
+		queryParams["roles_applicable"] = rolesApplicable
+	}
+
+	kpis, err := GetAllKPI(r.Db, queryParams)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
-	}
-
-	// Convert RolesApplicable to JSON strings for serialization
-	for i := range kpis {
-
-		rolesApplicableJSON, err := json.Marshal(kpis[i].RolesApplicable)
-		if err != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
-		}
-		kpis[i].RolesApplicable = nil
-
-		// Set RolesApplicable fields to original string slices
-
-		kpis[i].RolesApplicable = []string{}
-		if err := json.Unmarshal(rolesApplicableJSON, &kpis[i].RolesApplicable); err != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
-		}
 	}
 
 	c.JSON(http.StatusOK, kpis)
 }
 
-// GetKPIByID retrieves a KPI by its ID from the database
-func GetKPIByID(db *gorm.DB, id string) (models.KPI, error) {
+// GetKPI retrieves a single KPI by ID
+func GetKPIByID(db *gorm.DB, id uint) (models.KPI, error) {
 	var kpi models.KPI
-	if err := db.Table("kpis").Where("id = ?", id).First(&kpi).Error; err != nil {
-		return kpi, err
-	}
 
-	// Convert RolesApplicable to JSON strings
-
-	rolesApplicableJSON, err := json.Marshal(kpi.RolesApplicable)
-	if err != nil {
-		return kpi, err
-	}
-	kpi.RolesApplicable = nil
-
-	// Set RolesApplicable fields to original string slices
-
-	kpi.RolesApplicable = []string{}
-	if err := json.Unmarshal(rolesApplicableJSON, &kpi.RolesApplicable); err != nil {
+	if err := db.Preload("Measured").Preload("Questionaire").First(&kpi, id).Error; err != nil {
 		return kpi, err
 	}
 
 	return kpi, nil
 }
 
-// GetKPIByID retrieves a KPI by its ID
 func (r *KPIController) GetKPIByID(c *gin.Context) {
-	id := c.Param("id")
-
-	var kpi models.KPI
-	if err := r.Db.Where("id = ?", id).First(&kpi).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.AbortWithStatus(http.StatusNotFound)
-		} else {
-			c.AbortWithStatus(http.StatusInternalServerError)
-		}
-		return
-	}
-
-	// Convert RolesApplicable to JSON strings
-
-	rolesApplicableJSON, err := json.Marshal(kpi.RolesApplicable)
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	kpi.RolesApplicable = nil
 
-	// Set RolesApplicable fields to original string slices
-
-	kpi.RolesApplicable = []string{}
-	if err := json.Unmarshal(rolesApplicableJSON, &kpi.RolesApplicable); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+	kpi, err := GetKPIByID(r.Db, uint(id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, kpi)
 }
 
-func UpdateKPI(db *gorm.DB, kpiID uint, updatedKPI models.KPI) (models.KPI, error) {
-	// Serialize the updated KPI struct to JSON
-	data, err := json.Marshal(updatedKPI)
-	if err != nil {
-		return updatedKPI, err
+func UpdateKPI(db *gorm.DB, id uint, updatedKPI models.KPI) (models.KPI, error) {
+	var kpi models.KPI
+
+	if err := db.Model(&kpi).Where("id = ?", id).Updates(updatedKPI).Error; err != nil {
+		return kpi, err
 	}
 
-	// Deserialize the JSON to a new KPI struct with StringSlice fields
-	var newKPI models.KPI
-	err = json.Unmarshal(data, &newKPI)
-	if err != nil {
-		return updatedKPI, err
+	if err := db.Model(&models.MeasuredData{}).Where("kpi_id = ?", id).Updates(models.MeasuredData{
+		Key:   updatedKPI.Measured.Key,
+		Value: updatedKPI.Measured.Value,
+	}).Error; err != nil {
+		return kpi, err
 	}
 
-	// Update the KPI in the database
-	err = db.Table("kpis").Where("id = ?", kpiID).Updates(newKPI).Error
-	if err != nil {
-		return updatedKPI, err
+	if err := db.Model(&models.QuestionaireData{}).Where("kpi_id = ?", id).Updates(models.QuestionaireData{
+		Key:   updatedKPI.Questionaire.Key,
+		Value: updatedKPI.Questionaire.Value,
+	}).Error; err != nil {
+		return kpi, err
 	}
 
-	return newKPI, nil
+	if err := db.Preload("Measured").Preload("Questionaire").First(&kpi, id).Error; err != nil {
+		return kpi, err
+	}
+
+	return kpi, nil
 }
 
-// UpdateKPI updates an existing KPI
 func (r *KPIController) UpdateKPI(c *gin.Context) {
-	kpiID := c.Param("id")
-
-	// Get existing KPI from database
-	var existingKPI models.KPI
-	if err := r.Db.Where("id = ?", kpiID).First(&existingKPI).Error; err != nil {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-
-	// Bind request body to updated KPI model
-	var updatedKPI models.KPI
-	if err := c.BindJSON(&updatedKPI); err != nil {
-		c.AbortWithStatus(http.StatusBadRequest)
-		return
-	}
-
-	rolesApplicableJSON, err := json.Marshal(updatedKPI.RolesApplicable)
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-	updatedKPI.RolesApplicable = nil
-
-	// Update existing KPI with new data
-	if _, err := UpdateKPI(r.Db, existingKPI.ID, updatedKPI); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
 
-	// Set RolesApplicable fields to
-
-	updatedKPI.RolesApplicable = []string{}
-	if err := json.Unmarshal(rolesApplicableJSON, &updatedKPI.RolesApplicable); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+	var updatedKPI models.KPI
+	err = c.ShouldBindJSON(&updatedKPI)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedKPI)
+	kpi, err := UpdateKPI(r.Db, uint(id), updatedKPI)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, kpi)
 }
 
 func DeleteKPI(db *gorm.DB, id uint) error {
-	// Delete KPI with matching ID
-	err := db.Table("kpis").Where("id = ?", id).Delete(&models.KPI{}).Error
-	if err != nil {
-		return err
-	}
-	return nil
+    var kpi models.KPI
+    if err := db.First(&kpi, id).Error; err != nil {
+        return err
+    }
+
+    if err := db.Where("kpi_id = ?", id).Delete(&models.MeasuredData{}, "kpi_id").Error; err != nil {
+        return err
+    }
+    if err := db.Where("kpi_id = ?", id).Delete(&models.QuestionaireData{}, "kpi_id").Error; err != nil {
+        return err
+    }
+
+    if err := db.Delete(&kpi).Error; err != nil {
+        return err
+    }
+
+    return nil
 }
 
-// DeleteKPI deletes a KPI with the given ID
+
+
+
 func (r *KPIController) DeleteKPI(c *gin.Context) {
-	// Get ID from path parameter
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.AbortWithStatus(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
 
-	// Delete KPI from database
-	err = DeleteKPI(r.Db, uint(id))
-	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+	if err := DeleteKPI(r.Db, uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
