@@ -2,57 +2,46 @@ package models
 
 import (
 	"database/sql/driver"
-	"encoding/json"
-	"fmt"
+	"errors"
+	"strings"
 )
 
-type StringSlice []string
-
-func (s StringSlice) Value() (driver.Value, error) {
-	return json.Marshal(s)
-}
-
-func (s *StringSlice) Scan(src interface{}) error {
-	if src == nil {
-		*s = nil
-		return nil
-	}
-
-	var data []byte
-	switch src.(type){
-	case []byte:
-		data = src.([]byte)
-	case string:
-		data = []byte(src.(string))
-	default:
-		return fmt.Errorf("invalid type for StringSlice: %T", src)
-	}
-
-	err := json.Unmarshal(data, &s)
-	if err != nil {
-		return fmt.Errorf("error unmarshaling StringSlice: %w", err)
-	}
-
-	return nil
-}
+type RolesApplicable []string
 
 type KPI struct {
-	ID              uint               `gorm:"primaryKey" json:"kpi_id"`
-	KPIName         string             `gorm:"size:100;not null" json:"kpi_name"`
-	AssignType      string        `gorm:"type:json;not null" json:"assign_type"`
-	Measured        []MeasuredData     `gorm:"-" json:"measured_data,omitempty"`
-	Observatory     string             `gorm:"not null" json:"obs_data,omitempty"`
-	Questionaire    []QuestionaireData `gorm:"-" json:"questionaire_data,omitempty"`
-	Feedback        string             `gorm:"not null" json:"feedback_data,omitempty"`
-	RolesApplicable StringSlice        `gorm:"type:json;not null" json:"roles_applicable,omitempty"`
+	ID              uint             `gorm:"primaryKey" json:"kpi_id"`
+	KPIName         string           `gorm:"size:100;not null" json:"kpi_name"`
+	AssignType      string           `gorm:"not null" json:"assign_type"`
+	Observatory     string           `gorm:"not null" json:"obs_data,omitempty"`
+	Feedback        string           `gorm:"not null" json:"feedback_data,omitempty"`
+	Measured        MeasuredData     `gorm:"foreignKey:KPIID" json:"measured_data,omitempty"`
+	Questionaire    QuestionaireData `gorm:"foreignKey:KPIID" json:"questionaire_data,omitempty"`
+	RolesApplicable RolesApplicable  `gorm:"type:VARCHAR(255)" json:"roles_applicable"`
+}
+
+func (o *RolesApplicable) Scan(src any) error {
+	bytes, ok := src.([]byte)
+	if !ok {
+		return errors.New("src value cannot cast to []byte")
+	}
+	*o = strings.Split(string(bytes), ",")
+	return nil
+}
+func (o RolesApplicable) Value() (driver.Value, error) {
+	if len(o) == 0 {
+		return nil, nil
+	}
+	return strings.Join(o, ","), nil
 }
 
 type MeasuredData struct {
-	Key   string      `json:"key"`
-	Value int `json:"value"`
+	KPIID uint `json:"kpi_id"`
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type QuestionaireData struct {
-	Key   string      `json:"key"`
-	Value bool `json:"value"`
+	KPIID uint `json:"kpi_id"`
+	Key   string `json:"key"`
+	Value bool   `json:"value"`
 }
