@@ -9,7 +9,7 @@ func NewRouter() *gin.Engine {
 
 	router := gin.Default()
 
-	KPIController := service.NewKPIController()
+	KPIController := service.NewKPIService()
 
 	v1 := router.Group("/v1")
 	{

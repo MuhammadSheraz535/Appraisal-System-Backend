@@ -11,17 +11,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type KPIController struct {
+type KPIService struct {
 	Db *gorm.DB
 }
 
-func NewKPIController() *KPIController {
+func NewKPIService() *KPIService {
 	db := database.DB
 	db.AutoMigrate(&models.KPI{}, models.MeasuredData{}, models.QuestionaireData{})
-	return &KPIController{Db: db}
+	return &KPIService{Db: db}
 }
 
-func (r *KPIController) CreateKPI(c *gin.Context) {
+func (r *KPIService) CreateKPI(c *gin.Context) {
 	var kpi models.KPI
 	err := c.ShouldBindJSON(&kpi)
 	if err != nil {
@@ -37,7 +37,7 @@ func (r *KPIController) CreateKPI(c *gin.Context) {
 	c.JSON(http.StatusOK, kpi)
 }
 
-func (r *KPIController) GetAllKPI(c *gin.Context) {
+func (r *KPIService) GetAllKPI(c *gin.Context) {
 	queryParams := make(map[string]string)
 
 	if kpiName := c.Query("kpi_name"); kpiName != "" {
@@ -61,7 +61,7 @@ func (r *KPIController) GetAllKPI(c *gin.Context) {
 	c.JSON(http.StatusOK, kpis)
 }
 
-func (r *KPIController) GetKPIByID(c *gin.Context) {
+func (r *KPIService) GetKPIByID(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
@@ -77,7 +77,7 @@ func (r *KPIController) GetKPIByID(c *gin.Context) {
 	c.JSON(http.StatusOK, kpi)
 }
 
-func (r *KPIController) UpdateKPI(c *gin.Context) {
+func (r *KPIService) UpdateKPI(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
@@ -100,7 +100,7 @@ func (r *KPIController) UpdateKPI(c *gin.Context) {
 	c.JSON(http.StatusOK, kpi)
 }
 
-func (r *KPIController) DeleteKPI(c *gin.Context) {
+func (r *KPIService) DeleteKPI(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
