@@ -2,15 +2,14 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-
-	controllers "github.com/mrehanabbasi/appraisal-system-backend/controller"
+	"github.com/mrehanabbasi/appraisal-system-backend/service"
 )
 
 func NewRouter() *gin.Engine {
 
 	router := gin.Default()
 
-	KPIController := controllers.NewKPIController()
+	KPIController := service.NewKPIController()
 
 	v1 := router.Group("/v1")
 	{
