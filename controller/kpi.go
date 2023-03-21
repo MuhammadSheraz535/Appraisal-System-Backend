@@ -25,8 +25,8 @@ func GetAllKPI(db *gorm.DB, queryParams map[string]string) ([]models.KPI, error)
 		query = query.Where("assign_type = ?", assignType)
 	}
 
-	if rolesApplicable, ok := queryParams["roles_applicable"]; ok {
-		query = query.Where("roles_applicable LIKE ?", "%"+rolesApplicable+"%")
+	if ApplicableFor, ok := queryParams["applicable_for"]; ok {
+		query = query.Where("applicable_for LIKE ?", "%"+ApplicableFor+"%")
 	}
 
 	if err := query.Find(&kpis).Error; err != nil {

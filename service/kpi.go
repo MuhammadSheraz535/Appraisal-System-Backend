@@ -48,8 +48,8 @@ func (r *KPIService) GetAllKPI(c *gin.Context) {
 		queryParams["assign_type"] = assignType
 	}
 
-	if rolesApplicable := c.Query("roles_applicable"); rolesApplicable != "" {
-		queryParams["roles_applicable"] = rolesApplicable
+	if ApplicableFor := c.Query("applicable_for"); ApplicableFor != "" {
+		queryParams["applicable_for"] = ApplicableFor
 	}
 
 	kpis, err := controller.GetAllKPI(r.Db, queryParams)

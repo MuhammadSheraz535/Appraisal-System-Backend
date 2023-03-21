@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type RolesApplicable []string
+type ApplicableFor []string
 
 type KPI struct {
 	ID              uint             `gorm:"primaryKey" json:"kpi_id"`
@@ -16,10 +16,10 @@ type KPI struct {
 	Feedback        string           `gorm:"not null" json:"feedback_data,omitempty"`
 	Measured        MeasuredData     `gorm:"foreignKey:KPIID" json:"measured_data,omitempty"`
 	Questionaire    QuestionaireData `gorm:"foreignKey:KPIID" json:"questionaire_data,omitempty"`
-	RolesApplicable RolesApplicable  `gorm:"type:VARCHAR(255)" json:"roles_applicable"`
+	ApplicableFor ApplicableFor  `gorm:"type:VARCHAR(255)" json:"applicable_for"`
 }
 
-func (o *RolesApplicable) Scan(src any) error {
+func (o *ApplicableFor) Scan(src any) error {
 	bytes, ok := src.([]byte)
 	if !ok {
 		return errors.New("src value cannot cast to []byte")
@@ -27,7 +27,7 @@ func (o *RolesApplicable) Scan(src any) error {
 	*o = strings.Split(string(bytes), ",")
 	return nil
 }
-func (o RolesApplicable) Value() (driver.Value, error) {
+func (o ApplicableFor) Value() (driver.Value, error) {
 	if len(o) == 0 {
 		return nil, nil
 	}
