@@ -4,26 +4,32 @@ import (
 	"fmt"
 	"os"
 
-	"gorm.io/driver/mysql"
+	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
-var err error
 
 func Connect() {
-	dbUsername := os.Getenv("DB_USERNAME")
+	// Load environment variables from .env file
+	err := godotenv.Load()
+	if err != nil {
+		panic("Error loading .env file")
+	}
+
+	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
-	dbURL := os.Getenv("DB_URL")
-	dbPort := os.Getenv("DB_PORT")
 	dbName := os.Getenv("DB_NAME")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Local", dbUsername, dbPassword, dbURL, dbPort)
+	// Create connection string using environment variables
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", dbHost, dbUser, dbPassword, dbName, dbPort)
 
-	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	// Open database connection
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
-
-	DB.Exec("CREATE DATABASE IF NOT EXISTS " + dbName + ";").Exec("USE " + dbName + ";")
 }
