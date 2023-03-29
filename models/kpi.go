@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-
 type Questionaire []string
 
 type KpiType struct {
@@ -14,33 +13,36 @@ type KpiType struct {
 	AssignType string `gorm:"not null,unique" json:"assign_type"`
 }
 
-type KpiCommon struct {
+type Kpis struct {
 	ID         uint   `gorm:"primaryKey" json:"kpi_id"`
-	KpiName    string `gorm:"size:100;not null,unique" json:"kpi_name"`
+	KpiName    string `gorm:"size:100;not null;unique" json:"kpi_name"`
 	AssignType string `gorm:"not null" json:"assign_type"`
 	KpiType    string `gorm:"not null" json:"kpi_type"`
 }
 
 type FeedbackKpi struct {
-	KpiCommon
-	FeedBack    string    `gorm:"not null" json:"feedback_data,omitempty"`
+	KpisID   uint   `gorm:"foreignKey:KpisID"`
+	ID       uint   `gorm:"primaryKey" json:"feedback_id"`
+	FeedBack string `gorm:"not null" json:"feedback_data,omitempty"`
 }
 
 type ObservatoryKpi struct {
-	KpiCommon
-	Observatory string    `gorm:"not null" json:"obs_data,omitempty"`
+	KpisID      uint   `gorm:"foreignKey:KpisID"`
+	ID          uint   `gorm:"primaryKey" json:"observatory_id"`
+	Observatory string `gorm:"not null" json:"obs_data,omitempty"`
 }
 
 type QuestionaireKpi struct {
-	KpiCommon
+	KpisID       uint         `gorm:"foreignKey:KpisID"`
+	ID           uint         `gorm:"primaryKey" json:"questionaire_id"`
 	Questionaire Questionaire `gorm:"type:VARCHAR(255)" json:"questionaire_data"`
 }
 
 type MeasuredKpi struct {
-	KpiCommon
-	Measured    string    `gorm:"not null" json:"measured_data,omitempty"`
+	KpisID   uint   `gorm:"foreignKey:KpisID"`
+	ID       uint   `gorm:"primaryKey" json:"measured_id"`
+	Measured string `gorm:"not null" json:"measured_data,omitempty"`
 }
-
 
 func (o *Questionaire) Scan(src any) error {
 	bytes, ok := src.([]byte)
