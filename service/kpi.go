@@ -20,7 +20,10 @@ type KPIService struct {
 
 func NewKPIService() *KPIService {
 	db := database.DB
-	db.AutoMigrate(&models.Kpis{}, &models.KpiType{}, &models.FeedbackKpi{}, &models.MeasuredKpi{}, &models.ObservatoryKpi{}, &models.QuestionaireKpi{})
+	err := db.AutoMigrate(&models.Kpis{}, &models.KpiType{}, &models.FeedbackKpi{}, &models.MeasuredKpi{}, &models.ObservatoryKpi{}, &models.QuestionnaireKpi{})
+	if err != nil {
+		panic(err)
+	}
 	return &KPIService{Db: db}
 }
 
@@ -40,76 +43,131 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 	}
 
 	kpi.ID = 0
+
 	switch kpi.KpiType {
 	case FEEDBACK_KPI_TYPE:
 		var feedbackKpi models.FeedbackKpi
 		err := c.ShouldBindBodyWith(&feedbackKpi, binding.JSON)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid feedback KPI data"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid feedback KPI data"})
 			return
 		}
 
+		if feedbackKpi.FeedBack == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid feedback data"})
+			return
+		}
+
+		kpi, err := controller.CreateKPI(s.Db, kpi)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		feedbackKpi.KpisID = kpi.ID
+
 		result := s.Db.Create(&feedbackKpi)
 		if result.Error != nil {
+			_ = s.Db.Table("kpis").Delete(&kpi).Error
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, feedbackKpi)
+		c.JSON(http.StatusOK, kpi)
 	case OBSERVATORY_KPI_TYPE:
 		var observatoryKpi models.ObservatoryKpi
 		err := c.ShouldBindBodyWith(&observatoryKpi, binding.JSON)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid observatory KPI data"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid observatory KPI data"})
 			return
 		}
+
+		if observatoryKpi.Observatory == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid observatory data"})
+			return
+		}
+
+		kpi, err := controller.CreateKPI(s.Db, kpi)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		observatoryKpi.KpisID = kpi.ID
+
 		result := s.Db.Create(&observatoryKpi)
 		if result.Error != nil {
+			_ = s.Db.Table("kpis").Delete(&kpi).Error
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, observatoryKpi)
+		c.JSON(http.StatusOK, kpi)
 	case MEASURED_KPI_TYPE:
 		var measuredKpi models.MeasuredKpi
 		err := c.ShouldBindBodyWith(&measuredKpi, binding.JSON)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid measured KPI data"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid measured KPI data"})
 			return
 		}
+
+		if measuredKpi.Measured == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid measured data"})
+			return
+		}
+
+		kpi, err := controller.CreateKPI(s.Db, kpi)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		measuredKpi.KpisID = kpi.ID
+
 		result := s.Db.Create(&measuredKpi)
 		if result.Error != nil {
+			_ = s.Db.Table("kpis").Delete(&kpi).Error
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, measuredKpi)
+		c.JSON(http.StatusOK, kpi)
 	case QUESTIONNAIRE_KPI_TYPE:
-		var questionnaireKpi models.QuestionaireKpi
+		var questionnaireKpi models.QuestionnaireKpi
 		err := c.ShouldBindBodyWith(&questionnaireKpi, binding.JSON)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid questionnaire KPI data"})
-			return
-		}
-		result := s.Db.Create(&questionnaireKpi)
-		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid questionnaire KPI data"})
 			return
 		}
 
-		c.JSON(http.StatusOK, questionnaireKpi)
+		if questionnaireKpi.Questionnaire == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid questionnaire data"})
+			return
+		}
+
+		kpi, err := controller.CreateKPI(s.Db, kpi)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		for _, q := range questionnaireKpi.Questionnaire {
+			question := models.SingleQuestionnaireKpi{
+				KpisID:        kpi.ID,
+				Questionnaire: q,
+			}
+			result := s.Db.Table("questionnaire_kpis").Create(&question)
+			if result.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+				return
+			}
+		}
+
+		c.JSON(http.StatusOK, kpi)
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid type"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid KPI type"})
 		return
 	}
-
-	kpi, err := controller.CreateKPI(s.Db, kpi)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, kpi)
 }
 
 func (s *KPIService) GetAllKPI(c *gin.Context) {
@@ -137,11 +195,11 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 	}
 
 	if err := controller.GetAllKPI(db, &kpis); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch KPIs"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPIs"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": kpis})
+	c.JSON(http.StatusOK, kpis)
 }
 
 func (s *KPIService) GetKPIByID(c *gin.Context) {
@@ -152,12 +210,12 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "KPI not found"})
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch KPI"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
 		}
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": kpi})
+	c.JSON(http.StatusOK, kpi)
 }
 
 func (s *KPIService) UpdateKPI(c *gin.Context) {
@@ -168,18 +226,18 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "KPI not found"})
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch KPI"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
 		}
 		return
 	}
 
 	if err := c.ShouldBindJSON(&kpi); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
 	kpi.ID = 0
-	
+
 	// Update the KPI
 	kpi, err := controller.UpdateKPI(s.Db, kpi)
 	if err != nil {
@@ -193,14 +251,45 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 func (s *KPIService) DeleteKPI(c *gin.Context) {
 	kpiID := c.Param("id")
 
-	if err := controller.DeleteKPIByID(s.Db, kpiID); err != nil {
+	kpi, err := controller.DeleteKPIByID(s.Db, kpiID)
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "KPI not found"})
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete KPI"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete KPI"})
 		}
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "KPI deleted successfully"})
+	switch kpi.KpiType {
+	case FEEDBACK_KPI_TYPE:
+		err = s.Db.Where("kpis_id = ?", kpi.ID).Delete(&models.FeedbackKpi{}).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete KPI"})
+			return
+		}
+	case OBSERVATORY_KPI_TYPE:
+		err = s.Db.Where("kpis_id = ?", kpi.ID).Delete(&models.ObservatoryKpi{}).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete KPI"})
+			return
+		}
+	case MEASURED_KPI_TYPE:
+		err = s.Db.Where("kpis_id = ?", kpi.ID).Delete(&models.MeasuredKpi{}).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete KPI"})
+			return
+		}
+	case QUESTIONNAIRE_KPI_TYPE:
+		err = s.Db.Where("kpis_id = ?", kpi.ID).Delete(&models.QuestionnaireKpi{}).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete KPI"})
+			return
+		}
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid KPI type"})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }

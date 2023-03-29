@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type Questionaire []string
+type Questionnaire []string
 
 type KpiType struct {
 	ID         uint
@@ -32,10 +32,16 @@ type ObservatoryKpi struct {
 	Observatory string `gorm:"not null" json:"obs_data,omitempty"`
 }
 
-type QuestionaireKpi struct {
-	KpisID       uint         `gorm:"foreignKey:KpisID" json:"-"`
-	ID           uint         `gorm:"primaryKey" json:"questionaire_id"`
-	Questionaire Questionaire `gorm:"type:VARCHAR(255)" json:"questionaire_data"`
+type QuestionnaireKpi struct {
+	KpisID        uint          `gorm:"foreignKey:KpisID" json:"-"`
+	ID            uint          `gorm:"primaryKey" json:"questionnaire_id"`
+	Questionnaire Questionnaire `gorm:"type:VARCHAR(255)" json:"questionnaire_data"`
+}
+
+type SingleQuestionnaireKpi struct {
+	KpisID        uint   `gorm:"foreignKey:KpisID" json:"-"`
+	ID            uint   `gorm:"primaryKey" json:"questionnaire_id"`
+	Questionnaire string `gorm:"type:VARCHAR(255)" json:"questionnaire_data"`
 }
 
 type MeasuredKpi struct {
@@ -44,7 +50,7 @@ type MeasuredKpi struct {
 	Measured string `gorm:"not null" json:"measured_data,omitempty"`
 }
 
-func (o *Questionaire) Scan(src any) error {
+func (o *Questionnaire) Scan(src any) error {
 	bytes, ok := src.([]byte)
 	if !ok {
 		return errors.New("src value cannot cast to []byte")
@@ -52,7 +58,7 @@ func (o *Questionaire) Scan(src any) error {
 	*o = strings.Split(string(bytes), ",")
 	return nil
 }
-func (o Questionaire) Value() (driver.Value, error) {
+func (o Questionnaire) Value() (driver.Value, error) {
 	if len(o) == 0 {
 		return nil, nil
 	}

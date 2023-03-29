@@ -48,16 +48,16 @@ func UpdateKPI(db *gorm.DB, kpi models.Kpis) (models.Kpis, error) {
 	return kpi, nil
 }
 
-
-func DeleteKPIByID(db *gorm.DB, id string) error {
+func DeleteKPIByID(db *gorm.DB, id string) (*models.Kpis, error) {
 	var kpi models.Kpis
-	err := db.Table("kpis").Where("id = ?", id).First(&kpi).Error
+	err := GetKPIByID(db, id, &kpi)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = db.Delete(&kpi).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+
+	return &kpi, nil
 }
