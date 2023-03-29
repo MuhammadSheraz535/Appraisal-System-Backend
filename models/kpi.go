@@ -21,25 +21,25 @@ type Kpis struct {
 }
 
 type FeedbackKpi struct {
-	KpisID   uint   `gorm:"foreignKey:KpisID"`
+	KpisID   uint   `gorm:"foreignKey:KpisID" json:"-"`
 	ID       uint   `gorm:"primaryKey" json:"feedback_id"`
 	FeedBack string `gorm:"not null" json:"feedback_data,omitempty"`
 }
 
 type ObservatoryKpi struct {
-	KpisID      uint   `gorm:"foreignKey:KpisID"`
+	KpisID      uint   `gorm:"foreignKey:KpisID" json:"-"`
 	ID          uint   `gorm:"primaryKey" json:"observatory_id"`
 	Observatory string `gorm:"not null" json:"obs_data,omitempty"`
 }
 
 type QuestionaireKpi struct {
-	KpisID       uint         `gorm:"foreignKey:KpisID"`
+	KpisID       uint         `gorm:"foreignKey:KpisID" json:"-"`
 	ID           uint         `gorm:"primaryKey" json:"questionaire_id"`
 	Questionaire Questionaire `gorm:"type:VARCHAR(255)" json:"questionaire_data"`
 }
 
 type MeasuredKpi struct {
-	KpisID   uint   `gorm:"foreignKey:KpisID"`
+	KpisID   uint   `gorm:"foreignKey:KpisID" json:"-"`
 	ID       uint   `gorm:"primaryKey" json:"measured_id"`
 	Measured string `gorm:"not null" json:"measured_data,omitempty"`
 }
