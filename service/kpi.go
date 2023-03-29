@@ -173,7 +173,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		return
 	}
 
-	if err := c.BindJSON(&kpi); err != nil {
+	if err := c.ShouldBindJSON(&kpi); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
