@@ -32,13 +32,13 @@ type ObservatoryKpi struct {
 	Observatory string `gorm:"not null" json:"obs_data,omitempty"`
 }
 
-type QuestionnaireKpi struct {
-	KpisID        uint          `gorm:"foreignKey:KpisID" json:"-"`
-	ID            uint          `gorm:"primaryKey" json:"questionnaire_id"`
-	Questionnaire Questionnaire `gorm:"type:VARCHAR(255)" json:"questionnaire_data"`
+type ReqQuestionnaireKpi struct {
+	KpisID        uint          `json:"-"`
+	ID            uint          `json:"questionnaire_id"`
+	Questionnaire Questionnaire `json:"questionnaire_data"`
 }
 
-type SingleQuestionnaireKpi struct {
+type QuestionnaireKpi struct {
 	KpisID        uint   `gorm:"foreignKey:KpisID" json:"-"`
 	ID            uint   `gorm:"primaryKey" json:"questionnaire_id"`
 	Questionnaire string `gorm:"type:VARCHAR(255)" json:"questionnaire_data"`
@@ -48,6 +48,38 @@ type MeasuredKpi struct {
 	KpisID   uint   `gorm:"foreignKey:KpisID" json:"-"`
 	ID       uint   `gorm:"primaryKey" json:"measured_id"`
 	Measured string `gorm:"not null" json:"measured_data,omitempty"`
+}
+
+type ReqFeedBack struct {
+	ID         uint   `json:"kpi_id"`
+	KpiName    string `json:"kpi_name"`
+	AssignType string `json:"assign_type"`
+	KpiType    string `json:"kpi_type"`
+	Feedback   string `json:"feedback_data"`
+}
+
+type ReqObservatory struct {
+	ID          uint   `json:"kpi_id"`
+	KpiName     string `json:"kpi_name"`
+	AssignType  string `json:"assign_type"`
+	KpiType     string `json:"kpi_type"`
+	Observatory string `json:"obs_data"`
+}
+
+type ReqMeasured struct {
+	ID         uint   `json:"kpi_id"`
+	KpiName    string `json:"kpi_name"`
+	AssignType string `json:"assign_type"`
+	KpiType    string `json:"kpi_type"`
+	Measured   string `json:"measured_data"`
+}
+
+type ReqQuestionnaire struct {
+	ID            uint     `json:"kpi_id"`
+	KpiName       string   `json:"kpi_name"`
+	AssignType    string   `json:"assign_type"`
+	KpiType       string   `json:"kpi_type"`
+	Questionnaire []string `json:"questionnaire_data"`
 }
 
 func (o *Questionnaire) Scan(src any) error {

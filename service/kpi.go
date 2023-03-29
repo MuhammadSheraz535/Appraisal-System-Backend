@@ -14,6 +14,13 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	FEEDBACK_KPI_TYPE      = "Feedback"
+	OBSERVATORY_KPI_TYPE   = "Observatory"
+	MEASURED_KPI_TYPE      = "Measured"
+	QUESTIONNAIRE_KPI_TYPE = "Questionnaire"
+)
+
 type KPIService struct {
 	Db *gorm.DB
 }
@@ -26,13 +33,6 @@ func NewKPIService() *KPIService {
 	}
 	return &KPIService{Db: db}
 }
-
-const (
-	FEEDBACK_KPI_TYPE      = "Feedback"
-	OBSERVATORY_KPI_TYPE   = "Observatory"
-	MEASURED_KPI_TYPE      = "Measured"
-	QUESTIONNAIRE_KPI_TYPE = "Questionnaire"
-)
 
 func (s *KPIService) CreateKPI(c *gin.Context) {
 	var kpi models.Kpis
@@ -133,7 +133,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 
 		c.JSON(http.StatusOK, kpi)
 	case QUESTIONNAIRE_KPI_TYPE:
-		var questionnaireKpi models.QuestionnaireKpi
+		var questionnaireKpi models.ReqQuestionnaireKpi
 		err := c.ShouldBindBodyWith(&questionnaireKpi, binding.JSON)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid questionnaire KPI data"})
@@ -152,7 +152,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		}
 
 		for _, q := range questionnaireKpi.Questionnaire {
-			question := models.SingleQuestionnaireKpi{
+			question := models.QuestionnaireKpi{
 				KpisID:        kpi.ID,
 				Questionnaire: q,
 			}
@@ -215,7 +215,82 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, kpi)
+	switch kpi.KpiType {
+	case FEEDBACK_KPI_TYPE:
+		kpi_data := models.ReqFeedBack{
+			ID:         kpi.ID,
+			KpiName:    kpi.KpiName,
+			KpiType:    kpi.KpiType,
+			AssignType: kpi.AssignType,
+		}
+
+		var feedbackKpi models.FeedbackKpi
+		err := s.Db.Where("kpis_id = ?", kpi.ID).First(&feedbackKpi).Error
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
+			return
+		}
+
+		kpi_data.Feedback = feedbackKpi.FeedBack
+
+		c.JSON(http.StatusOK, kpi_data)
+	case OBSERVATORY_KPI_TYPE:
+		kpi_data := models.ReqObservatory{
+			ID:         kpi.ID,
+			KpiName:    kpi.KpiName,
+			KpiType:    kpi.KpiType,
+			AssignType: kpi.AssignType,
+		}
+
+		var observatoryKpi models.ObservatoryKpi
+		err := s.Db.Where("kpis_id = ?", kpi.ID).First(&observatoryKpi).Error
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
+			return
+		}
+
+		kpi_data.Observatory = observatoryKpi.Observatory
+
+		c.JSON(http.StatusOK, kpi_data)
+	case MEASURED_KPI_TYPE:
+		kpi_data := models.ReqMeasured{
+			ID:         kpi.ID,
+			KpiName:    kpi.KpiName,
+			KpiType:    kpi.KpiType,
+			AssignType: kpi.AssignType,
+		}
+
+		var measuredKpi models.MeasuredKpi
+		err := s.Db.Where("kpis_id = ?", kpi.ID).First(&measuredKpi).Error
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
+			return
+		}
+
+		kpi_data.Measured = measuredKpi.Measured
+
+		c.JSON(http.StatusOK, kpi_data)
+	case QUESTIONNAIRE_KPI_TYPE:
+		kpi_data := models.ReqQuestionnaire{
+			ID:         kpi.ID,
+			KpiName:    kpi.KpiName,
+			KpiType:    kpi.KpiType,
+			AssignType: kpi.AssignType,
+		}
+
+		var questionnaireKpi []models.QuestionnaireKpi
+		err := s.Db.Find(&questionnaireKpi).Error
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
+			return
+		}
+
+		for _, q := range questionnaireKpi {
+			kpi_data.Questionnaire = append(kpi_data.Questionnaire, q.Questionnaire)
+		}
+
+		c.JSON(http.StatusOK, kpi_data)
+	}
 }
 
 func (s *KPIService) UpdateKPI(c *gin.Context) {
@@ -281,7 +356,7 @@ func (s *KPIService) DeleteKPI(c *gin.Context) {
 			return
 		}
 	case QUESTIONNAIRE_KPI_TYPE:
-		err = s.Db.Where("kpis_id = ?", kpi.ID).Delete(&models.QuestionnaireKpi{}).Error
+		err = s.Db.Where("kpis_id = ?", kpi.ID).Delete(&models.ReqQuestionnaireKpi{}).Error
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete KPI"})
 			return
