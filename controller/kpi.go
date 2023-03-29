@@ -40,12 +40,6 @@ func GetKPIByID(db *gorm.DB, kpiID string, kpi *models.Kpis) error {
 }
 
 func UpdateKPI(db *gorm.DB, kpi models.Kpis) (models.Kpis, error) {
-	// Check if a KPI with the same name already exists in the database
-	var existingKpi models.Kpis
-	if err := db.Where("kpi_name = ?", kpi.KpiName).First(&existingKpi).Error; err == nil && existingKpi.ID != kpi.ID {
-		return models.Kpis{}, errors.New("a KPI with the same name already exists in the database")
-	}
-
 	// Update the KPI
 	if err := db.Save(&kpi).Error; err != nil {
 		return models.Kpis{}, err

@@ -178,6 +178,8 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		return
 	}
 
+	kpi.ID = 0
+	
 	// Update the KPI
 	kpi, err := controller.UpdateKPI(s.Db, kpi)
 	if err != nil {
@@ -185,70 +187,6 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		return
 	}
 
-	kpi.ID = 0
-	switch kpi.KpiType {
-	case FEEDBACK_KPI_TYPE:
-		var feedbackKpi models.FeedbackKpi
-		err := c.ShouldBindBodyWith(&feedbackKpi, binding.JSON)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid feedback KPI data"})
-			return
-		}
-
-		result := s.Db.Save(&feedbackKpi)
-		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, feedbackKpi)
-	case OBSERVATORY_KPI_TYPE:
-		var observatoryKpi models.ObservatoryKpi
-		err := c.ShouldBindBodyWith(&observatoryKpi, binding.JSON)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid observatory KPI data"})
-			return
-		}
-		result := s.Db.Create(&observatoryKpi)
-		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, observatoryKpi)
-	case MEASURED_KPI_TYPE:
-		var measuredKpi models.MeasuredKpi
-		err := c.ShouldBindBodyWith(&measuredKpi, binding.JSON)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid measured KPI data"})
-			return
-		}
-		result := s.Db.Create(&measuredKpi)
-		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, measuredKpi)
-	case QUESTIONNAIRE_KPI_TYPE:
-		var questionnaireKpi models.QuestionaireKpi
-		err := c.ShouldBindBodyWith(&questionnaireKpi, binding.JSON)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid questionnaire KPI data"})
-			return
-		}
-		result := s.Db.Create(&questionnaireKpi)
-		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, questionnaireKpi)
-
-	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid type"})
-		return
-	}
 	c.JSON(http.StatusOK, kpi)
 }
 
