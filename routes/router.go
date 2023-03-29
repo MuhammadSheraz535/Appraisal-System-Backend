@@ -13,6 +13,8 @@ func NewRouter() *gin.Engine {
 	router := gin.Default()
 	ec := service.NewEmployeeService()
 
+	kc := service.NewKPIService()
+
 	v1 := router.Group("/v1")
 	{
 		employee := v1.Group("/employees")
@@ -47,6 +49,18 @@ func NewRouter() *gin.Engine {
 			supervisors.GET(":id", sc.GetSupervisorById)
 			supervisors.PUT(":id", sc.UpdateSupervisor)
 			supervisors.DELETE(":id", sc.DeleteSupervisor)
+		}
+	}
+
+	v1 = router.Group("/v1")
+	{
+		roles := v1.Group("/kpis")
+		{
+			roles.GET("/", kc.GetAllKPI)
+			roles.GET(":id", kc.GetKPIByID)
+			roles.POST("/", kc.CreateKPI)
+			roles.PUT(":id", kc.UpdateKPI)
+			roles.DELETE(":id", kc.DeleteKPI)
 		}
 	}
 	return router
