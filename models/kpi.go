@@ -9,15 +9,22 @@ import (
 type Questionnaire []string
 
 type KpiType struct {
-	ID         uint
-	AssignType string `gorm:"not null,unique" json:"assign_type"`
+	ID      uint   `gorm:"primaryKey" json:"id"`
+	KpiType string `gorm:"not null,unique" json:"kpi_type"`
+}
+
+type AssignType struct {
+	ID           uint   `gorm:"primaryKey" json:"id"`
+	AssignTypeId uint   `gorm:"not null,unique" json:"assign_type_id"`
+	AssignType   string `gorm:"not null,unique" json:"assign_type"`
 }
 
 type Kpis struct {
-	ID         uint   `gorm:"primaryKey" json:"kpi_id"`
-	KpiName    string `gorm:"size:100;not null;unique" json:"kpi_name"`
-	AssignType string `gorm:"not null" json:"assign_type"`
-	KpiType    string `gorm:"not null" json:"kpi_type"`
+	ID            uint   `gorm:"primaryKey" json:"kpi_id"`
+	KpiName       string `gorm:"size:100;not null;unique" json:"kpi_name"`
+	AssignType    uint64 `gorm:"not null" json:"assign_type"`
+	KpiType       string `gorm:"not null" json:"kpi_type"`
+	ApplicableFor string `gorm:"not null" json:"applicable_for"`
 }
 
 type FeedbackKpi struct {
@@ -51,34 +58,38 @@ type MeasuredKpi struct {
 }
 
 type ReqFeedBack struct {
-	ID         uint   `json:"kpi_id"`
-	KpiName    string `json:"kpi_name"`
-	AssignType string `json:"assign_type"`
-	KpiType    string `json:"kpi_type"`
-	Feedback   string `json:"feedback_data"`
+	ID            uint   `json:"kpi_id"`
+	KpiName       string `json:"kpi_name"`
+	AssignType    uint64 `json:"assign_type"`
+	KpiType       string `json:"kpi_type"`
+	ApplicableFor string `json:"applicable_for"`
+	Feedback      string `json:"feedback_data"`
 }
 
 type ReqObservatory struct {
-	ID          uint   `json:"kpi_id"`
-	KpiName     string `json:"kpi_name"`
-	AssignType  string `json:"assign_type"`
-	KpiType     string `json:"kpi_type"`
-	Observatory string `json:"obs_data"`
+	ID            uint   `json:"kpi_id"`
+	KpiName       string `json:"kpi_name"`
+	AssignType    uint64 `json:"assign_type"`
+	KpiType       string `json:"kpi_type"`
+	ApplicableFor string `json:"applicable_for"`
+	Observatory   string `json:"obs_data"`
 }
 
 type ReqMeasured struct {
-	ID         uint   `json:"kpi_id"`
-	KpiName    string `json:"kpi_name"`
-	AssignType string `json:"assign_type"`
-	KpiType    string `json:"kpi_type"`
-	Measured   string `json:"measured_data"`
+	ID            uint   `json:"kpi_id"`
+	KpiName       string `json:"kpi_name"`
+	AssignType    uint64 `json:"assign_type"`
+	KpiType       string `json:"kpi_type"`
+	ApplicableFor string `json:"applicable_for"`
+	Measured      string `json:"measured_data"`
 }
 
 type ReqQuestionnaire struct {
 	ID            uint     `json:"kpi_id"`
 	KpiName       string   `json:"kpi_name"`
-	AssignType    string   `json:"assign_type"`
+	AssignType    uint64   `json:"assign_type"`
 	KpiType       string   `json:"kpi_type"`
+	ApplicableFor string   `json:"applicable_for"`
 	Questionnaire []string `json:"questionnaire_data"`
 }
 

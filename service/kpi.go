@@ -21,17 +21,78 @@ const (
 	QUESTIONNAIRE_KPI_TYPE = "Questionnaire"
 )
 
+const (
+	ASSIGN_TYPE_ROLE       = "Role"
+	ASSIGN_TYPE_TEAM       = "Team"
+	ASSIGN_TYPE_INDIVIDUAL = "Individual"
+)
+
 type KPIService struct {
 	Db *gorm.DB
 }
 
 func NewKPIService() *KPIService {
 	db := database.DB
-	err := db.AutoMigrate(&models.Kpis{}, &models.KpiType{}, &models.FeedbackKpi{}, &models.MeasuredKpi{}, &models.ObservatoryKpi{}, &models.QuestionnaireKpi{})
+	err := db.AutoMigrate(&models.Kpis{}, &models.KpiType{}, &models.AssignType{}, &models.FeedbackKpi{}, &models.MeasuredKpi{}, &models.ObservatoryKpi{}, &models.QuestionnaireKpi{})
 	if err != nil {
 		panic(err)
 	}
+
+	// Populate assign_types table
+	err = populateAssignTypeTable(db)
+	if err != nil {
+		panic(err)
+	}
+
+	// Populate kpi_types table
+	err = populateKpiTypeTable(db)
+	if err != nil {
+		panic(err)
+	}
+
 	return &KPIService{Db: db}
+}
+
+func populateKpiTypeTable(db *gorm.DB) error {
+	kpiTypes := []string{
+		FEEDBACK_KPI_TYPE,
+		OBSERVATORY_KPI_TYPE,
+		MEASURED_KPI_TYPE,
+		QUESTIONNAIRE_KPI_TYPE,
+	}
+
+	for _, k := range kpiTypes {
+		newKpiType := models.KpiType{
+			KpiType: k,
+		}
+		err := db.Create(&newKpiType).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func populateAssignTypeTable(db *gorm.DB) error {
+	assignTypes := []string{
+		ASSIGN_TYPE_ROLE,
+		ASSIGN_TYPE_TEAM,
+		ASSIGN_TYPE_INDIVIDUAL,
+	}
+
+	for i, a := range assignTypes {
+		newAssignType := models.AssignType{
+			AssignTypeId: uint(i),
+			AssignType:   a,
+		}
+		err := db.Create(&newAssignType).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *KPIService) CreateKPI(c *gin.Context) {
@@ -206,10 +267,11 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 		switch kpi.KpiType {
 		case FEEDBACK_KPI_TYPE:
 			kpi_data := models.ReqFeedBack{
-				ID:         kpi.ID,
-				KpiName:    kpi.KpiName,
-				KpiType:    kpi.KpiType,
-				AssignType: kpi.AssignType,
+				ID:            kpi.ID,
+				KpiName:       kpi.KpiName,
+				KpiType:       kpi.KpiType,
+				AssignType:    kpi.AssignType,
+				ApplicableFor: kpi.ApplicableFor,
 			}
 
 			var feedbackKpi models.FeedbackKpi
@@ -224,10 +286,11 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 			allKpis = append(allKpis, kpi_data)
 		case OBSERVATORY_KPI_TYPE:
 			kpi_data := models.ReqObservatory{
-				ID:         kpi.ID,
-				KpiName:    kpi.KpiName,
-				KpiType:    kpi.KpiType,
-				AssignType: kpi.AssignType,
+				ID:            kpi.ID,
+				KpiName:       kpi.KpiName,
+				KpiType:       kpi.KpiType,
+				AssignType:    kpi.AssignType,
+				ApplicableFor: kpi.ApplicableFor,
 			}
 
 			var observatoryKpi models.ObservatoryKpi
@@ -242,10 +305,11 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 			allKpis = append(allKpis, kpi_data)
 		case MEASURED_KPI_TYPE:
 			kpi_data := models.ReqMeasured{
-				ID:         kpi.ID,
-				KpiName:    kpi.KpiName,
-				KpiType:    kpi.KpiType,
-				AssignType: kpi.AssignType,
+				ID:            kpi.ID,
+				KpiName:       kpi.KpiName,
+				KpiType:       kpi.KpiType,
+				AssignType:    kpi.AssignType,
+				ApplicableFor: kpi.ApplicableFor,
 			}
 
 			var measuredKpi models.MeasuredKpi
@@ -260,10 +324,11 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 			allKpis = append(allKpis, kpi_data)
 		case QUESTIONNAIRE_KPI_TYPE:
 			kpi_data := models.ReqQuestionnaire{
-				ID:         kpi.ID,
-				KpiName:    kpi.KpiName,
-				KpiType:    kpi.KpiType,
-				AssignType: kpi.AssignType,
+				ID:            kpi.ID,
+				KpiName:       kpi.KpiName,
+				KpiType:       kpi.KpiType,
+				AssignType:    kpi.AssignType,
+				ApplicableFor: kpi.ApplicableFor,
 			}
 
 			var questionnaireKpi []models.QuestionnaireKpi
@@ -303,10 +368,11 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 	switch kpi.KpiType {
 	case FEEDBACK_KPI_TYPE:
 		kpi_data := models.ReqFeedBack{
-			ID:         kpi.ID,
-			KpiName:    kpi.KpiName,
-			KpiType:    kpi.KpiType,
-			AssignType: kpi.AssignType,
+			ID:            kpi.ID,
+			KpiName:       kpi.KpiName,
+			KpiType:       kpi.KpiType,
+			AssignType:    kpi.AssignType,
+			ApplicableFor: kpi.ApplicableFor,
 		}
 
 		var feedbackKpi models.FeedbackKpi
@@ -321,10 +387,11 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 		c.JSON(http.StatusOK, kpi_data)
 	case OBSERVATORY_KPI_TYPE:
 		kpi_data := models.ReqObservatory{
-			ID:         kpi.ID,
-			KpiName:    kpi.KpiName,
-			KpiType:    kpi.KpiType,
-			AssignType: kpi.AssignType,
+			ID:            kpi.ID,
+			KpiName:       kpi.KpiName,
+			KpiType:       kpi.KpiType,
+			AssignType:    kpi.AssignType,
+			ApplicableFor: kpi.ApplicableFor,
 		}
 
 		var observatoryKpi models.ObservatoryKpi
@@ -339,10 +406,11 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 		c.JSON(http.StatusOK, kpi_data)
 	case MEASURED_KPI_TYPE:
 		kpi_data := models.ReqMeasured{
-			ID:         kpi.ID,
-			KpiName:    kpi.KpiName,
-			KpiType:    kpi.KpiType,
-			AssignType: kpi.AssignType,
+			ID:            kpi.ID,
+			KpiName:       kpi.KpiName,
+			KpiType:       kpi.KpiType,
+			AssignType:    kpi.AssignType,
+			ApplicableFor: kpi.ApplicableFor,
 		}
 
 		var measuredKpi models.MeasuredKpi
@@ -357,10 +425,11 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 		c.JSON(http.StatusOK, kpi_data)
 	case QUESTIONNAIRE_KPI_TYPE:
 		kpi_data := models.ReqQuestionnaire{
-			ID:         kpi.ID,
-			KpiName:    kpi.KpiName,
-			KpiType:    kpi.KpiType,
-			AssignType: kpi.AssignType,
+			ID:            kpi.ID,
+			KpiName:       kpi.KpiName,
+			KpiType:       kpi.KpiType,
+			AssignType:    kpi.AssignType,
+			ApplicableFor: kpi.ApplicableFor,
 		}
 
 		var questionnaireKpi []models.QuestionnaireKpi
