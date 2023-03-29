@@ -18,8 +18,8 @@ func Connect() {
 	dbName := os.Getenv("DB_NAME")
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
-
-	// Create connection string using environment variables
+  
+  // Create connection string using environment variables
 	dsn := fmt.Sprintf("host=%s user=%s password=%s port=%s database=postgres sslmode=disable", dbHost, dbUser, dbPassword, dbPort)
 
 	// Open database connection
