@@ -241,19 +241,19 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 	kpiType := c.Query("kpi_type")
 
 	if kpiName != "" && assignType != "" && kpiType != "" {
-		db = db.Where("kpis.kpi_name = ? AND kpis.assign_type = ? AND kpis.kpi_type = ?", kpiName, assignType, kpiType)
+		db = s.Db.Table("Kpis").Where("kpis.kpi_name = ? AND kpis.assign_type = ? AND kpis.kpi_type = ?", kpiName, assignType, kpiType)
 	} else if kpiName != "" && assignType != "" {
-		db = db.Where("kpis.kpi_name = ? AND kpis.assign_type = ?", kpiName, assignType)
+		db = s.Db.Table("Kpis").Where("kpis.kpi_name = ? AND kpis.assign_type = ?", kpiName, assignType)
 	} else if kpiName != "" && kpiType != "" {
-		db = db.Where("kpis.kpi_name = ? AND kpis.kpi_type = ?", kpiName, kpiType)
+		db = s.Db.Table("Kpis").Where("kpis.kpi_name = ? AND kpis.kpi_type = ?", kpiName, kpiType)
 	} else if assignType != "" && kpiType != "" {
-		db = db.Where("kpis.assign_type = ? AND kpis.kpi_type = ?", assignType, kpiType)
+		db = s.Db.Table("Kpis").Where("kpis.assign_type = ? AND kpis.kpi_type = ?", assignType, kpiType)
 	} else if kpiName != "" {
-		db = db.Where("kpis.kpi_name = ?", kpiName)
+		db = s.Db.Table("Kpis").Where("kpis.kpi_name = ?", kpiName)
 	} else if assignType != "" {
-		db = db.Where("kpis.assign_type = ?", assignType)
+		db = s.Db.Table("Kpis").Where("kpis.assign_type = ?", assignType)
 	} else if kpiType != "" {
-		db = db.Where("kpis.kpi_type = ?", kpiType)
+		db = s.Db.Table("Kpis").Where("kpis.kpi_type = ?", kpiType)
 	}
 
 	if err := controller.GetAllKPI(db, &kpis); err != nil {
@@ -275,7 +275,7 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 			}
 
 			var feedbackKpi models.FeedbackKpi
-			err := db.Where("kpis_id = ?", kpi.ID).First(&feedbackKpi).Error
+			err := s.Db.Table("feedback_kpis").Where("kpis_id = ?", kpi.ID).First(&feedbackKpi).Error
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
 				return
