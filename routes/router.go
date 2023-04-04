@@ -58,7 +58,10 @@ func NewRouter() *gin.Engine {
 		{
 
 			roles.POST("/", kc.CreateKPI)
+			roles.GET("/", kc.GetAllKPI)
+			roles.GET(":id", kc.GetKPIByID)
 			roles.PUT(":id", kc.UpdateKPI)
+
 		}
 	}
 	return router

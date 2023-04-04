@@ -38,3 +38,21 @@ func UpdateKPI(db *gorm.DB, kpi models.Kpi) (models.Kpi, error) {
 	}
 	return kpi, nil
 }
+
+func GetKPIByID(db *gorm.DB, id uint) (models.Kpi, error) {
+	var kpi models.Kpi
+
+	if err := db.Where("id = ?", id).First(&kpi).Error; err != nil {
+		return kpi, err
+	}
+
+	return kpi, nil
+}
+
+func GetAllKPI(db *gorm.DB, kpi *[]models.Kpi) (err error) {
+	err = db.Table("kpis").Find(&kpi).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}

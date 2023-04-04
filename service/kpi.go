@@ -251,3 +251,54 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 	}
 }
 
+func (s *KPIService) GetKPIByID(c *gin.Context) {
+	kpiID := c.Param("id")
+
+	id, err := strconv.Atoi(kpiID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	kpi, err := controller.GetKPIByID(s.Db, uint(id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, kpi)
+}
+
+
+func (s *KPIService) GetAllKPI(c *gin.Context) {
+	var kpi []models.Kpi
+	db := s.Db
+
+	kpiName := c.Query("kpi_name")
+	assignType := c.Query("assign_type")
+	kpiType := c.Query("kpi_type")
+
+	if kpiName != "" && assignType != "" && kpiType != "" {
+		db = db.Table("Kpis").Where("kpis.kpi_name LIKE ? AND kpis.assign_type = ? AND kpis.kpi_type = ?", "%"+kpiName+"%", assignType, kpiType)
+	} else if kpiName != "" && assignType != "" {
+		db = db.Table("Kpis").Where("kpis.kpi_name LIKE ? AND kpis.assign_type = ?", "%"+kpiName+"%", assignType)
+	} else if kpiName != "" && kpiType != "" {
+		db = db.Table("Kpis").Where("kpis.kpi_name LIKE ? AND kpis.kpi_type = ?", "%"+kpiName+"%", kpiType)
+	} else if assignType != "" && kpiType != "" {
+		db = db.Table("Kpis").Where("kpis.assign_type = ? AND kpis.kpi_type = ?", assignType, kpiType)
+	} else if kpiName != "" {
+		db = db.Table("Kpis").Where("kpis.kpi_name LIKE ?", "%"+kpiName+"%")
+	} else if assignType != "" {
+		db = db.Table("Kpis").Where("kpis.assign_type = ?", assignType)
+	} else if kpiType != "" {
+		db = db.Table("Kpis").Where("kpis.kpi_type = ?", kpiType)
+	}
+
+	if err := controller.GetAllKPI(db, &kpi); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPIs"})
+		return
+	}
+
+	c.JSON(http.StatusOK, kpi)
+}
+
