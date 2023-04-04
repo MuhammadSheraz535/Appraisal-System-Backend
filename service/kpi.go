@@ -4,6 +4,7 @@ package service
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -109,15 +110,16 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if kpi.Statement == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Statement is nil"})
-		return
-	}
 
 	kpi.ID = 0
 
 	switch kpi.KpiType {
 	case FEEDBACK_KPI_TYPE, OBSERVATORY_KPI_TYPE:
+
+		if kpi.Statement == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Statement is nil"})
+			return
+		}
 
 		kpi, err = controller.CreateKPI(s.Db, kpi)
 		if err != nil {
@@ -170,3 +172,82 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		return
 	}
 }
+
+func (s *KPIService) UpdateKPI(c *gin.Context) {
+	kpiID := c.Param("id")
+	var kpi models.Kpi
+	var err error
+
+	if err := c.ShouldBindBodyWith(&kpi, binding.JSON); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	id, err := strconv.Atoi(kpiID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	kpi.ID = uint(id)
+
+	switch kpi.KpiType {
+	case FEEDBACK_KPI_TYPE, OBSERVATORY_KPI_TYPE:
+		if kpi.Statement == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Statement is nil"})
+			return
+		}
+
+		kpi, err = controller.UpdateKPI(s.Db, kpi)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, kpi)
+
+	case MEASURED_KPI_TYPE, QUESTIONNAIRE_KPI_TYPE:
+		var multiKpi models.MultiKpi
+		err = c.ShouldBindBodyWith(&multiKpi, binding.JSON)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		tx := s.Db.Begin()
+		err = tx.Save(&kpi).Error
+		if err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		err = tx.Where("kpi_id = ?", kpi.ID).Delete(&models.MultiStatementKpiData{}).Error
+		if err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		for _, statement := range multiKpi.Statements {
+			statement.KpiID = kpi.ID
+			err = tx.Create(&statement).Error
+			if err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		}
+
+		err = tx.Commit().Error
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, kpi)
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid KPI type"})
+		return
+	}
+}
+
