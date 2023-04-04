@@ -269,7 +269,6 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 	c.JSON(http.StatusOK, kpi)
 }
 
-
 func (s *KPIService) GetAllKPI(c *gin.Context) {
 	var kpi []models.Kpi
 	db := s.Db
@@ -302,3 +301,18 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 	c.JSON(http.StatusOK, kpi)
 }
 
+// DeleteKPI deletes a KPI with the given ID
+func (s *KPIService) DeleteKPI(c *gin.Context) {
+	id := c.Param("id")
+
+	if err := controller.DeleteKPI(s.Db, id); err != nil {
+		if err.Error() == "KPI not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "KPI not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete KPI"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "KPI deleted successfully"})
+}

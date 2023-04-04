@@ -61,6 +61,7 @@ func NewRouter() *gin.Engine {
 			roles.GET("/", kc.GetAllKPI)
 			roles.GET(":id", kc.GetKPIByID)
 			roles.PUT(":id", kc.UpdateKPI)
+			roles.DELETE(":id", kc.DeleteKPI)
 
 		}
 	}
