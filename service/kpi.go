@@ -253,7 +253,6 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 
 func (s *KPIService) GetKPIByID(c *gin.Context) {
 	kpiID := c.Param("id")
-
 	id, err := strconv.Atoi(kpiID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -266,8 +265,45 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, kpi)
+	switch kpi.KpiType {
+
+	case FEEDBACK_KPI_TYPE, OBSERVATORY_KPI_TYPE:
+		kpi_data := models.Kpi{
+			ID:            kpi.ID,
+			KpiName:       kpi.KpiName,
+			AssignType:    kpi.AssignType,
+			KpiType:       kpi.KpiType,
+			ApplicableFor: kpi.ApplicableFor,
+			Statement:     kpi.Statement,
+		}
+
+		err := s.Db.Find(&kpi_data).Error
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
+			return
+		}
+		c.JSON(http.StatusOK, kpi_data)
+
+	case MEASURED_KPI_TYPE, QUESTIONNAIRE_KPI_TYPE:
+		kpi_data := models.MultiKpi{
+			ID:            kpi.ID,
+			KpiName:       kpi.KpiName,
+			AssignType:    kpi.AssignType,
+			KpiType:       kpi.KpiType,
+			ApplicableFor: kpi.ApplicableFor,
+		}
+
+		var multistatementKpi []models.MultiStatementKpiData
+		err := s.Db.Find(&multistatementKpi, "kpi_id = ?", kpi.ID).Error
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
+			return
+		}
+		kpi_data.Statements = append(kpi_data.Statements, multistatementKpi...)
+		c.JSON(http.StatusOK, kpi_data)
+	}
 }
+
 
 func (s *KPIService) GetAllKPI(c *gin.Context) {
 	var kpi []models.Kpi
@@ -337,7 +373,6 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 			}
 
 			kpi_data.Statements = append(kpi_data.Statements, multistatementKpi...)
-
 
 			allKpis = append(allKpis, kpi_data)
 		}
