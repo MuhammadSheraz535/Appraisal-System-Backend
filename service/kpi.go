@@ -332,9 +332,8 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 	}
 }
 
-
 func (s *KPIService) GetAllKPI(c *gin.Context) {
-	var kpi []models.Kpi
+	var kpis []models.Kpi
 	db := s.Db
 
 	kpiName := c.Query("kpi_name")
@@ -342,33 +341,37 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 	kpiType := c.Query("kpi_type")
 
 	if kpiName != "" && assignType != "" && kpiType != "" {
-		db = db.Table("Kpis").Where("kpis.kpi_name LIKE ? AND kpis.assign_type = ? AND kpis.kpi_type = ?", "%"+kpiName+"%", assignType, kpiType)
+		db = db.Table("kpis").Where("kpis.kpi_name LIKE ? AND kpis.assign_type = ? AND kpis.kpi_type = ?", "%"+kpiName+"%", assignType, kpiType)
 	} else if kpiName != "" && assignType != "" {
-		db = db.Table("Kpis").Where("kpis.kpi_name LIKE ? AND kpis.assign_type = ?", "%"+kpiName+"%", assignType)
+		db = db.Table("kpis").Where("kpis.kpi_name LIKE ? AND kpis.assign_type = ?", "%"+kpiName+"%", assignType)
 	} else if kpiName != "" && kpiType != "" {
-		db = db.Table("Kpis").Where("kpis.kpi_name LIKE ? AND kpis.kpi_type = ?", "%"+kpiName+"%", kpiType)
+		db = db.Table("kpis").Where("kpis.kpi_name LIKE ? AND kpis.kpi_type = ?", "%"+kpiName+"%", kpiType)
 	} else if assignType != "" && kpiType != "" {
-		db = db.Table("Kpis").Where("kpis.assign_type = ? AND kpis.kpi_type = ?", assignType, kpiType)
+		db = db.Table("kpis").Where("kpis.assign_type = ? AND kpis.kpi_type = ?", assignType, kpiType)
 	} else if kpiName != "" {
-		db = db.Table("Kpis").Where("kpis.kpi_name LIKE ?", "%"+kpiName+"%")
+		db = db.Table("kpis").Where("kpis.kpi_name LIKE ?", "%"+kpiName+"%")
 	} else if assignType != "" {
-		db = db.Table("Kpis").Where("kpis.assign_type = ?", assignType)
+		db = db.Table("kpis").Where("kpis.assign_type = ?", assignType)
 	} else if kpiType != "" {
-		db = db.Table("Kpis").Where("kpis.kpi_type = ?", kpiType)
+		db = db.Table("kpis").Where("kpis.kpi_type = ?", kpiType)
 	}
 
-	if err := controller.GetAllKPI(db, &kpi); err != nil {
+	if err := controller.GetAllKPI(db, &kpis); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPIs"})
 		return
 	}
 
 	var allKpis []interface{}
 
-	for _, k := range kpi {
-		switch k.KpiType {
+	for _, k := range kpis {
+		kpiType, err := checkKpiType(s.Db, k.KpiType)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 
-		case FEEDBACK_KPI_TYPE, OBSERVATORY_KPI_TYPE:
-
+		switch kpiType.BasicKpiType {
+		case SINGLE_KPI_TYPE:
 			kpi_data := models.Kpi{
 				ID:            k.ID,
 				KpiName:       k.KpiName,
@@ -377,14 +380,14 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 				ApplicableFor: k.ApplicableFor,
 				Statement:     k.Statement,
 			}
-			err := s.Db.Find(&kpi).Error
+			err := s.Db.Find(&kpis).Error
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
 				return
 			}
 			allKpis = append(allKpis, kpi_data)
 
-		case MEASURED_KPI_TYPE, QUESTIONNAIRE_KPI_TYPE:
+		case MULTI_KPI_TYPE:
 			kpi_data := models.MultiKpi{
 				ID:            k.ID,
 				KpiName:       k.KpiName,

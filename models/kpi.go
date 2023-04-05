@@ -35,8 +35,8 @@ type MultiKpi struct {
 }
 
 type MultiStatementKpiData struct {
-	KpiID         uint   `gorm:"foreignKey:KpiID"`
-	ID            uint64 `gorm:"primaryKey" json:"id"`
+	KpiID         uint   `gorm:"foreignKey:KpiID" json:"-"`
+	ID            uint64 `gorm:"primaryKey" json:"-"`
 	Statement     string `gorm:"not null" json:"statement"`
 	CorrectAnswer string `gorm:"not null" json:"correct_answer"`
 	Weightage     uint64 `gorm:"not null" json:"weightage"`
