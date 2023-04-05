@@ -21,8 +21,8 @@ const (
 	QUESTIONNAIRE_KPI_TYPE = "Questionnaire"
 )
 const (
-	Single_KPI_TYPE   = "Single"
-	Multiple_KPI_TYPE = "Multiple"
+	SINGLE_KPI_TYPE = "Single"
+	MULTI_KPI_TYPE  = "Multi"
 )
 
 const (
@@ -57,6 +57,7 @@ func NewKPIService() *KPIService {
 }
 
 func populateKpiTypeTable(db *gorm.DB) error {
+	// TODO: Delete this table and get KPI types from /kpi_types endpoint
 	kpiTypes := []string{
 		FEEDBACK_KPI_TYPE,
 		OBSERVATORY_KPI_TYPE,
@@ -69,9 +70,9 @@ func populateKpiTypeTable(db *gorm.DB) error {
 			KpiType: v,
 		}
 		if k == 0 || k == 1 {
-			newKpiType.BasicKpiType = "Single"
+			newKpiType.BasicKpiType = SINGLE_KPI_TYPE
 		} else if k == 2 || k == 3 {
-			newKpiType.BasicKpiType = "Multiple"
+			newKpiType.BasicKpiType = MULTI_KPI_TYPE
 		}
 		err := db.Create(&newKpiType).Error
 		if err != nil {
@@ -89,6 +90,7 @@ func populateAssignTypeTable(db *gorm.DB) error {
 		ASSIGN_TYPE_INDIVIDUAL,
 	}
 
+	// Make assign type ID as 0 = Role, 1 = Team and 2 = Individual
 	for i, a := range assignTypes {
 		newAssignType := models.AssignType{
 			AssignTypeId: uint64(i),
@@ -113,11 +115,22 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 
 	kpi.ID = 0
 
-	switch kpi.KpiType {
-	case FEEDBACK_KPI_TYPE, OBSERVATORY_KPI_TYPE:
+	kpiType, err := checkKpiType(s.Db, kpi.KpiType)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid KPI type"})
+		return
+	}
 
+	_, err = checkAssignType(s.Db, kpi.AssignType)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
+		return
+	}
+
+	switch kpiType.BasicKpiType {
+	case SINGLE_KPI_TYPE:
 		if kpi.Statement == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Statement is nil"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "statement is nil"})
 			return
 		}
 
@@ -132,9 +145,9 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, kpi)
+		c.JSON(http.StatusCreated, kpi)
 
-	case MEASURED_KPI_TYPE, QUESTIONNAIRE_KPI_TYPE:
+	case MULTI_KPI_TYPE:
 		var multiKpi models.MultiKpi
 		err = c.ShouldBindBodyWith(&multiKpi, binding.JSON)
 		if err != nil {
@@ -143,14 +156,15 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		}
 
 		tx := s.Db.Begin()
-		err = tx.Create(&kpi).Error
+		kpi.Statement = "" // since it's multi-statement
+		kpi, err = controller.CreateKPI(tx, kpi)
 		if err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		for _, statement := range multiKpi.Statements {
+		for i, statement := range multiKpi.Statements {
 			statement.KpiID = kpi.ID
 			err = tx.Create(&statement).Error
 			if err != nil {
@@ -158,6 +172,8 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
+			multiKpi.Statements[i].ID = statement.ID
+			multiKpi.Statements[i].KpiID = kpi.ID
 		}
 
 		err = tx.Commit().Error
@@ -166,7 +182,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusCreated, kpi)
+		c.JSON(http.StatusCreated, multiKpi)
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid KPI type"})
 		return
@@ -395,4 +411,22 @@ func (s *KPIService) DeleteKPI(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "KPI deleted successfully"})
+}
+
+func checkKpiType(db *gorm.DB, kpiType string) (models.KpiType, error) {
+	var kpiTypeModel models.KpiType
+	err := db.Where("kpi_type = ?", kpiType).First(&kpiTypeModel).Error
+	if err != nil {
+		return kpiTypeModel, err
+	}
+	return kpiTypeModel, nil
+}
+
+func checkAssignType(db *gorm.DB, assignType uint64) (models.AssignType, error) {
+	var assignTypeModel models.AssignType
+	err := db.Where("assign_type_id = ?", assignType).First(&assignTypeModel).Error
+	if err != nil {
+		return assignTypeModel, err
+	}
+	return assignTypeModel, nil
 }
