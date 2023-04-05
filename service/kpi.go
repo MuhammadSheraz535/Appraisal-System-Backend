@@ -238,6 +238,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		}
 
 		tx := s.Db.Begin()
+		kpi.Statement = ""
 		kpi, err = controller.UpdateKPI(tx, kpi)
 		if err != nil {
 			tx.Rollback()
