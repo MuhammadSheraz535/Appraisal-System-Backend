@@ -422,16 +422,43 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 func (s *KPIService) DeleteKPI(c *gin.Context) {
 	id := c.Param("id")
 
-	if err := controller.DeleteKPI(s.Db, id); err != nil {
-		if err.Error() == "KPI not found" {
-			c.JSON(http.StatusNotFound, gin.H{"error": "KPI not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete KPI"})
-		}
+	var count int64
+	var kpi models.Kpi
+	if err := s.Db.First(&kpi, id).Count(&count).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "KPI not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "KPI deleted successfully"})
+	tx := s.Db.Begin()
+
+	if err := controller.DeleteKPI(tx, id); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	kpiType, err := checkKpiType(tx, kpi.KpiType)
+	if err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if kpiType.BasicKpiType == MULTI_KPI_TYPE {
+		if err := tx.Where("kpi_id = ?", kpi.ID).Delete(&models.MultiStatementKpiData{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete KPI statements"})
+			return
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to commit transaction"})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 func checkKpiType(db *gorm.DB, kpiType string) (models.KpiType, error) {

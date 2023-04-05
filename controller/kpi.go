@@ -65,24 +65,9 @@ func DeleteKPI(db *gorm.DB, id string) error {
 		return errors.New("KPI not found")
 	}
 
-	tx := db.Begin()
-
-	// Delete associated statements if KPI type is MultiKpi
-	if kpi.KpiType == "Measured" || kpi.KpiType == "Questionnaire" {
-		if err := tx.Where("kpi_id = ?", kpi.ID).Delete(&models.MultiStatementKpiData{}).Error; err != nil {
-			tx.Rollback()
-			return errors.New("failed to delete KPI statements")
-		}
-	}
-
 	// Delete the KPI
-	if err := tx.Delete(&kpi).Error; err != nil {
-		tx.Rollback()
+	if err := db.Delete(&kpi).Error; err != nil {
 		return errors.New("failed to delete KPI")
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		return errors.New("failed to commit transaction")
 	}
 
 	return nil
