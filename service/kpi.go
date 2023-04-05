@@ -293,9 +293,14 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 		return
 	}
 
-	switch kpi.KpiType {
+	kpiType, err := checkKpiType(s.Db, kpi.KpiType)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-	case FEEDBACK_KPI_TYPE, OBSERVATORY_KPI_TYPE:
+	switch kpiType.BasicKpiType {
+	case SINGLE_KPI_TYPE:
 		kpi_data := models.Kpi{
 			ID:            kpi.ID,
 			KpiName:       kpi.KpiName,
@@ -312,7 +317,7 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, kpi_data)
 
-	case MEASURED_KPI_TYPE, QUESTIONNAIRE_KPI_TYPE:
+	case MULTI_KPI_TYPE:
 		kpi_data := models.MultiKpi{
 			ID:            kpi.ID,
 			KpiName:       kpi.KpiName,
@@ -322,12 +327,13 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 		}
 
 		var multistatementKpi []models.MultiStatementKpiData
-		err := s.Db.Find(&multistatementKpi, "kpi_id = ?", kpi.ID).Error
+		err := s.Db.Where("kpi_id = ?", kpi.ID).Find(&multistatementKpi).Error
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
 			return
 		}
 		kpi_data.Statements = append(kpi_data.Statements, multistatementKpi...)
+
 		c.JSON(http.StatusOK, kpi_data)
 	}
 }
