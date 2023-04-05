@@ -298,7 +298,52 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, kpi)
+	var allKpis []interface{}
+
+	for _, k := range kpi {
+		switch k.KpiType {
+
+		case FEEDBACK_KPI_TYPE, OBSERVATORY_KPI_TYPE:
+
+			kpi_data := models.Kpi{
+				ID:            k.ID,
+				KpiName:       k.KpiName,
+				AssignType:    k.AssignType,
+				KpiType:       k.KpiType,
+				ApplicableFor: k.ApplicableFor,
+				Statement:     k.Statement,
+			}
+			err := s.Db.Find(&kpi).Error
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
+				return
+			}
+			allKpis = append(allKpis, kpi_data)
+
+		case MEASURED_KPI_TYPE, QUESTIONNAIRE_KPI_TYPE:
+			kpi_data := models.MultiKpi{
+				ID:            k.ID,
+				KpiName:       k.KpiName,
+				AssignType:    k.AssignType,
+				KpiType:       k.KpiType,
+				ApplicableFor: k.ApplicableFor,
+			}
+
+			var multistatementKpi []models.MultiStatementKpiData
+			err := s.Db.Where("kpi_id = ?", k.ID).Find(&multistatementKpi).Error
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
+				return
+			}
+
+			kpi_data.Statements = append(kpi_data.Statements, multistatementKpi...)
+
+
+			allKpis = append(allKpis, kpi_data)
+		}
+	}
+
+	c.JSON(http.StatusOK, allKpis)
 }
 
 // DeleteKPI deletes a KPI with the given ID
