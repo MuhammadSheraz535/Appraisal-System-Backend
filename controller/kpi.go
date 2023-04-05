@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateKPI(db *gorm.DB, kpi models.Kpis) (models.Kpis, error) {
+func CreateKPI(db *gorm.DB, kpi models.Kpi) (models.Kpi, error) {
 	// Check if KPI name already exists
 	var count int64
 	if err := db.Table("kpis").Where("kpi_name = ?", kpi.KpiName).Count(&count).Error; err != nil {
@@ -23,41 +23,52 @@ func CreateKPI(db *gorm.DB, kpi models.Kpis) (models.Kpis, error) {
 	return kpi, nil
 }
 
-func GetAllKPI(db *gorm.DB, kpis *[]models.Kpis) (err error) {
-	err = db.Table("kpis").Find(&kpis).Error
-	if err != nil {
-		return err
+func UpdateKPI(db *gorm.DB, kpi models.Kpi) (models.Kpi, error) {
+	// Check if KPI name already exists
+	var count int64
+	if err := db.Table("kpis").Where("kpi_name = ? AND id != ?", kpi.KpiName, kpi.ID).Count(&count).Error; err != nil {
+		return kpi, err
 	}
-	return nil
-}
-
-func GetKPIByID(db *gorm.DB, kpiID string, kpi *models.Kpis) error {
-	err := db.Table("kpis").Where("id = ?", kpiID).First(kpi).Error
-	if err != nil {
-		return err
+	if count > 0 {
+		return kpi, errors.New("KPI name already exists")
 	}
-	return nil
-}
-
-func UpdateKPI(db *gorm.DB, kpi models.Kpis) (models.Kpis, error) {
-	// Update the KPI
+	// Update KPI record
 	if err := db.Save(&kpi).Error; err != nil {
-		return models.Kpis{}, err
+		return kpi, err
+	}
+	return kpi, nil
+}
+
+func GetKPIByID(db *gorm.DB, id uint) (models.Kpi, error) {
+	var kpi models.Kpi
+
+	if err := db.Where("id = ?", id).First(&kpi).Error; err != nil {
+		return kpi, err
 	}
 
 	return kpi, nil
 }
 
-func DeleteKPIByID(db *gorm.DB, id string) (*models.Kpis, error) {
-	var kpi models.Kpis
-	err := GetKPIByID(db, id, &kpi)
+func GetAllKPI(db *gorm.DB, kpi *[]models.Kpi) (err error) {
+	err = db.Table("kpis").Find(&kpi).Error
 	if err != nil {
-		return nil, err
+		return err
 	}
-	err = db.Delete(&kpi).Error
-	if err != nil {
-		return nil, err
+	return nil
+}
+
+// DeleteKPI deletes a KPI with the given ID
+func DeleteKPI(db *gorm.DB, id string) error {
+	var kpi models.Kpi
+
+	if err := db.First(&kpi, id).Error; err != nil {
+		return errors.New("KPI not found")
 	}
 
-	return &kpi, nil
+	// Delete the KPI
+	if err := db.Delete(&kpi).Error; err != nil {
+		return errors.New("failed to delete KPI")
+	}
+
+	return nil
 }
