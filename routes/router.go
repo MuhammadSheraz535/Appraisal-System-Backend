@@ -3,14 +3,25 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 
+	"github.com/gin-contrib/cors"
 	"github.com/mrehanabbasi/appraisal-system-backend/service"
 )
 
 func NewRouter() *gin.Engine {
+	router := gin.Default()
+
+	_ = router.SetTrustedProxies(nil)
+
+	router.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Content-Type", "Content-Length", "Accept-Encoding", "Authorization", "Accept", "Origin", "Cache-Control"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 
 	sc := service.NewSupervisorService()
 
-	router := gin.Default()
 	ec := service.NewEmployeeService()
 
 	kc := service.NewKPIService()
