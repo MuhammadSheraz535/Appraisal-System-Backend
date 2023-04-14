@@ -303,7 +303,7 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 	switch kpiType.BasicKpiType {
 	case SINGLE_KPI_TYPE:
 		kpi_data := models.Kpi{
-			Common:        models.Common{ID: kpi.ID},
+			CommonModel:   models.CommonModel{ID: kpi.ID},
 			KpiName:       kpi.KpiName,
 			AssignType:    kpi.AssignType,
 			KpiType:       kpi.KpiType,
@@ -320,7 +320,7 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 
 	case MULTI_KPI_TYPE:
 		kpi_data := models.MultiKpi{
-			Common:        models.Common{ID: kpi.ID},
+			CommonModel:   models.CommonModel{ID: kpi.ID},
 			KpiName:       kpi.KpiName,
 			AssignType:    kpi.AssignType,
 			KpiType:       kpi.KpiType,
@@ -380,7 +380,7 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 		switch kpiType.BasicKpiType {
 		case SINGLE_KPI_TYPE:
 			kpi_data := models.Kpi{
-				Common:        models.Common{ID: k.ID},
+				CommonModel:   models.CommonModel{ID: k.ID},
 				KpiName:       k.KpiName,
 				AssignType:    k.AssignType,
 				KpiType:       k.KpiType,
@@ -396,7 +396,7 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 
 		case MULTI_KPI_TYPE:
 			kpi_data := models.MultiKpi{
-				Common:        models.Common{ID: k.ID},
+				CommonModel:   models.CommonModel{ID: k.ID},
 				KpiName:       k.KpiName,
 				AssignType:    k.AssignType,
 				KpiType:       k.KpiType,

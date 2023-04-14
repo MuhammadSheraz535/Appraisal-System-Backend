@@ -5,19 +5,19 @@ import (
 )
 
 type KpiType struct {
-	Common
+	CommonModel
 	KpiType      string `gorm:"not null,unique" json:"kpi_type"`
 	BasicKpiType string `gorm:"not null,unique" json:"basic_kpi_type"`
 }
 
 type AssignType struct {
-	Common
+	CommonModel
 	AssignTypeId uint64 `gorm:"not null,unique" json:"assign_type_id"`
 	AssignType   string `gorm:"not null,unique" json:"assign_type"`
 }
 
 type Kpi struct {
-	Common
+	CommonModel
 	KpiName       string         `gorm:"size:100;not null;unique" json:"kpi_name"`
 	AssignType    uint64         `gorm:"not null" json:"assign_type"`
 	KpiType       string         `gorm:"not null" json:"kpi_type"`
@@ -26,7 +26,7 @@ type Kpi struct {
 }
 
 type MultiKpi struct {
-	Common
+	CommonModel
 	KpiName       string                  `json:"kpi_name"`
 	AssignType    uint64                  `json:"assign_type"`
 	KpiType       string                  `json:"kpi_type"`
@@ -35,7 +35,7 @@ type MultiKpi struct {
 }
 
 type MultiStatementKpiData struct {
-	Common
+	CommonModel
 	KpiID         uint64 `gorm:"foreignKey:ID" json:"-"`
 	Statement     string `gorm:"not null" json:"statement"`
 	CorrectAnswer string `gorm:"not null" json:"correct_answer"`
