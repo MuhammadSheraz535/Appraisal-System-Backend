@@ -14,8 +14,15 @@ func CreateAppraisalFlow(db *gorm.DB, appraisalflow models.ApraisalFlow) (models
 }
 
 func GetAppraisalFlowByID(db *gorm.DB, appraisalflow *models.ApraisalFlow, id int) (err error) {
-	err = db.Table("apraisal_flows").Where("id = ?", id).First(&appraisalflow).Error
+	err = db.Model(&appraisalflow).Preload("FlowSteps").Where("id = ?", id).First(&appraisalflow).Error
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdateAppraisalFlow(db *gorm.DB, appraisalflow *models.ApraisalFlow) error {
+	if err := db.Table("apraisal_flows").Updates(appraisalflow).Error; err != nil {
 		return err
 	}
 	return nil

@@ -87,7 +87,7 @@ func NewRouter() *gin.Engine {
 			appraisalflow.POST("/", af.CreateAppraisalFlow)
 			// appraisalflow.GET("/", kc.GetAllKPI)
 			appraisalflow.GET(":id", af.GetAppraisalFlowByID)
-			// appraisalflow.PUT(":id", kc.UpdateKPI)
+			appraisalflow.PUT(":id", af.UpdateAppraisalFlow)
 			// appraisalflow.DELETE(":id", kc.DeleteKPI)
 
 		}

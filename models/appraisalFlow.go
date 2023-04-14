@@ -6,7 +6,7 @@ type ApraisalFlow struct {
 	Createdby uint64     `json:"created_by" binding:"required" gorm:"not null"`
 	IsActive  bool       `json:"is_active" binding:"required" gorm:"not null"`
 	TeamId    uint64     `json:"team_id" binding:"required" gorm:"not null"`
-	FlowStep  []FlowStep `json:"flowsteps" gorm:"foreignKey:FlowID;not null"`
+	FlowSteps []FlowStep `json:"flowsteps" gorm:"foreignKey:FlowID;not null"`
 }
 
 type FlowStep struct {

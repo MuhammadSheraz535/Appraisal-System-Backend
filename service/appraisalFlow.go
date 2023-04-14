@@ -53,3 +53,27 @@ func (r *ApprasialFlowService) GetAppraisalFlowByID(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, apprasialflow)
 }
+
+func (r *ApprasialFlowService) UpdateAppraisalFlow(c *gin.Context) {
+	var appraisalflow models.ApraisalFlow
+	id, _ := strconv.Atoi(c.Param("id"))
+	err := controller.GetAppraisalFlowByID(r.Db, &appraisalflow, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+	err = c.ShouldBindJSON(&appraisalflow)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = controller.UpdateAppraisalFlow(r.Db, &appraisalflow)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, appraisalflow)
+}
