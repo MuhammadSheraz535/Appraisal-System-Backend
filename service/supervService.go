@@ -40,7 +40,7 @@ func (sc *SupervisorService) ConvertSupervisorToEmployee(c *gin.Context) {
 	}
 
 	// Create a new employee with supervisor role
-	employee, err := controller.CreateSupervisor(sc.db, req.Name, req.Email, supervisorRoleName, supervisorRole.ID)
+	employee, err := controller.CreateSupervisor(sc.db, req.Name, req.Email, supervisorRoleName, uint(supervisorRole.ID))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
