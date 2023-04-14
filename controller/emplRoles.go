@@ -49,9 +49,11 @@ func UpdateRole(db *gorm.DB, role *models.Role) error {
 	if count > 0 {
 		return errors.New("role name already exists")
 	}
+	var k models.Role
 	if err := db.Table("roles").Updates(role).Error; err != nil {
 		return err
 	}
+	role.CreatedAt = k.CreatedAt
 	return nil
 }
 

@@ -17,7 +17,7 @@ func GetRoleIdFromDb(db *gorm.DB, roleName string) (uint, error) {
 		return 0, err
 	}
 
-	return role.ID, nil
+	return uint(role.ID), nil
 }
 
 func ChecKSupervisorExist(db *gorm.DB, id uint) error {
@@ -80,7 +80,9 @@ func GetEmployee(db *gorm.DB, Employee *models.Employee, id int) (err error) {
 
 // update Employee
 func UpdateEmployee(db *gorm.DB, Employee *models.Employee) (err error) {
+	var k models.Employee
 	err = db.Model(&Employee).Updates(&Employee).Save(&Employee).Error
+	Employee.CreatedAt = k.CreatedAt
 	return err
 }
 

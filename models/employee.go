@@ -1,7 +1,7 @@
 package models
 
 type Employee struct {
-	ID           uint   `gorm:"primary_key;auto_increment" json:"id"`
+	Common
 	Name         string `json:"name" gorm:"size:255;not null" binding:"required"`
 	Email        string `json:"email" gorm:"unique;not null" binding:"required"`
 	Role         string `json:"role_name"`
