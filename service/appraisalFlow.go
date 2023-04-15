@@ -84,11 +84,11 @@ func (r *ApprasialFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	}
 	err = c.ShouldBindJSON(&appraisalflow)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	err = controller.UpdateAppraisalFlow(r.Db, &appraisalflow)
+	err = controller.UpdateAppraisalFlow(r.Db, &appraisalflow,id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -4,7 +4,7 @@ type ApraisalFlow struct {
 	Common
 	FlowName  string     `json:"flow_name" binding:"required" gorm:"type:varchar(255);not null"`
 	Createdby uint64     `json:"created_by" binding:"required" gorm:"not null"`
-	IsActive  bool       `json:"is_active" binding:"required" gorm:"not null"`
+	IsActive  bool       `json:"is_active" gorm:"not null"`
 	TeamId    uint64     `json:"team_id" binding:"required" gorm:"not null"`
 	FlowSteps []FlowStep `json:"flowsteps" gorm:"foreignKey:FlowID;not null"`
 }
