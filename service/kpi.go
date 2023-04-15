@@ -200,7 +200,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	kpi.ID = uint(id)
+	kpi.ID = uint64(id)
 
 	kpiType, err := checkKpiType(s.Db, kpi.KpiType)
 	if err != nil {
@@ -303,7 +303,7 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 	switch kpiType.BasicKpiType {
 	case SINGLE_KPI_TYPE:
 		kpi_data := models.Kpi{
-			ID:            kpi.ID,
+			CommonModel:   models.CommonModel{ID: kpi.ID},
 			KpiName:       kpi.KpiName,
 			AssignType:    kpi.AssignType,
 			KpiType:       kpi.KpiType,
@@ -320,7 +320,7 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 
 	case MULTI_KPI_TYPE:
 		kpi_data := models.MultiKpi{
-			ID:            kpi.ID,
+			CommonModel:   models.CommonModel{ID: kpi.ID},
 			KpiName:       kpi.KpiName,
 			AssignType:    kpi.AssignType,
 			KpiType:       kpi.KpiType,
@@ -380,7 +380,7 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 		switch kpiType.BasicKpiType {
 		case SINGLE_KPI_TYPE:
 			kpi_data := models.Kpi{
-				ID:            k.ID,
+				CommonModel:   models.CommonModel{ID: k.ID},
 				KpiName:       k.KpiName,
 				AssignType:    k.AssignType,
 				KpiType:       k.KpiType,
@@ -396,7 +396,7 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 
 		case MULTI_KPI_TYPE:
 			kpi_data := models.MultiKpi{
-				ID:            k.ID,
+				CommonModel:   models.CommonModel{ID: k.ID},
 				KpiName:       k.KpiName,
 				AssignType:    k.AssignType,
 				KpiType:       k.KpiType,

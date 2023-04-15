@@ -107,7 +107,7 @@ func (r *RoleService) UpdateRole(c *gin.Context) {
 func (r *RoleService) DeleteRole(c *gin.Context) {
 	var role models.Role
 	id, _ := strconv.Atoi(c.Param("id"))
-	role.ID = uint(id)
+	role.ID = uint64(id)
 	err := controller.DeleteRole(r.Db, &role, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

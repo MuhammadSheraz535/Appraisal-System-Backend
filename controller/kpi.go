@@ -32,8 +32,14 @@ func UpdateKPI(db *gorm.DB, kpi models.Kpi) (models.Kpi, error) {
 	if count > 0 {
 		return kpi, errors.New("KPI name already exists")
 	}
+	var k models.Kpi
 	// Update KPI record
 	if err := db.Save(&kpi).Error; err != nil {
+		return kpi, err
+	}
+	kpi.CreatedAt = k.CreatedAt
+
+	if err := db.Table("kpis").Where("id != ?", kpi.ID).First(&k).Error; err != nil {
 		return kpi, err
 	}
 	return kpi, nil
