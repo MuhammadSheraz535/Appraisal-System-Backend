@@ -62,7 +62,7 @@ func (r *ApprasialFlowService) GetAllApprasialFlow(c *gin.Context) {
 	isActive := c.Query("is_active")
 	teamId := c.Query("team_id")
 
-	err = controller.GetAllApprasialFlow(flowName ,isActive,teamId,r.Db,&apprasialflow) 
+	err = controller.GetAllApprasialFlow(flowName, isActive, teamId, r.Db, &apprasialflow)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -88,10 +88,32 @@ func (r *ApprasialFlowService) UpdateAppraisalFlow(c *gin.Context) {
 		return
 	}
 
-	err = controller.UpdateAppraisalFlow(r.Db, &appraisalflow,id)
+	err = controller.UpdateAppraisalFlow(r.Db, &appraisalflow, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, appraisalflow)
+}
+
+func (r *ApprasialFlowService) DeleteApprasialFlow(c *gin.Context) {
+	var apprasialflow models.ApraisalFlow
+	id, _ := strconv.Atoi(c.Param("id"))
+	apprasialflow.ID = uint64(id)
+	err := controller.GetAppraisalFlowByID(r.Db, &apprasialflow, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	err = controller.DeleteApprasialFlow(r.Db, &apprasialflow, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
 }

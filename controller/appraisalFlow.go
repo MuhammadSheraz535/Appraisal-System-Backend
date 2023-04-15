@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func CreateAppraisalFlow(db *gorm.DB, appraisalflow models.ApraisalFlow) (models.ApraisalFlow, error) {
@@ -54,6 +55,14 @@ func GetAllApprasialFlow(flowName, isActive, teamId string, db *gorm.DB, apprais
 }
 
 func UpdateAppraisalFlow(db *gorm.DB, appraisalflow *models.ApraisalFlow, id int) error {
-	db.Session(&gorm.Session{FullSaveAssociations: true}).Save(&appraisalflow)
+	db.Session(&gorm.Session{FullSaveAssociations: true}).Where("id = ?", id).Save(&appraisalflow)
+	return nil
+}
+
+func DeleteApprasialFlow(db *gorm.DB, appraisalflow *models.ApraisalFlow, id int) error {
+	err := db.Select(clause.Associations).Delete(&appraisalflow).Error
+	if err != nil {
+		return err
+	}
 	return nil
 }
