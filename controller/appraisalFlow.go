@@ -21,6 +21,38 @@ func GetAppraisalFlowByID(db *gorm.DB, appraisalflow *models.ApraisalFlow, id in
 	return nil
 }
 
+func GetAllApprasialFlow(flowName, isActive, teamId string, db *gorm.DB, appraisalflow *[]models.ApraisalFlow) (err error) {
+	if flowName != "" && isActive != "" && teamId != "" {
+		err = db.Model(&appraisalflow).Preload("FlowSteps").Where("flow_name = ? AND is_active = ? AND team_id = ?", flowName, isActive, teamId).Find(&appraisalflow).Error
+		if err != nil {
+			return err
+		}
+	} else if flowName != "" {
+		err = db.Model(&appraisalflow).Preload("FlowSteps").Where("flow_name = ?", flowName).Find(&appraisalflow).Error
+		if err != nil {
+			return err
+		}
+	} else if isActive != "" {
+		err = db.Model(&appraisalflow).Preload("FlowSteps").Where("is_active = ?", isActive).Find(&appraisalflow).Error
+		if err != nil {
+			return err
+		}
+	} else if teamId != "" {
+		err = db.Model(&appraisalflow).Preload("FlowSteps").Where("team_id = ?", teamId).Find(&appraisalflow).Error
+		if err != nil {
+			return err
+		}
+	} else {
+
+		err = db.Model(&appraisalflow).Preload("FlowSteps").Find(&appraisalflow).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func UpdateAppraisalFlow(db *gorm.DB, appraisalflow *models.ApraisalFlow) error {
 	if err := db.Table("apraisal_flows").Updates(appraisalflow).Error; err != nil {
 		return err

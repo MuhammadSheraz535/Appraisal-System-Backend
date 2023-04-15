@@ -54,6 +54,24 @@ func (r *ApprasialFlowService) GetAppraisalFlowByID(c *gin.Context) {
 	c.JSON(http.StatusOK, apprasialflow)
 }
 
+func (r *ApprasialFlowService) GetAllApprasialFlow(c *gin.Context) {
+	var apprasialflow []models.ApraisalFlow
+	var err error
+
+	flowName := c.Query("flow_name")
+	isActive := c.Query("is_active")
+	teamId := c.Query("team_id")
+
+	err = controller.GetAllApprasialFlow(flowName ,isActive,teamId,r.Db,&apprasialflow) 
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, apprasialflow)
+}
+
 func (r *ApprasialFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	var appraisalflow models.ApraisalFlow
 	id, _ := strconv.Atoi(c.Param("id"))
@@ -66,7 +84,7 @@ func (r *ApprasialFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	}
 	err = c.ShouldBindJSON(&appraisalflow)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
