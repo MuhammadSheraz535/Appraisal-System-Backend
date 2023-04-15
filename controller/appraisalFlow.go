@@ -29,26 +29,26 @@ func GetAllApprasialFlow(flowName, isActive, teamId string, db *gorm.DB, apprais
 			return err
 		}
 	} else if flowName != "" {
-		err = db.Model(&appraisalflow).Preload("FlowSteps").Where("flow_name = ?", flowName).Find(&appraisalflow).Error
+		err = db.Model(&appraisalflow).Preload("FlowSteps").Where("flow_name LIKE ?", "%"+flowName+"%").Find(&appraisalflow).Error
 		if err != nil {
 			return err
 		}
-	}  else if flowName != "" && isActive!="" {
-		err = db.Model(&appraisalflow).Preload("FlowSteps").Where("flow_name = ? AND is_active = ?", flowName,isActive).Find(&appraisalflow).Error
+	} else if flowName != "" && isActive != "" {
+		err = db.Model(&appraisalflow).Preload("FlowSteps").Where("flow_name = ? AND is_active = ?", flowName, isActive).Find(&appraisalflow).Error
 		if err != nil {
 			return err
 		}
-	} else if flowName != "" && teamId!="" {
-		err = db.Model(&appraisalflow).Preload("FlowSteps").Where("flow_name = ? AND team_id = ?", flowName,teamId).Find(&appraisalflow).Error
+	} else if flowName != "" && teamId != "" {
+		err = db.Model(&appraisalflow).Preload("FlowSteps").Where("flow_name = ? AND team_id = ?", flowName, teamId).Find(&appraisalflow).Error
 		if err != nil {
 			return err
 		}
-	} else if isActive != "" && teamId!="" {
-		err = db.Model(&appraisalflow).Preload("FlowSteps").Where("is_active = ? AND team_id = ?", isActive,teamId).Find(&appraisalflow).Error
+	} else if isActive != "" && teamId != "" {
+		err = db.Model(&appraisalflow).Preload("FlowSteps").Where("is_active = ? AND team_id = ?", isActive, teamId).Find(&appraisalflow).Error
 		if err != nil {
 			return err
 		}
-	}  else if isActive != "" {
+	} else if isActive != "" {
 		err = db.Model(&appraisalflow).Preload("FlowSteps").Where("is_active = ?", isActive).Find(&appraisalflow).Error
 		if err != nil {
 			return err
