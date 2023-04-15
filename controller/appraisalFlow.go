@@ -54,22 +54,6 @@ func GetAllApprasialFlow(flowName, isActive, teamId string, db *gorm.DB, apprais
 }
 
 func UpdateAppraisalFlow(db *gorm.DB, appraisalflow *models.ApraisalFlow, id int) error {
-	if err := db.Transaction(func(tx *gorm.DB) error {
-		// Update ApraisalFlow object
-		if err := tx.Model(&models.ApraisalFlow{}).Where("id = ?", id).Updates(appraisalflow).Error; err != nil {
-			return err
-		}
-
-		// Update related FlowStep objects
-		for i := range appraisalflow.FlowSteps {
-			if err := tx.Model(&models.FlowStep{}).Where("id = ?", appraisalflow.FlowSteps[i].ID).Updates(&appraisalflow.FlowSteps[i]).Error; err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}); err != nil {
-		return err
-	}
+	db.Session(&gorm.Session{FullSaveAssociations: true}).Save(&appraisalflow)
 	return nil
 }
