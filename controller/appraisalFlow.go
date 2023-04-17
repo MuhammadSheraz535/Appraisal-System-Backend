@@ -1,13 +1,21 @@
 package controller
 
 import (
+	"errors"
+
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 func CreateAppraisalFlow(db *gorm.DB, appraisalFlow models.AppraisalFlow) (models.AppraisalFlow, error) {
-
+	var count int64
+	if err := db.Table("appraisal_flows").Where("flow_name = ?", appraisalFlow.FlowName).Count(&count).Error; err != nil {
+		return appraisalFlow, err
+	}
+	if count > 0 {
+		return appraisalFlow, errors.New("flow Name already exists")
+	}
 	if err := db.Create(&appraisalFlow).Error; err != nil {
 		return appraisalFlow, err
 	}
