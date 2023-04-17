@@ -26,6 +26,8 @@ func NewRouter() *gin.Engine {
 
 	kc := service.NewKPIService()
 
+	af := service.NewApprasialFlowService()
+
 	v1 := router.Group("/v1")
 	{
 		employee := v1.Group("/employees")
@@ -73,6 +75,20 @@ func NewRouter() *gin.Engine {
 			roles.GET(":id", kc.GetKPIByID)
 			roles.PUT(":id", kc.UpdateKPI)
 			roles.DELETE(":id", kc.DeleteKPI)
+
+		}
+	}
+
+	v1 = router.Group("/v1")
+	{
+		appraisalflow := v1.Group("/appraisal_flows")
+		{
+
+			appraisalflow.POST("/", af.CreateAppraisalFlow)
+			appraisalflow.GET("/", af.GetAllApprasialFlow)
+			appraisalflow.GET(":id", af.GetAppraisalFlowByID)
+			appraisalflow.PUT(":id", af.UpdateAppraisalFlow)
+			appraisalflow.DELETE(":id", af.DeleteApprasialFlow)
 
 		}
 	}
