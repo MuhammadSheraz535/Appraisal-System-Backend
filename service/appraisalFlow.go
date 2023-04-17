@@ -18,99 +18,101 @@ type ApprasialFlowService struct {
 
 func NewApprasialFlowService() *ApprasialFlowService {
 	db := database.DB
-	db.AutoMigrate(&models.ApraisalFlow{}, &models.FlowStep{})
+	err := db.AutoMigrate(&models.AppraisalFlow{}, &models.FlowStep{})
+	if err != nil {
+		panic(err)
+	}
 	return &ApprasialFlowService{Db: db}
 }
 
 func (r *ApprasialFlowService) CreateAppraisalFlow(c *gin.Context) {
-	var appraisalflow models.ApraisalFlow
-	err := c.ShouldBindJSON(&appraisalflow)
+	var appraisalFlow models.AppraisalFlow
+	err := c.ShouldBindJSON(&appraisalFlow)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	appraisalflow, err = controller.CreateAppraisalFlow(r.Db, appraisalflow)
+	appraisalFlow, err = controller.CreateAppraisalFlow(r.Db, appraisalFlow)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, appraisalflow)
+	c.JSON(http.StatusCreated, appraisalFlow)
 }
 
 func (r *ApprasialFlowService) GetAppraisalFlowByID(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	var apprasialflow models.ApraisalFlow
-	err := controller.GetAppraisalFlowByID(r.Db, &apprasialflow, id)
+	var appraisalFlow models.AppraisalFlow
+	err := controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "record not found"})
 			return
 		}
 
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, apprasialflow)
+	c.JSON(http.StatusOK, appraisalFlow)
 }
 
 func (r *ApprasialFlowService) GetAllApprasialFlow(c *gin.Context) {
-	var apprasialflow []models.ApraisalFlow
-	var err error
+	var appraisalFlow []models.AppraisalFlow
 
 	flowName := c.Query("flow_name")
 	isActive := c.Query("is_active")
 	teamId := c.Query("team_id")
 
-	err = controller.GetAllApprasialFlow(flowName, isActive, teamId, r.Db, &apprasialflow)
+	err := controller.GetAllApprasialFlow(flowName, isActive, teamId, r.Db, &appraisalFlow)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, apprasialflow)
+	c.JSON(http.StatusOK, appraisalFlow)
 }
 
 func (r *ApprasialFlowService) UpdateAppraisalFlow(c *gin.Context) {
-	var appraisalflow models.ApraisalFlow
+	var appraisalFlow models.AppraisalFlow
 	id, _ := strconv.Atoi(c.Param("id"))
-	err := controller.GetAppraisalFlowByID(r.Db, &appraisalflow, id)
+	err := controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
-	err = c.ShouldBindJSON(&appraisalflow)
+	err = c.ShouldBindJSON(&appraisalFlow)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	err = controller.UpdateAppraisalFlow(r.Db, &appraisalflow, id)
+	err = controller.UpdateAppraisalFlow(r.Db, &appraisalFlow, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, appraisalflow)
+	c.JSON(http.StatusOK, appraisalFlow)
 }
 
 func (r *ApprasialFlowService) DeleteApprasialFlow(c *gin.Context) {
-	var apprasialflow models.ApraisalFlow
+	var appraisalFlow models.AppraisalFlow
 	id, _ := strconv.Atoi(c.Param("id"))
-	apprasialflow.ID = uint64(id)
-	err := controller.GetAppraisalFlowByID(r.Db, &apprasialflow, id)
+	appraisalFlow.ID = uint64(id)
+	err := controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "record not found"})
 			return
 		}
 
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	err = controller.DeleteApprasialFlow(r.Db, &apprasialflow, id)
+	err = controller.DeleteApprasialFlow(r.Db, &appraisalFlow, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
