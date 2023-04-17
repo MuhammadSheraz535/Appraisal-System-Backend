@@ -12,7 +12,7 @@ type AppraisalFlow struct {
 type FlowStep struct {
 	CommonModel
 	FlowID    uint64 `json:"-" binding:"required" gorm:"not null"`
-	StepName  string `json:"step_name" binding:"required" gorm:"type:varchar(255);not null"`
+	StepName  string `json:"step_name" binding:"required" gorm:"type:varchar(255);not null;unique"`
 	StepOrder uint64 `json:"step_order" binding:"required" gorm:"not null"`
 	UserId    uint64 `json:"user_id" binding:"required" gorm:"not null"`
 }

@@ -16,11 +16,24 @@ func CreateAppraisalFlow(db *gorm.DB, appraisalFlow models.AppraisalFlow) (model
 	if count > 0 {
 		return appraisalFlow, errors.New("flow Name already exists")
 	}
+
+	// check uniqueness of step names
+	for _, step := range appraisalFlow.FlowSteps {
+		var stepCount int64
+		if err := db.Table("flow_steps").Where("step_name = ?",step.StepName).Count(&stepCount).Error; err != nil {
+			return appraisalFlow, err
+		}
+		if stepCount > 0 {
+			return appraisalFlow, errors.New("step name already exists")
+		}
+	}
+
 	if err := db.Create(&appraisalFlow).Error; err != nil {
 		return appraisalFlow, err
 	}
 	return appraisalFlow, nil
 }
+
 
 func GetAppraisalFlowByID(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id int) (err error) {
 	err = db.Model(&appraisalFlow).Preload("FlowSteps").Where("id = ?", id).First(&appraisalFlow).Error
