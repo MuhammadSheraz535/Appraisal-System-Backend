@@ -19,7 +19,10 @@ type EmployeeService struct {
 
 func NewEmployeeService() *EmployeeService {
 	db := database.DB
-	db.AutoMigrate(&models.Employee{}, &models.Role{})
+	err := db.AutoMigrate(&models.Employee{}, &models.Role{})
+	if err != nil {
+		panic(err)
+	}
 	return &EmployeeService{Db: db}
 }
 
