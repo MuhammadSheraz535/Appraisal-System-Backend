@@ -17,7 +17,10 @@ type SupervisorService struct {
 
 func NewSupervisorService() *SupervisorService {
 	db := database.DB
-	db.AutoMigrate(&models.Employee{})
+	err := db.AutoMigrate(&models.Employee{})
+	if err != nil {
+		panic(err)
+	}
 	return &SupervisorService{db: db}
 }
 

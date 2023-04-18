@@ -19,7 +19,10 @@ type RoleService struct {
 
 func NewRoleService() *RoleService {
 	db := database.DB
-	db.AutoMigrate(&models.Role{})
+	err := db.AutoMigrate(&models.Role{})
+	if err != nil {
+		panic(err)
+	}
 	return &RoleService{Db: db}
 }
 
