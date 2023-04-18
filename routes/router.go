@@ -22,11 +22,10 @@ func NewRouter() *gin.Engine {
 			"Authorization",
 			"Accept",
 			"Origin",
-			"Access-Control-Allow-Origin",
 			"Cache-Control",
 		},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin"},
+		AllowCredentials: false,
 	}))
 
 	ec := service.NewEmployeeService()
