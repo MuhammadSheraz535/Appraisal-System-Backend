@@ -18,11 +18,12 @@ type AssignType struct {
 
 type Kpi struct {
 	CommonModel
-	KpiName       string         `gorm:"size:100;not null;unique" json:"kpi_name"`
-	AssignType    uint64         `gorm:"not null" json:"assign_type"`
-	KpiType       string         `gorm:"not null" json:"kpi_type"`
-	ApplicableFor pq.StringArray `gorm:"type:text[];not null" json:"applicable_for"`
-	Statement     string         `json:"statement,omitempty"`
+	KpiName       string                  `gorm:"size:100;not null;unique" json:"kpi_name"`
+	AssignType    uint64                  `gorm:"not null" json:"assign_type"`
+	KpiType       string                  `gorm:"not null" json:"kpi_type"`
+	ApplicableFor pq.StringArray          `gorm:"type:text[];not null" json:"applicable_for"`
+	Statement     string                  `json:"statement,omitempty"`
+	Statements    []MultiStatementKpiData `gorm:"foreignKey:MultiStatementID" json:"-"`
 }
 
 type MultiKpi struct {
@@ -36,8 +37,8 @@ type MultiKpi struct {
 
 type MultiStatementKpiData struct {
 	CommonModel
-	KpiID         uint64 `gorm:"foreignKey:ID" json:"-"`
-	Statement     string `gorm:"not null" json:"statement"`
-	CorrectAnswer string `gorm:"not null" json:"correct_answer"`
-	Weightage     uint64 `gorm:"not null" json:"weightage"`
+	MultiStatementID uint64 `json:"-"`
+	Statement        string `gorm:"not null" json:"statement"`
+	CorrectAnswer    string `gorm:"not null" json:"correct_answer"`
+	Weightage        uint64 `gorm:"not null" json:"weightage"`
 }

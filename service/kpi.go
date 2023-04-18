@@ -161,7 +161,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		multiKpi.ID = kpi.ID
 
 		for i, statement := range multiKpi.Statements {
-			statement.KpiID = kpi.ID
+			statement.MultiStatementID = kpi.ID
 			err = tx.Create(&statement).Error
 			if err != nil {
 				tx.Rollback()
@@ -169,7 +169,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 				return
 			}
 			multiKpi.Statements[i].ID = statement.ID
-			multiKpi.Statements[i].KpiID = kpi.ID
+			multiKpi.Statements[i].MultiStatementID = kpi.ID
 		}
 
 		err = tx.Commit().Error
@@ -256,7 +256,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		}
 
 		for i, statement := range multiKpi.Statements {
-			statement.KpiID = kpi.ID
+			statement.MultiStatementID = kpi.ID
 			err = tx.Create(&statement).Error
 			if err != nil {
 				tx.Rollback()
@@ -264,7 +264,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 				return
 			}
 			multiKpi.Statements[i].ID = statement.ID
-			multiKpi.Statements[i].KpiID = kpi.ID
+			multiKpi.Statements[i].MultiStatementID = kpi.ID
 		}
 
 		err = tx.Commit().Error
