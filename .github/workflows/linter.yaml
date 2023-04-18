@@ -23,6 +23,7 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
           cache: false
+      - run: go get ./...
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
