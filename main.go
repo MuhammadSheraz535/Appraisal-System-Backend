@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -11,10 +10,7 @@ import (
 
 func main() {
 	// Load environment variables from .env file
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Panicf("Error loading .env file: %v", err)
-	}
+	_ = godotenv.Load(".env")
 
 	// Connect to the database
 	database.Connect()
