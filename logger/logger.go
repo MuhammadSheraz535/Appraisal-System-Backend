@@ -56,56 +56,48 @@ func JSONLogInit() {
 // }
 
 func Info(args ...interface{}) {
-	TextLogInit()
 	logrus.WithFields(logrus.Fields{
 		// "from": getLogCaller(),
 	}).Info(args...)
 }
 
 func Debug(args ...interface{}) {
-	TextLogInit()
 	logrus.WithFields(logrus.Fields{
 		// "from": getLogCaller(),
 	}).Debug(args...)
 }
 
 func Trace(args ...interface{}) {
-	TextLogInit()
 	logrus.WithFields(logrus.Fields{
 		// "from": getLogCaller(),
 	}).Trace(args...)
 }
 
 func Warn(args ...interface{}) {
-	TextLogInit()
 	logrus.WithFields(logrus.Fields{
 		// "from": getLogCaller(),
 	}).Warn(args...)
 }
 
 func Error(args ...interface{}) {
-	TextLogInit()
 	logrus.WithFields(logrus.Fields{
 		// "from": getLogCaller(),
 	}).Error(args...)
 }
 
 func Panic(args ...interface{}) {
-	TextLogInit()
 	logrus.WithFields(logrus.Fields{
 		// "from": getLogCaller(),
 	}).Panic(args...)
 }
 
 func Fatal(args ...interface{}) {
-	TextLogInit()
 	logrus.WithFields(logrus.Fields{
 		// "from": getLogCaller(),
 	}).Fatal(args...)
 }
 
 func WithFields(fields Fields) *logrus.Entry {
-	TextLogInit()
 	return logrus.WithFields(logrus.Fields(fields))
 }
 
