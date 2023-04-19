@@ -13,84 +13,73 @@ func NewRouter() *gin.Engine {
 	_ = router.SetTrustedProxies(nil)
 
 	router.Use(cors.New(cors.Config{
-		AllowAllOrigins:  true,
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Content-Type", "Content-Length", "Accept-Encoding", "Authorization", "Accept", "Origin", "Cache-Control"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+		AllowAllOrigins: true,
+		AllowMethods:    []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders: []string{
+			"Content-Type",
+			"Content-Length",
+			"Accept-Encoding",
+			"Authorization",
+			"Accept",
+			"Origin",
+			"Cache-Control",
+		},
+		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin"},
+		AllowCredentials: false,
 	}))
 
-	sc := service.NewSupervisorService()
-
 	ec := service.NewEmployeeService()
-
+	roleController := service.NewRoleService()
+	sc := service.NewSupervisorService()
 	kc := service.NewKPIService()
-
 	af := service.NewApprasialFlowService()
 
 	v1 := router.Group("/v1")
-	{
-		employee := v1.Group("/employees")
-		{
-			employee.POST("", ec.CreateEmployee)
-			employee.GET("", ec.GetEmployees)
-			employee.GET("/:id", ec.GetEmployee)
-			employee.PUT("/:id", ec.UpdateEmployee)
-			employee.DELETE("/:id", ec.DeleteEmployee)
-		}
-	}
-	roleController := service.NewRoleService()
 
-	v1 = router.Group("/v1")
+	employee := v1.Group("/employees")
 	{
-		roles := v1.Group("/roles")
-		{
-			roles.GET("/", roleController.GetAllRoles)
-			roles.GET(":id", roleController.GetRoleByID)
-			roles.POST("/", roleController.CreateRole)
-			roles.PUT(":id", roleController.UpdateRole)
-			roles.DELETE(":id", roleController.DeleteRole)
-		}
+		employee.POST("", ec.CreateEmployee)
+		employee.GET("", ec.GetEmployees)
+		employee.GET("/:id", ec.GetEmployee)
+		employee.PUT("/:id", ec.UpdateEmployee)
+		employee.DELETE("/:id", ec.DeleteEmployee)
 	}
 
-	v1 = router.Group("/v1")
+	roles := v1.Group("/roles")
 	{
-		supervisors := v1.Group("/supervisors")
-		{
-			supervisors.POST("/", sc.ConvertSupervisorToEmployee)
-			supervisors.GET("/", sc.GetSupervisors)
-			supervisors.GET(":id", sc.GetSupervisorById)
-			supervisors.PUT(":id", sc.UpdateSupervisor)
-			supervisors.DELETE(":id", sc.DeleteSupervisor)
-		}
+		roles.GET("/", roleController.GetAllRoles)
+		roles.GET(":id", roleController.GetRoleByID)
+		roles.POST("/", roleController.CreateRole)
+		roles.PUT(":id", roleController.UpdateRole)
+		roles.DELETE(":id", roleController.DeleteRole)
 	}
 
-	v1 = router.Group("/v1")
+	supervisors := v1.Group("/supervisors")
 	{
-		roles := v1.Group("/kpis")
-		{
-
-			roles.POST("/", kc.CreateKPI)
-			roles.GET("/", kc.GetAllKPI)
-			roles.GET(":id", kc.GetKPIByID)
-			roles.PUT(":id", kc.UpdateKPI)
-			roles.DELETE(":id", kc.DeleteKPI)
-
-		}
+		supervisors.POST("", sc.ConvertSupervisorToEmployee)
+		supervisors.GET("", sc.GetSupervisors)
+		supervisors.GET("/:id", sc.GetSupervisorById)
+		supervisors.PUT("/:id", sc.UpdateSupervisor)
+		supervisors.DELETE("/:id", sc.DeleteSupervisor)
 	}
 
-	v1 = router.Group("/v1")
+	kpis := v1.Group("/kpis")
 	{
-		appraisalflow := v1.Group("/appraisal_flows")
-		{
-
-			appraisalflow.POST("/", af.CreateAppraisalFlow)
-			appraisalflow.GET("/", af.GetAllApprasialFlow)
-			appraisalflow.GET(":id", af.GetAppraisalFlowByID)
-			appraisalflow.PUT(":id", af.UpdateAppraisalFlow)
-			appraisalflow.DELETE(":id", af.DeleteApprasialFlow)
-
-		}
+		kpis.POST("", kc.CreateKPI)
+		kpis.GET("", kc.GetAllKPI)
+		kpis.GET("/:id", kc.GetKPIByID)
+		kpis.PUT("/:id", kc.UpdateKPI)
+		kpis.DELETE("/:id", kc.DeleteKPI)
 	}
+
+	appraisalFlows := v1.Group("/appraisal_flows")
+	{
+		appraisalFlows.POST("", af.CreateAppraisalFlow)
+		appraisalFlows.GET("", af.GetAllApprasialFlow)
+		appraisalFlows.GET("/:id", af.GetAppraisalFlowByID)
+		appraisalFlows.PUT("/:id", af.UpdateAppraisalFlow)
+		appraisalFlows.DELETE("/:id", af.DeleteApprasialFlow)
+	}
+
 	return router
 }
