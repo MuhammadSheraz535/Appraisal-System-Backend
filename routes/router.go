@@ -13,10 +13,10 @@ import (
 func NewRouter() *gin.Engine {
 	router := gin.Default()
 
-	_ = router.SetTrustedProxies(nil)
-
 	isCorsEnabled, _ := strconv.ParseBool(os.Getenv("ENABLE_CORS"))
 	if isCorsEnabled {
+		_ = router.SetTrustedProxies(nil)
+
 		router.Use(cors.New(cors.Config{
 			AllowAllOrigins: true,
 			AllowMethods:    []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
