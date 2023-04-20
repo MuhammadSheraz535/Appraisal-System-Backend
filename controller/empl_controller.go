@@ -80,9 +80,7 @@ func GetEmployee(db *gorm.DB, Employee *models.Employee, id int) (err error) {
 
 // update Employee
 func UpdateEmployee(db *gorm.DB, Employee *models.Employee) (err error) {
-	var k models.Employee
 	err = db.Model(&Employee).Updates(&Employee).Save(&Employee).Error
-	Employee.CreatedAt = k.CreatedAt
 	return err
 }
 

@@ -3,7 +3,7 @@ package logger
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -17,12 +17,13 @@ const LoggerTimeStampFormat = time.RFC1123Z
 type Fields map[string]interface{}
 
 func TextLogInit() {
-	logrus.SetReportCaller(true)
+	// logrus.SetReportCaller(true)
 	formatter := &logrus.TextFormatter{
 		TimestampFormat: LoggerTimeStampFormat,
+		DisableColors:   false,
 		FullTimestamp:   true,
 		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
-			filename := path.Base(f.File)
+			filename := filepath.Base(f.File)
 			return fmt.Sprintf("%s()", f.Function), fmt.Sprintf("%s:%d", filename, f.Line)
 		},
 	}
@@ -32,13 +33,13 @@ func TextLogInit() {
 }
 
 func JSONLogInit() {
-	logrus.SetReportCaller(true)
+	// logrus.SetReportCaller(true)
 	formatter := &logrus.JSONFormatter{
 		TimestampFormat: LoggerTimeStampFormat,
 		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
 			s := strings.Split(f.Function, ".")
 			funcName := s[len(s)-1]
-			return funcName, fmt.Sprintf("%s:%d", path.Base(f.File), f.Line)
+			return funcName, fmt.Sprintf("%s:%d", filepath.Base(f.File), f.Line)
 		},
 	}
 	logrus.SetFormatter(formatter)
@@ -48,52 +49,60 @@ func JSONLogInit() {
 
 // getLogCaller
 // setReportCaller cannot ignore caller levels, so cannot work in a wrapper. Fix not merged in github, so doing it manually
-// func getLogCaller() string {
-// 	_, file, line, _ := runtime.Caller(2)
+func getLogCaller() string {
+	_, file, line, _ := runtime.Caller(2)
 
-// 	location := fmt.Sprintf("%v:%v", path.Base(file), line)
-// 	return location
-// }
+	projectRoot, _ := filepath.Abs(".")
+
+	relPath, err := filepath.Rel(projectRoot, file)
+	if err != nil {
+		// If there was an error getting the relative path, use the absolute path
+		relPath = file
+	}
+
+	location := fmt.Sprintf("%v:%v", relPath, line)
+	return location
+}
 
 func Info(args ...interface{}) {
 	logrus.WithFields(logrus.Fields{
-		// "from": getLogCaller(),
+		"from": getLogCaller(),
 	}).Info(args...)
 }
 
 func Debug(args ...interface{}) {
 	logrus.WithFields(logrus.Fields{
-		// "from": getLogCaller(),
+		"from": getLogCaller(),
 	}).Debug(args...)
 }
 
 func Trace(args ...interface{}) {
 	logrus.WithFields(logrus.Fields{
-		// "from": getLogCaller(),
+		"from": getLogCaller(),
 	}).Trace(args...)
 }
 
 func Warn(args ...interface{}) {
 	logrus.WithFields(logrus.Fields{
-		// "from": getLogCaller(),
+		"from": getLogCaller(),
 	}).Warn(args...)
 }
 
 func Error(args ...interface{}) {
 	logrus.WithFields(logrus.Fields{
-		// "from": getLogCaller(),
+		"from": getLogCaller(),
 	}).Error(args...)
 }
 
 func Panic(args ...interface{}) {
 	logrus.WithFields(logrus.Fields{
-		// "from": getLogCaller(),
+		"from": getLogCaller(),
 	}).Panic(args...)
 }
 
 func Fatal(args ...interface{}) {
 	logrus.WithFields(logrus.Fields{
-		// "from": getLogCaller(),
+		"from": getLogCaller(),
 	}).Fatal(args...)
 }
 
