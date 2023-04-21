@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/mrehanabbasi/appraisal-system-backend/controller"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
+	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"gorm.io/gorm"
 )
@@ -57,7 +58,7 @@ func NewKPIService() *KPIService {
 }
 
 func populateKpiTypeTable(db *gorm.DB) error {
-	// TODO: Delete this table and get KPI types from /kpi_types endpoint
+	// TODO: Delete this table population and get KPI types from /kpi_types endpoint
 	kpiTypes := []string{
 		FEEDBACK_KPI_TYPE,
 		OBSERVATORY_KPI_TYPE,
@@ -76,6 +77,7 @@ func populateKpiTypeTable(db *gorm.DB) error {
 		}
 		err := db.Create(&newKpiType).Error
 		if err != nil {
+			log.Error(err.Error())
 			return err
 		}
 
@@ -98,6 +100,7 @@ func populateAssignTypeTable(db *gorm.DB) error {
 		}
 		err := db.Create(&newAssignType).Error
 		if err != nil {
+			log.Error(err.Error())
 			return err
 		}
 	}
@@ -105,10 +108,13 @@ func populateAssignTypeTable(db *gorm.DB) error {
 	return nil
 }
 func (s *KPIService) CreateKPI(c *gin.Context) {
+	log.Info("Initializing CreateKPI handler function...")
+
 	var kpi models.Kpi
 	var err error
 
 	if err := c.ShouldBindBodyWith(&kpi, binding.JSON); err != nil {
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -117,25 +123,31 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 
 	kpiType, err := checkKpiType(s.Db, kpi.KpiType)
 	if err != nil {
+		log.Error("invalid kpi type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid KPI type"})
 		return
 	}
 
 	_, err = checkAssignType(s.Db, kpi.AssignType)
 	if err != nil {
+		log.Error("invalid assign type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
 		return
 	}
 
 	switch kpiType.BasicKpiType {
 	case SINGLE_KPI_TYPE:
+		log.Info("Handling single KPI type request...")
+
 		if kpi.Statement == "" {
+			log.Error("statement is nil in the request")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "statement is nil"})
 			return
 		}
 
 		kpi, err = controller.CreateKPI(s.Db, kpi)
 		if err != nil {
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -143,9 +155,12 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		c.JSON(http.StatusCreated, kpi)
 
 	case MULTI_KPI_TYPE:
+		log.Info("Handling multi KPI type request...")
+
 		var multiKpi models.MultiKpi
 		err = c.ShouldBindBodyWith(&multiKpi, binding.JSON)
 		if err != nil {
+			log.Error(err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -155,6 +170,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		kpi, err = controller.CreateKPI(tx, kpi)
 		if err != nil {
 			tx.Rollback()
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -165,6 +181,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 			err = tx.Create(&statement).Error
 			if err != nil {
 				tx.Rollback()
+				log.Error(err.Error())
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
@@ -174,29 +191,35 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 
 		err = tx.Commit().Error
 		if err != nil {
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
 		c.JSON(http.StatusCreated, multiKpi)
 	default:
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid KPI type"})
 		return
 	}
 }
 
 func (s *KPIService) UpdateKPI(c *gin.Context) {
+	log.Info("Initializing UpdateKPI handler function...")
+
 	kpiID := c.Param("id")
 	var kpi models.Kpi
 	var err error
 
 	if err := c.ShouldBindBodyWith(&kpi, binding.JSON); err != nil {
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	id, err := strconv.Atoi(kpiID)
 	if err != nil {
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -204,25 +227,31 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 
 	kpiType, err := checkKpiType(s.Db, kpi.KpiType)
 	if err != nil {
+		log.Error("invalid kpi type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid KPI type"})
 		return
 	}
 
 	_, err = checkAssignType(s.Db, kpi.AssignType)
 	if err != nil {
+		log.Error("invalid assign type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
 		return
 	}
 
 	switch kpiType.BasicKpiType {
 	case SINGLE_KPI_TYPE:
+		log.Info("Handling single KPI type request...")
+
 		if kpi.Statement == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Statement is nil"})
+			log.Error("statement is nil in the request")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "statement is nil"})
 			return
 		}
 
 		kpi, err = controller.UpdateKPI(s.Db, kpi)
 		if err != nil {
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -230,9 +259,12 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		c.JSON(http.StatusOK, kpi)
 
 	case MULTI_KPI_TYPE:
+		log.Info("Handling multi KPI type request...")
+
 		var multiKpi models.MultiKpi
 		err = c.ShouldBindBodyWith(&multiKpi, binding.JSON)
 		if err != nil {
+			log.Error(err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -242,6 +274,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		kpi, err = controller.UpdateKPI(tx, kpi)
 		if err != nil {
 			tx.Rollback()
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -251,6 +284,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		err = tx.Where("kpi_id = ?", kpi.ID).Delete(&models.MultiStatementKpiData{}).Error
 		if err != nil {
 			tx.Rollback()
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -260,6 +294,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 			err = tx.Create(&statement).Error
 			if err != nil {
 				tx.Rollback()
+				log.Error(err.Error())
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
@@ -269,39 +304,48 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 
 		err = tx.Commit().Error
 		if err != nil {
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
 		c.JSON(http.StatusOK, multiKpi)
 	default:
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid KPI type"})
 		return
 	}
 }
 
 func (s *KPIService) GetKPIByID(c *gin.Context) {
+	log.Info("Initializing GetKPIByID handler function...")
+
 	kpiID := c.Param("id")
 	id, err := strconv.Atoi(kpiID)
 	if err != nil {
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	kpi, err := controller.GetKPIByID(s.Db, uint(id))
 	if err != nil {
+		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	kpiType, err := checkKpiType(s.Db, kpi.KpiType)
 	if err != nil {
+		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	switch kpiType.BasicKpiType {
 	case SINGLE_KPI_TYPE:
+		log.Info("Handling single KPI type request...")
+
 		kpi_data := models.Kpi{
 			CommonModel:   models.CommonModel{ID: kpi.ID},
 			KpiName:       kpi.KpiName,
@@ -313,12 +357,15 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 
 		err := s.Db.Find(&kpi_data).Error
 		if err != nil {
+			log.Error("failed to fetch single type kpi")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
 			return
 		}
 		c.JSON(http.StatusOK, kpi_data)
 
 	case MULTI_KPI_TYPE:
+		log.Info("Handling multi KPI type request...")
+
 		kpi_data := models.MultiKpi{
 			CommonModel:   models.CommonModel{ID: kpi.ID},
 			KpiName:       kpi.KpiName,
@@ -330,6 +377,7 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 		var multistatementKpi []models.MultiStatementKpiData
 		err := s.Db.Where("kpi_id = ?", kpi.ID).Find(&multistatementKpi).Error
 		if err != nil {
+			log.Error("failed to fetch multi type kpi")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
 			return
 		}
@@ -340,6 +388,8 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 }
 
 func (s *KPIService) GetAllKPI(c *gin.Context) {
+	log.Info("Initializing GetAllKPI handler function...")
+
 	var kpis []models.Kpi
 	db := s.Db
 
@@ -364,6 +414,7 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 	}
 
 	if err := controller.GetAllKPI(db, &kpis); err != nil {
+		log.Error("failed to fetch kpis")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPIs"})
 		return
 	}
@@ -373,6 +424,7 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 	for _, k := range kpis {
 		kpiType, err := checkKpiType(s.Db, k.KpiType)
 		if err != nil {
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -389,6 +441,7 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 			}
 			err := s.Db.Find(&kpis).Error
 			if err != nil {
+				log.Error("failed to fetch single type kpi")
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
 				return
 			}
@@ -406,6 +459,7 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 			var multistatementKpi []models.MultiStatementKpiData
 			err := s.Db.Where("kpi_id = ?", k.ID).Find(&multistatementKpi).Error
 			if err != nil {
+				log.Error("failed to fetch multi type kpi")
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPI"})
 				return
 			}
@@ -421,11 +475,14 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 
 // DeleteKPI deletes a KPI with the given ID
 func (s *KPIService) DeleteKPI(c *gin.Context) {
+	log.Info("Initializing DeleteKPI handler function...")
+
 	id := c.Param("id")
 
 	var count int64
 	var kpi models.Kpi
 	if err := s.Db.First(&kpi, id).Count(&count).Error; err != nil {
+		log.Error("kpi not found with the given id")
 		c.JSON(http.StatusNotFound, gin.H{"error": "KPI not found"})
 		return
 	}
@@ -434,6 +491,7 @@ func (s *KPIService) DeleteKPI(c *gin.Context) {
 
 	if err := controller.DeleteKPI(tx, id); err != nil {
 		tx.Rollback()
+		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -441,20 +499,23 @@ func (s *KPIService) DeleteKPI(c *gin.Context) {
 	kpiType, err := checkKpiType(tx, kpi.KpiType)
 	if err != nil {
 		tx.Rollback()
+		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	if kpiType.BasicKpiType == MULTI_KPI_TYPE {
-		if err := tx.Where("kpi_id = ?", kpi.ID).Delete(&models.MultiStatementKpiData{}).Error; err != nil {
+		if err = tx.Where("kpi_id = ?", kpi.ID).Delete(&models.MultiStatementKpiData{}).Error; err != nil {
 			tx.Rollback()
+			log.Error("failed to delete kpi statements")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete KPI statements"})
 			return
 		}
 	}
 
-	if err := tx.Commit().Error; err != nil {
+	if err = tx.Commit().Error; err != nil {
 		tx.Rollback()
+		log.Error("failed to commit transactions")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to commit transaction"})
 		return
 	}
@@ -463,6 +524,7 @@ func (s *KPIService) DeleteKPI(c *gin.Context) {
 }
 
 func checkKpiType(db *gorm.DB, kpiType string) (models.KpiType, error) {
+	log.Info("Checking KPI type")
 	var kpiTypeModel models.KpiType
 	err := db.Where("kpi_type = ?", kpiType).First(&kpiTypeModel).Error
 	if err != nil {
@@ -472,6 +534,7 @@ func checkKpiType(db *gorm.DB, kpiType string) (models.KpiType, error) {
 }
 
 func checkAssignType(db *gorm.DB, assignType uint64) (models.AssignType, error) {
+	log.Info("Checking assign type")
 	var assignTypeModel models.AssignType
 	err := db.Where("assign_type_id = ?", assignType).First(&assignTypeModel).Error
 	if err != nil {
