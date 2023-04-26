@@ -13,6 +13,7 @@ import (
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 const (
@@ -42,6 +43,7 @@ func NewKPIService() *KPIService {
 	if err != nil {
 		panic(err)
 	}
+
 	// Populate assign_types table
 	err = populateAssignTypeTable(db)
 	if err != nil {
@@ -66,22 +68,27 @@ func populateKpiTypeTable(db *gorm.DB) error {
 		QUESTIONNAIRE_KPI_TYPE,
 	}
 
+	kpiTypesSlice := make([]models.KpiType, len(kpiTypes))
+
 	for k, v := range kpiTypes {
 		newKpiType := models.KpiType{
 			KpiType: v,
 		}
-		if k == 0 || k == 1 {
+		if k == 0 || k == 1 { // Feedback and Observatory will be 'Single'
 			newKpiType.BasicKpiType = SINGLE_KPI_TYPE
-		} else if k == 2 || k == 3 {
+		} else if k == 2 || k == 3 { // Measured and Questionnaire will be 'Multi'
 			newKpiType.BasicKpiType = MULTI_KPI_TYPE
 		}
-		err := db.Create(&newKpiType).Error
-		if err != nil {
-			log.Error(err.Error())
-			return err
-		}
 
+		kpiTypesSlice[k] = newKpiType
 	}
+
+	err := db.Clauses(clause.OnConflict{DoNothing: true}).Create(&kpiTypesSlice).Error
+	if err != nil {
+		log.Error(err.Error())
+		return err
+	}
+
 	return nil
 }
 
@@ -93,20 +100,24 @@ func populateAssignTypeTable(db *gorm.DB) error {
 	}
 
 	// Make assign type ID as 0 = Role, 1 = Team and 2 = Individual
+	assignTypesSlice := make([]models.AssignType, len(assignTypes))
 	for i, a := range assignTypes {
 		newAssignType := models.AssignType{
 			AssignTypeId: uint64(i),
 			AssignType:   a,
 		}
-		err := db.Create(&newAssignType).Error
-		if err != nil {
-			log.Error(err.Error())
-			return err
-		}
+		assignTypesSlice[i] = newAssignType
+	}
+
+	err := db.Clauses(clause.OnConflict{DoNothing: true}).Create(&assignTypesSlice).Error
+	if err != nil {
+		log.Error(err.Error())
+		return err
 	}
 
 	return nil
 }
+
 func (s *KPIService) CreateKPI(c *gin.Context) {
 	log.Info("Initializing CreateKPI handler function...")
 
@@ -121,14 +132,14 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 
 	kpi.ID = 0
 
-	kpiType, err := checkKpiType(s.Db, kpi.KpiType)
+	kpiType, err := checkKpiType(s.Db, kpi.KpiTypeID)
 	if err != nil {
 		log.Error("invalid kpi type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid KPI type"})
 		return
 	}
 
-	_, err = checkAssignType(s.Db, kpi.AssignType)
+	_, err = checkAssignType(s.Db, kpi.AssignTypeID)
 	if err != nil {
 		log.Error("invalid assign type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
@@ -225,14 +236,14 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 	}
 	kpi.ID = uint64(id)
 
-	kpiType, err := checkKpiType(s.Db, kpi.KpiType)
+	kpiType, err := checkKpiType(s.Db, kpi.KpiTypeID)
 	if err != nil {
 		log.Error("invalid kpi type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid KPI type"})
 		return
 	}
 
-	_, err = checkAssignType(s.Db, kpi.AssignType)
+	_, err = checkAssignType(s.Db, kpi.AssignTypeID)
 	if err != nil {
 		log.Error("invalid assign type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
@@ -335,7 +346,7 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 		return
 	}
 
-	kpiType, err := checkKpiType(s.Db, kpi.KpiType)
+	kpiType, err := checkKpiType(s.Db, kpi.KpiTypeID)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -349,8 +360,8 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 		kpi_data := models.Kpi{
 			CommonModel:   models.CommonModel{ID: kpi.ID},
 			KpiName:       kpi.KpiName,
-			AssignType:    kpi.AssignType,
-			KpiType:       kpi.KpiType,
+			AssignTypeID:  kpi.AssignTypeID,
+			KpiTypeID:     kpi.KpiTypeID,
 			ApplicableFor: kpi.ApplicableFor,
 			Statement:     kpi.Statement,
 		}
@@ -369,8 +380,8 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 		kpi_data := models.MultiKpi{
 			CommonModel:   models.CommonModel{ID: kpi.ID},
 			KpiName:       kpi.KpiName,
-			AssignType:    kpi.AssignType,
-			KpiType:       kpi.KpiType,
+			AssignType:    kpi.AssignTypeID,
+			KpiType:       kpi.KpiTypeID,
 			ApplicableFor: kpi.ApplicableFor,
 		}
 
@@ -422,7 +433,7 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 	var allKpis []interface{}
 
 	for _, k := range kpis {
-		kpiType, err := checkKpiType(s.Db, k.KpiType)
+		kpiType, err := checkKpiType(s.Db, k.KpiTypeID)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -434,8 +445,8 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 			kpi_data := models.Kpi{
 				CommonModel:   models.CommonModel{ID: k.ID},
 				KpiName:       k.KpiName,
-				AssignType:    k.AssignType,
-				KpiType:       k.KpiType,
+				AssignTypeID:  k.AssignTypeID,
+				KpiTypeID:     k.KpiTypeID,
 				ApplicableFor: k.ApplicableFor,
 				Statement:     k.Statement,
 			}
@@ -451,8 +462,8 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 			kpi_data := models.MultiKpi{
 				CommonModel:   models.CommonModel{ID: k.ID},
 				KpiName:       k.KpiName,
-				AssignType:    k.AssignType,
-				KpiType:       k.KpiType,
+				AssignType:    k.AssignTypeID,
+				KpiType:       k.KpiTypeID,
 				ApplicableFor: k.ApplicableFor,
 			}
 
@@ -496,7 +507,7 @@ func (s *KPIService) DeleteKPI(c *gin.Context) {
 		return
 	}
 
-	kpiType, err := checkKpiType(tx, kpi.KpiType)
+	kpiType, err := checkKpiType(tx, kpi.KpiTypeID)
 	if err != nil {
 		tx.Rollback()
 		log.Error(err.Error())
