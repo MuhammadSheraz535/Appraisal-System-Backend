@@ -13,7 +13,7 @@ func CreateKPI(db *gorm.DB, kpi *models.Kpi) (*models.Kpi, error) {
 
 	// Check if KPI name already exists
 	var count int64
-	if err := db.Model(&models.Kpi{}).Where("kpi_name = ?", kpi.KpiName).Count(&count).Error; err != nil {
+	if err := db.Model(&models.Kpi{}).Where("kpi_name = ? AND id != ?", kpi.KpiName, kpi.ID).Count(&count).Error; err != nil {
 		log.Error(err.Error())
 		return nil, err
 	}
@@ -43,6 +43,11 @@ func UpdateKPI(db *gorm.DB, kpi *models.Kpi) (*models.Kpi, error) {
 	if count > 0 {
 		log.Error("invalid kpi id or kpi name already exists")
 		return nil, errors.New("invalid kpi id or kpi name already exists")
+	}
+
+	if err := db.First(&kpi, kpi.ID).Error; err != nil {
+		log.Error("kpi with the given id not found")
+		return nil, errors.New("kpi not found")
 	}
 
 	// TODO: Ensure that data from multi_statement_kpi_data table is only updated instead of being deleted
@@ -102,27 +107,11 @@ func DeleteKPI(db *gorm.DB, id uint64) error {
 		return errors.New("kpi not found")
 	}
 
-	tx := db.Begin()
-
 	// Delete the KPI
-	if err := tx.Preload("Statements").Delete(&models.Kpi{}, id).Error; err != nil {
-		tx.Rollback()
+	if err := db.Select("Statements").Delete(&kpi).Error; err != nil {
 		log.Error("failed to delete kpi")
 		return errors.New("failed to delete KPI")
 	}
-
-	// TODO: Deleting KPI should also delete the statements
-	var count int64
-	_ = tx.First(&models.MultiStatementKpiData{}, "kpi_id = ?", id).Count(&count).Error
-	if count > 0 {
-		if err := tx.Delete(&models.MultiStatementKpiData{}, "kpi_id = ?", kpi.ID).Error; err != nil {
-			tx.Rollback()
-			log.Error(err.Error())
-			return err
-		}
-	}
-
-	tx.Commit()
 
 	return nil
 }
