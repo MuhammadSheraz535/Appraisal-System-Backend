@@ -194,7 +194,33 @@ func (r *ApprasialService) UpdateAppraisal(c *gin.Context) {
 	c.JSON(http.StatusOK, appraisal)
 }
 
+func (r *ApprasialService) DeleteApprasial(c *gin.Context) {
+	log.Info("Initializing DeleteAppraisal handler function...")
 
+	var appraisal models.Apprasial
+	id, _ := strconv.Atoi(c.Param("id"))
+	appraisal.ID = uint64(id)
+
+	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error("appraisal record not found against the given id")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "record not found"})
+			return
+		}
+
+		log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = controller.DeleteApprasial(r.Db, &appraisal, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
 
 func checkAppraisalType(db *gorm.DB, appraisal_type string) ( error) {
 	log.Info("Checking Appraisal type")

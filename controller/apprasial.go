@@ -6,6 +6,7 @@ import (
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func CreateAppraisal(db *gorm.DB, appraisal models.Apprasial) (models.Apprasial, error) {
@@ -67,4 +68,15 @@ func UpdateAppraisal(db *gorm.DB, appraisal *models.Apprasial, id int) (models.A
 		return *appraisal, err
 	}
 	return *appraisal, nil
+}
+
+func DeleteApprasial(db *gorm.DB, appraisal *models.Apprasial, id int) error {
+	log.Info("Deleting appraisal")
+
+	err := db.Select(clause.Associations).Delete(&appraisal).Error
+	if err != nil {
+		log.Error(err.Error())
+		return err
+	}
+	return nil
 }
