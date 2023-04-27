@@ -50,24 +50,29 @@ func UpdateKPI(db *gorm.DB, kpi *models.Kpi) (*models.Kpi, error) {
 		return nil, errors.New("kpi not found")
 	}
 
-	// TODO: Ensure that data from multi_statement_kpi_data table is only updated instead of being deleted
-
-	tx := db.Begin()
-
-	if err := tx.Delete(&models.MultiStatementKpiData{}, "kpi_id = ?", kpi.ID).Error; err != nil {
-		tx.Rollback()
+	var statements []models.MultiStatementKpiData
+	if err := db.Model(&models.MultiStatementKpiData{}).Find(&statements, "kpi_id = ?", kpi.ID).Error; err != nil {
 		log.Error(err.Error())
 		return nil, err
+	}
+
+	// Assigning statements' IDs to the request statements
+	if len(statements) <= len(kpi.Statements) && len(statements) != 0 && len(kpi.Statements) != 0 {
+		for k, v := range statements {
+			kpi.Statements[k].ID = v.ID
+		}
+	}
+	if len(statements) > len(kpi.Statements) && len(statements) != 0 && len(kpi.Statements) != 0 {
+		for k := range kpi.Statements {
+			kpi.Statements[k].ID = statements[k].ID
+		}
 	}
 
 	// Update KPI record
-	if err := tx.Save(kpi).Error; err != nil {
-		tx.Rollback()
+	if err := db.Session(&gorm.Session{FullSaveAssociations: true}).Save(kpi).Error; err != nil {
 		log.Error(err.Error())
 		return nil, err
 	}
-
-	tx.Commit()
 
 	return kpi, nil
 }
