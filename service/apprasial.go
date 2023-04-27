@@ -1,7 +1,9 @@
 package service
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mrehanabbasi/appraisal-system-backend/controller"
@@ -101,12 +103,59 @@ func (r *ApprasialService) CreateAppraisal(c *gin.Context) {
 	c.JSON(http.StatusCreated, appraisal)
 }
 
-func checkAppraisalType(db *gorm.DB, appraisal_type string) error {
+
+
+func (r *ApprasialService) UpdateAppraisal(c *gin.Context) {
+	log.Info("Initializing UpdateAppraisal handler function...")
+
+	var appraisal models.Apprasial
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error("appraisal record not found against the given id")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "record not found"})
+			return
+		}
+
+		log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = c.ShouldBindJSON(&appraisal)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Query apprasialflow struct using apprasialflowid value and update  apprasialflow id accordingly
+	var apprasialflow models.AppraisalFlow
+	err = r.Db.First(&apprasialflow, appraisal.AppraisalFlowID).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Appraisal Flow ID not exist"})
+		return
+	}
+	appraisal.AppraisalFlow = apprasialflow
+
+	appraisal, err = controller.UpdateAppraisal(r.Db, &appraisal, id)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, appraisal)
+}
+
+
+
+func checkAppraisalType(db *gorm.DB, appraisal_type string) ( error) {
 	log.Info("Checking Appraisal type")
 	var appraisalTypeModel models.AppraisalType
 	err := db.Where("appraisal_type = ?", appraisal_type).First(&appraisalTypeModel).Error
 	if err != nil {
-		return err
+		return  err
 	}
 	return nil
 }
