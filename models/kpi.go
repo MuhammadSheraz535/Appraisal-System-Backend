@@ -6,37 +6,32 @@ import (
 
 type KpiType struct {
 	CommonModel
-	KpiType      string `gorm:"not null,unique" json:"kpi_type"`
-	BasicKpiType string `gorm:"not null,unique" json:"basic_kpi_type"`
+	KpiType      string `gorm:"not null;unique" json:"kpi_type"`
+	BasicKpiType string `gorm:"not null" json:"basic_kpi_type"`
 }
 
 type AssignType struct {
 	CommonModel
-	AssignTypeId uint64 `gorm:"not null,unique" json:"assign_type_id"`
-	AssignType   string `gorm:"not null,unique" json:"assign_type"`
+	AssignTypeId uint64 `gorm:"not null;unique" json:"assign_type_id"`
+	AssignType   string `gorm:"not null;unique" json:"assign_type"`
 }
 
 type Kpi struct {
 	CommonModel
-	KpiName       string         `gorm:"size:100;not null;unique" json:"kpi_name"`
-	AssignType    uint64         `gorm:"not null" json:"assign_type"`
-	KpiType       string         `gorm:"not null" json:"kpi_type"`
-	ApplicableFor pq.StringArray `gorm:"type:text[];not null" json:"applicable_for"`
-	Statement     string         `json:"statement,omitempty"`
-}
-
-type MultiKpi struct {
-	CommonModel
-	KpiName       string                  `json:"kpi_name"`
-	AssignType    uint64                  `json:"assign_type"`
-	KpiType       string                  `json:"kpi_type"`
-	ApplicableFor pq.StringArray          `json:"applicable_for"`
-	Statements    []MultiStatementKpiData `json:"statements,omitempty"`
+	KpiName        string                  `gorm:"size:100;not null" json:"kpi_name"`
+	KpiDescription string                  `gorm:"not null" json:"kpi_description"`
+	AssignTypeID   uint64                  `gorm:"not null" json:"assign_type"`
+	AssignType     AssignType              `gorm:"references:AssignTypeId;foreignKey:AssignTypeID" json:"-"`
+	KpiTypeStr     string                  `gorm:"not null" json:"kpi_type"`
+	KpiType        KpiType                 `gorm:"references:KpiType;foreignKey:KpiTypeStr" json:"-"`
+	ApplicableFor  pq.StringArray          `gorm:"type:text[];not null" json:"applicable_for"`
+	Statement      string                  `json:"statement,omitempty"`
+	Statements     []MultiStatementKpiData `gorm:"foreignKey:KpiID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"statements,omitempty"`
 }
 
 type MultiStatementKpiData struct {
 	CommonModel
-	KpiID         uint64 `gorm:"foreignKey:ID" json:"-"`
+	KpiID         uint64 `gorm:"not null" json:"-"`
 	Statement     string `gorm:"not null" json:"statement"`
 	CorrectAnswer string `gorm:"not null" json:"correct_answer"`
 	Weightage     uint64 `gorm:"not null" json:"weightage"`
