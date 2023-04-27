@@ -93,7 +93,7 @@ func NewRouter() *gin.Engine {
 		appraisal.POST("", a.CreateAppraisal)
 		// appraisal.GET("", a.GetAllApprasial)
 		// appraisal.GET("/:id", a.GetAppraisalByID)
-		// appraisal.PUT("/:id", a.UpdateAppraisal)
+		appraisal.PUT("/:id", a.UpdateAppraisal)
 		// appraisal.DELETE("/:id", a.DeleteApprasial)
 	}
 
