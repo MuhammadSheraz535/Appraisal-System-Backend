@@ -13,7 +13,7 @@ func CreateAppraisalFlow(db *gorm.DB, appraisalFlow models.AppraisalFlow) (model
 	log.Info("Creating appraisal flow")
 
 	var count int64
-	if err := db.Table("appraisal_flows").Where("flow_name = ?", appraisalFlow.FlowName).Count(&count).Error; err != nil {
+	if err := db.Model(&models.AppraisalFlow{}).Where("flow_name = ?", appraisalFlow.FlowName).Count(&count).Error; err != nil {
 		log.Error(err.Error())
 		return appraisalFlow, err
 	}
@@ -28,7 +28,7 @@ func CreateAppraisalFlow(db *gorm.DB, appraisalFlow models.AppraisalFlow) (model
 		stepNames = append(stepNames, flow.StepName)
 	}
 	var stepCount int64
-	if err := db.Table("flow_steps").Where("step_name IN (?)", stepNames).Count(&stepCount).Error; err != nil {
+	if err := db.Model(&models.FlowStep{}).Where("step_name IN (?)", stepNames).Count(&stepCount).Error; err != nil {
 		log.Error(err.Error())
 		return appraisalFlow, err
 	}
