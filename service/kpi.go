@@ -263,30 +263,22 @@ func (s *KPIService) GetAllKPI(c *gin.Context) {
 	log.Info("Initializing GetAllKPI handler function...")
 
 	var kpis []models.Kpi
-	db := s.Db
+	db := s.Db.Model(&models.Kpi{})
 
 	kpiName := c.Query("kpi_name")
 	assignType := c.Query("assign_type")
 	kpiType := c.Query("kpi_type")
 
-	if kpiName != "" && assignType != "" && kpiType != "" {
-		db = db.Table("kpis").Where("kpis.kpi_name LIKE ? AND kpis.assign_type = ? AND kpis.kpi_type = ?",
-			"%"+kpiName+"%",
-			assignType,
-			kpiType,
-		)
-	} else if kpiName != "" && assignType != "" {
-		db = db.Table("kpis").Where("kpis.kpi_name LIKE ? AND kpis.assign_type = ?", "%"+kpiName+"%", assignType)
-	} else if kpiName != "" && kpiType != "" {
-		db = db.Table("kpis").Where("kpis.kpi_name LIKE ? AND kpis.kpi_type = ?", "%"+kpiName+"%", kpiType)
-	} else if assignType != "" && kpiType != "" {
-		db = db.Table("kpis").Where("kpis.assign_type = ? AND kpis.kpi_type = ?", assignType, kpiType)
-	} else if kpiName != "" {
-		db = db.Table("kpis").Where("kpis.kpi_name LIKE ?", "%"+kpiName+"%")
-	} else if assignType != "" {
-		db = db.Table("kpis").Where("kpis.assign_type = ?", assignType)
-	} else if kpiType != "" {
-		db = db.Table("kpis").Where("kpis.kpi_type = ?", kpiType)
+	if kpiName != "" {
+		db = db.Where("kpi_name LIKE ?", "%"+kpiName+"%")
+	}
+
+	if assignType != "" {
+		db = db.Where("assign_type_id = ?", assignType)
+	}
+
+	if kpiType != "" {
+		db = db.Where("kpi_type_str = ?", kpiType)
 	}
 
 	if err := controller.GetAllKPI(db, &kpis); err != nil {
