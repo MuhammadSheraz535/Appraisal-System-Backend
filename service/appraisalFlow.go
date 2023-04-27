@@ -21,8 +21,10 @@ func NewApprasialFlowService() *ApprasialFlowService {
 	db := database.DB
 	err := db.AutoMigrate(&models.AppraisalFlow{}, &models.FlowStep{})
 	if err != nil {
+		log.Panic(err.Error())
 		panic(err)
 	}
+
 	return &ApprasialFlowService{Db: db}
 }
 
@@ -33,23 +35,25 @@ func (r *ApprasialFlowService) CreateAppraisalFlow(c *gin.Context) {
 	err := c.ShouldBindJSON(&appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
 
-	appraisalFlow, err = controller.CreateAppraisalFlow(r.Db, appraisalFlow)
+	dbAppraisalFlow, err := controller.CreateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, appraisalFlow)
+
+	c.JSON(http.StatusCreated, dbAppraisalFlow)
 }
 
 func (r *ApprasialFlowService) GetAppraisalFlowByID(c *gin.Context) {
 	log.Info("Initializing GetAppraisalFlowByID handler function...")
 
-	id, _ := strconv.Atoi(c.Param("id"))
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
+
 	var appraisalFlow models.AppraisalFlow
 	err := controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
 	if err != nil {
@@ -63,19 +67,20 @@ func (r *ApprasialFlowService) GetAppraisalFlowByID(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusOK, appraisalFlow)
 }
 
 func (r *ApprasialFlowService) GetAllApprasialFlow(c *gin.Context) {
 	log.Info("Initializing GetAllAppraisalFlow handler function...")
 
-	var appraisalFlow []models.AppraisalFlow
+	var appraisalFlows []models.AppraisalFlow
 
 	flowName := c.Query("flow_name")
 	isActive := c.Query("is_active")
 	teamId := c.Query("team_id")
 
-	err := controller.GetAllApprasialFlow(flowName, isActive, teamId, r.Db, &appraisalFlow)
+	err := controller.GetAllApprasialFlow(flowName, isActive, teamId, r.Db, &appraisalFlows)
 
 	if err != nil {
 		log.Error(err.Error())
@@ -83,14 +88,14 @@ func (r *ApprasialFlowService) GetAllApprasialFlow(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, appraisalFlow)
+	c.JSON(http.StatusOK, appraisalFlows)
 }
 
 func (r *ApprasialFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	log.Info("Initializing UpdateAppraisalFlow handler function...")
 
 	var appraisalFlow models.AppraisalFlow
-	id, _ := strconv.Atoi(c.Param("id"))
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
 
 	err := controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
 	if err != nil {
@@ -107,7 +112,8 @@ func (r *ApprasialFlowService) UpdateAppraisalFlow(c *gin.Context) {
 
 	err = c.ShouldBindJSON(&appraisalFlow)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
 
@@ -117,6 +123,7 @@ func (r *ApprasialFlowService) UpdateAppraisalFlow(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusOK, appraisalFlow)
 }
 
@@ -124,8 +131,8 @@ func (r *ApprasialFlowService) DeleteApprasialFlow(c *gin.Context) {
 	log.Info("Initializing DeleteAppraisalFlow handler function...")
 
 	var appraisalFlow models.AppraisalFlow
-	id, _ := strconv.Atoi(c.Param("id"))
-	appraisalFlow.ID = uint64(id)
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
+	appraisalFlow.ID = id
 
 	err := controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
 	if err != nil {
@@ -142,8 +149,10 @@ func (r *ApprasialFlowService) DeleteApprasialFlow(c *gin.Context) {
 
 	err = controller.DeleteApprasialFlow(r.Db, &appraisalFlow, id)
 	if err != nil {
+		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.Status(http.StatusNoContent)
 }

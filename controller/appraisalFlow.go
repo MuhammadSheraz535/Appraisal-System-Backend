@@ -9,45 +9,40 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func CreateAppraisalFlow(db *gorm.DB, appraisalFlow models.AppraisalFlow) (models.AppraisalFlow, error) {
+func CreateAppraisalFlow(db *gorm.DB, appraisalFlow *models.AppraisalFlow) (*models.AppraisalFlow, error) {
 	log.Info("Creating appraisal flow")
 
 	var count int64
 	if err := db.Model(&models.AppraisalFlow{}).Where("flow_name = ?", appraisalFlow.FlowName).Count(&count).Error; err != nil {
 		log.Error(err.Error())
-		return appraisalFlow, err
+		return nil, err
 	}
 	if count > 0 {
 		log.Error("appraisal flow name already exists")
-		return appraisalFlow, errors.New("flow name already exists")
+		return nil, errors.New("flow name already exists")
 	}
 
-	// check uniqueness of step names for all flows
+	// check uniqueness of step names for current request
 	var stepNames []string
 	for _, flow := range appraisalFlow.FlowSteps {
+		if contains(stepNames, flow.StepName) {
+			log.Error("flow step name already exists in the same request")
+			return nil, errors.New("step name already exists")
+		}
 		stepNames = append(stepNames, flow.StepName)
-	}
-	var stepCount int64
-	if err := db.Model(&models.FlowStep{}).Where("step_name IN (?)", stepNames).Count(&stepCount).Error; err != nil {
-		log.Error(err.Error())
-		return appraisalFlow, err
-	}
-	if stepCount > 0 {
-		log.Error("flow step name already exists in the same request")
-		return appraisalFlow, errors.New("step name already exists")
 	}
 
 	if err := db.Create(&appraisalFlow).Error; err != nil {
 		log.Error(err.Error())
-		return appraisalFlow, err
+		return nil, err
 	}
 	return appraisalFlow, nil
 }
 
-func GetAppraisalFlowByID(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id int) (err error) {
+func GetAppraisalFlowByID(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id uint64) error {
 	log.Info("Getting appraisal flow by ID")
 
-	err = db.Model(&appraisalFlow).Preload("FlowSteps").Where("id = ?", id).First(&appraisalFlow).Error
+	err := db.Model(&models.AppraisalFlow{}).Preload("FlowSteps").Where("id = ?", id).First(&appraisalFlow).Error
 	if err != nil {
 		log.Error(err.Error())
 		return err
@@ -55,64 +50,33 @@ func GetAppraisalFlowByID(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id i
 	return nil
 }
 
-func GetAllApprasialFlow(flowName, isActive, teamId string, db *gorm.DB, appraisalFlow *[]models.AppraisalFlow) (err error) {
+func GetAllApprasialFlow(flowName, isActive, teamId string, db *gorm.DB, appraisalFlows *[]models.AppraisalFlow) error {
 	log.Info("Getting all appraisal flows")
 
-	if flowName != "" && isActive != "" && teamId != "" {
-		err = db.Model(&appraisalFlow).Preload("FlowSteps").Where("flow_name = ? AND is_active = ? AND team_id = ?", flowName, isActive, teamId).Find(&appraisalFlow).Error
-		if err != nil {
-			log.Error(err.Error())
-			return err
-		}
-	} else if flowName != "" {
-		err = db.Model(&appraisalFlow).Preload("FlowSteps").Where("flow_name LIKE ?", "%"+flowName+"%").Find(&appraisalFlow).Error
-		if err != nil {
-			log.Error(err.Error())
-			return err
-		}
-	} else if flowName != "" && isActive != "" {
-		err = db.Model(&appraisalFlow).Preload("FlowSteps").Where("flow_name = ? AND is_active = ?", flowName, isActive).Find(&appraisalFlow).Error
-		if err != nil {
-			log.Error(err.Error())
-			return err
-		}
-	} else if flowName != "" && teamId != "" {
-		err = db.Model(&appraisalFlow).Preload("FlowSteps").Where("flow_name = ? AND team_id = ?", flowName, teamId).Find(&appraisalFlow).Error
-		if err != nil {
-			log.Error(err.Error())
-			return err
-		}
-	} else if isActive != "" && teamId != "" {
-		err = db.Model(&appraisalFlow).Preload("FlowSteps").Where("is_active = ? AND team_id = ?", isActive, teamId).Find(&appraisalFlow).Error
-		if err != nil {
-			log.Error(err.Error())
-			return err
-		}
-	} else if isActive != "" {
-		err = db.Model(&appraisalFlow).Preload("FlowSteps").Where("is_active = ?", isActive).Find(&appraisalFlow).Error
-		if err != nil {
-			log.Error(err.Error())
-			return err
-		}
-	} else if teamId != "" {
-		err = db.Model(&appraisalFlow).Preload("FlowSteps").Where("team_id = ?", teamId).Find(&appraisalFlow).Error
-		if err != nil {
-			log.Error(err.Error())
-			return err
-		}
-	} else {
+	db = db.Model(&models.AppraisalFlow{}).Preload("FlowSteps")
 
-		err = db.Model(&appraisalFlow).Preload("FlowSteps").Find(&appraisalFlow).Error
-		if err != nil {
-			log.Error(err.Error())
-			return err
-		}
+	if flowName != "" {
+		db = db.Where("flow_name LIKE ?", "%"+flowName+"%")
+	}
+
+	if isActive != "" {
+		db = db.Where("is_active = ?", isActive)
+	}
+
+	if teamId != "" {
+		db = db.Where("team_id = ?", teamId)
+	}
+
+	err := db.Find(&appraisalFlows).Error
+	if err != nil {
+		log.Error(err.Error())
+		return err
 	}
 
 	return nil
 }
 
-func UpdateAppraisalFlow(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id int) error {
+func UpdateAppraisalFlow(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id uint64) error {
 	log.Info("Updating appraisal flow")
 
 	err := db.Session(&gorm.Session{FullSaveAssociations: true}).Where("id = ?", id).Save(&appraisalFlow).Error
@@ -120,10 +84,11 @@ func UpdateAppraisalFlow(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id in
 		log.Error(err.Error())
 		return err
 	}
+
 	return nil
 }
 
-func DeleteApprasialFlow(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id int) error {
+func DeleteApprasialFlow(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id uint64) error {
 	log.Info("Deleting appraisal flow")
 
 	err := db.Select(clause.Associations).Delete(&appraisalFlow).Error
@@ -131,5 +96,16 @@ func DeleteApprasialFlow(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id in
 		log.Error(err.Error())
 		return err
 	}
+
 	return nil
+}
+
+// Contains tells whether a contains x.
+func contains(a []string, x string) bool {
+	for _, n := range a {
+		if x == n {
+			return true
+		}
+	}
+	return false
 }
