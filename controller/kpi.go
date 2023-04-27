@@ -82,7 +82,7 @@ func GetKPIByID(db *gorm.DB, id uint64) (models.Kpi, error) {
 
 	var kpi models.Kpi
 
-	if err := db.Where("id = ?", id).First(&kpi).Error; err != nil {
+	if err := db.Model(&models.Kpi{}).Preload("Statements").Where("id = ?", id).First(&kpi).Error; err != nil {
 		log.Error(err.Error())
 		return kpi, err
 	}
@@ -93,7 +93,7 @@ func GetKPIByID(db *gorm.DB, id uint64) (models.Kpi, error) {
 func GetAllKPI(db *gorm.DB, kpi *[]models.Kpi) (err error) {
 	log.Info("Getting all KPIs")
 
-	err = db.Table("kpis").Find(&kpi).Error
+	err = db.Model(&models.Kpi{}).Preload("Statements").Find(&kpi).Error
 	if err != nil {
 		log.Error(err.Error())
 		return err
