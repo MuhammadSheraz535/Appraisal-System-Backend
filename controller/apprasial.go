@@ -38,6 +38,17 @@ func GetAppraisalByID(db *gorm.DB, appraisal *models.Apprasial, id int) (err err
 	return nil
 }
 
+func GetAllApprasial(db *gorm.DB, appraisal *[]models.Apprasial) (err error) {
+	log.Info("Getting all appraisal")
+
+	err = db.Model(models.Apprasial{}).Preload("AppraisalKpis").Find(&appraisal).Error
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
 func UpdateAppraisal(db *gorm.DB, appraisal *models.Apprasial, id int) (models.Apprasial, error) {
 	log.Info("Updating appraisal")
 	// Check if KPI IDs exist in KPIs table

@@ -124,6 +124,33 @@ func (r *ApprasialService) GetAppraisalByID(c *gin.Context) {
 	c.JSON(http.StatusOK, appraisal)
 }
 
+func (r *ApprasialService) GetAllApprasial(c *gin.Context) {
+	log.Info("Initializing GetAllAppraisal handler function...")
+	var appraisal []models.Apprasial
+	db := r.Db.Model(&models.Apprasial{})
+
+	apprasialName := c.Query("apprasial_name")
+	supervisorID := c.Query("supervisor_id")
+
+	if apprasialName != "" {
+		db = db.Where("apprasial_name LIKE ?", "%"+apprasialName+"%")
+	}
+
+	if supervisorID != "" {
+		db = db.Where("supervisor_id = ?", supervisorID)
+	}
+
+	err := controller.GetAllApprasial(db, &appraisal)
+
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, appraisal)
+}
+
 func (r *ApprasialService) UpdateAppraisal(c *gin.Context) {
 	log.Info("Initializing UpdateAppraisal handler function...")
 
