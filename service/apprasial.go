@@ -104,6 +104,25 @@ func (r *ApprasialService) CreateAppraisal(c *gin.Context) {
 }
 
 
+func (r *ApprasialService) GetAppraisalByID(c *gin.Context) {
+	log.Info("Initializing GetAppraisalByID handler function...")
+
+	id, _ := strconv.Atoi(c.Param("id"))
+	var appraisal models.Apprasial
+	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error("appraisal record not found against the given id")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "record not found"})
+			return
+		}
+
+		log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, appraisal)
+}
 
 func (r *ApprasialService) UpdateAppraisal(c *gin.Context) {
 	log.Info("Initializing UpdateAppraisal handler function...")
