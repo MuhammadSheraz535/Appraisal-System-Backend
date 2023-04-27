@@ -1,0 +1,112 @@
+package service
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/mrehanabbasi/appraisal-system-backend/controller"
+	"github.com/mrehanabbasi/appraisal-system-backend/database"
+	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
+	"github.com/mrehanabbasi/appraisal-system-backend/models"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+)
+
+const (
+	MID_YEAR_APPRASIAL = "MidYear"
+	ANNUAL_APPRAISAL   = "Annual"
+)
+
+type ApprasialService struct {
+	Db *gorm.DB
+}
+
+func NewApprasialService() *ApprasialService {
+	db := database.DB
+	err := db.AutoMigrate(&models.Apprasial{}, models.AppraisalType{}, models.AppraisalKpis{})
+	if err != nil {
+		panic(err)
+	}
+	// Populate appraisal_types table
+	err = populateAppraisalTypeTable(db)
+	if err != nil {
+		panic(err)
+	}
+	return &ApprasialService{Db: db}
+}
+
+func populateAppraisalTypeTable(db *gorm.DB) error {
+	appraisalTypes := []string{
+		MID_YEAR_APPRASIAL,
+		ANNUAL_APPRAISAL,
+	}
+
+	appraisalTypesSlice := make([]models.AppraisalType, len(appraisalTypes))
+
+	for k, v := range appraisalTypes {
+		newAppraisalType := models.AppraisalType{
+			AppraisalType: v,
+		}
+		if k == 0 {
+			newAppraisalType.AppraisalType = MID_YEAR_APPRASIAL
+		} else if k == 2 {
+			newAppraisalType.AppraisalType = ANNUAL_APPRAISAL
+		}
+
+		appraisalTypesSlice[k] = newAppraisalType
+	}
+
+	err := db.Clauses(clause.OnConflict{DoNothing: true}).Create(&appraisalTypesSlice).Error
+	if err != nil {
+		log.Error(err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (r *ApprasialService) CreateAppraisal(c *gin.Context) {
+	log.Info("Initializing CreateAppraisal handler function...")
+
+	var appraisal models.Apprasial
+	err := c.ShouldBindJSON(&appraisal)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	//check appraisal type exists
+	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
+	if err != nil {
+		log.Error("invalid Appraisal type")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid Apprasial type"})
+		return
+	}
+
+	//checking appraisal flow id exists in db
+	var apprasialflow models.AppraisalFlow
+
+	err = r.Db.First(&apprasialflow, appraisal.AppraisalFlowID).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid Appraisal Flow ID"})
+		return
+	}
+
+	appraisal, err = controller.CreateAppraisal(r.Db, appraisal)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, appraisal)
+}
+
+func checkAppraisalType(db *gorm.DB, appraisal_type string) error {
+	log.Info("Checking Appraisal type")
+	var appraisalTypeModel models.AppraisalType
+	err := db.Where("appraisal_type = ?", appraisal_type).First(&appraisalTypeModel).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
