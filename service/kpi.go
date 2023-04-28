@@ -259,7 +259,7 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 	c.JSON(http.StatusOK, kpi)
 }
 
-func (s *KPIService) GetAllKPI(c *gin.Context) {
+func (s *KPIService) GetAllKPIs(c *gin.Context) {
 	log.Info("Initializing GetAllKPI handler function...")
 
 	var kpis []models.Kpi

@@ -50,7 +50,7 @@ func GetAppraisalFlowByID(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id u
 	return nil
 }
 
-func GetAllApprasialFlow(flowName, isActive, teamId string, db *gorm.DB, appraisalFlows *[]models.AppraisalFlow) error {
+func GetAllAppraisalFlow(flowName, isActive, teamId string, db *gorm.DB, appraisalFlows *[]models.AppraisalFlow) error {
 	log.Info("Getting all appraisal flows")
 
 	db = db.Model(&models.AppraisalFlow{}).Preload("FlowSteps")
@@ -88,7 +88,7 @@ func UpdateAppraisalFlow(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id ui
 	return nil
 }
 
-func DeleteApprasialFlow(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id uint64) error {
+func DeleteAppraisalFlow(db *gorm.DB, appraisalFlow *models.AppraisalFlow, id uint64) error {
 	log.Info("Deleting appraisal flow")
 
 	err := db.Select(clause.Associations).Delete(&appraisalFlow).Error

@@ -15,31 +15,33 @@ import (
 )
 
 const (
-	MID_YEAR_APPRASIAL = "MidYear"
+	MID_YEAR_APPRAISAL = "Mid-Year"
 	ANNUAL_APPRAISAL   = "Annual"
 )
 
-type ApprasialService struct {
+type AppraisalService struct {
 	Db *gorm.DB
 }
 
-func NewApprasialService() *ApprasialService {
+func NewAppraisalService() *AppraisalService {
 	db := database.DB
-	err := db.AutoMigrate(&models.Apprasial{}, models.AppraisalType{}, models.AppraisalKpis{})
+	err := db.AutoMigrate(&models.Appraisal{}, models.AppraisalType{}, models.AppraisalKpi{})
 	if err != nil {
 		panic(err)
 	}
+
 	// Populate appraisal_types table
 	err = populateAppraisalTypeTable(db)
 	if err != nil {
 		panic(err)
 	}
-	return &ApprasialService{Db: db}
+
+	return &AppraisalService{Db: db}
 }
 
 func populateAppraisalTypeTable(db *gorm.DB) error {
 	appraisalTypes := []string{
-		MID_YEAR_APPRASIAL,
+		MID_YEAR_APPRAISAL,
 		ANNUAL_APPRAISAL,
 	}
 
@@ -50,7 +52,7 @@ func populateAppraisalTypeTable(db *gorm.DB) error {
 			AppraisalType: v,
 		}
 		if k == 0 {
-			newAppraisalType.AppraisalType = MID_YEAR_APPRASIAL
+			newAppraisalType.AppraisalType = MID_YEAR_APPRAISAL
 		} else if k == 2 {
 			newAppraisalType.AppraisalType = ANNUAL_APPRAISAL
 		}
@@ -67,53 +69,55 @@ func populateAppraisalTypeTable(db *gorm.DB) error {
 	return nil
 }
 
-func (r *ApprasialService) CreateAppraisal(c *gin.Context) {
+func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 	log.Info("Initializing CreateAppraisal handler function...")
 
-	var appraisal models.Apprasial
+	var appraisal models.Appraisal
 	err := c.ShouldBindJSON(&appraisal)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	//check appraisal type exists
+
+	// check appraisal type exists
 	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
 	if err != nil {
-		log.Error("invalid Appraisal type")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid Apprasial type"})
+		log.Error("invalid appraisal type")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal type"})
 		return
 	}
 
-	//checking appraisal flow id exists in db
-	var apprasialflow models.AppraisalFlow
-
-	err = r.Db.First(&apprasialflow, appraisal.AppraisalFlowID).Error
+	// checking appraisal flow id exists in db
+	var appraisalFlow models.AppraisalFlow
+	err = r.Db.Model(&models.AppraisalFlow{}).First(&appraisalFlow, appraisal.AppraisalFlowID).Error
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid Appraisal Flow ID"})
+		log.Error("invalid appraisal flow id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid appraisal flow id"})
 		return
 	}
 
-	appraisal, err = controller.CreateAppraisal(r.Db, appraisal)
+	dbAppraisal, err := controller.CreateAppraisal(r.Db, &appraisal)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, appraisal)
+
+	c.JSON(http.StatusCreated, dbAppraisal)
 }
 
-
-func (r *ApprasialService) GetAppraisalByID(c *gin.Context) {
+func (r *AppraisalService) GetAppraisalByID(c *gin.Context) {
 	log.Info("Initializing GetAppraisalByID handler function...")
 
-	id, _ := strconv.Atoi(c.Param("id"))
-	var appraisal models.Apprasial
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
+
+	var appraisal models.Appraisal
 	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Error("appraisal record not found against the given id")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "record not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
 			return
 		}
 
@@ -121,26 +125,27 @@ func (r *ApprasialService) GetAppraisalByID(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusOK, appraisal)
 }
 
-func (r *ApprasialService) GetAllApprasial(c *gin.Context) {
+func (r *AppraisalService) GetAllAppraisals(c *gin.Context) {
 	log.Info("Initializing GetAllAppraisal handler function...")
-	var appraisal []models.Apprasial
-	db := r.Db.Model(&models.Apprasial{})
+	var appraisals []models.Appraisal
+	db := r.Db.Model(&models.Appraisal{})
 
-	apprasialName := c.Query("apprasial_name")
+	appraisalName := c.Query("appraisal_name")
 	supervisorID := c.Query("supervisor_id")
 
-	if apprasialName != "" {
-		db = db.Where("apprasial_name LIKE ?", "%"+apprasialName+"%")
+	if appraisalName != "" {
+		db = db.Where("appraisal_name LIKE ?", "%"+appraisalName+"%")
 	}
 
 	if supervisorID != "" {
 		db = db.Where("supervisor_id = ?", supervisorID)
 	}
 
-	err := controller.GetAllApprasial(db, &appraisal)
+	err := controller.GetAllAppraisals(db, &appraisals)
 
 	if err != nil {
 		log.Error(err.Error())
@@ -148,20 +153,37 @@ func (r *ApprasialService) GetAllApprasial(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, appraisal)
+	c.JSON(http.StatusOK, appraisals)
 }
 
-func (r *ApprasialService) UpdateAppraisal(c *gin.Context) {
+func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 	log.Info("Initializing UpdateAppraisal handler function...")
 
-	var appraisal models.Apprasial
-	id, _ := strconv.Atoi(c.Param("id"))
+	var appraisal models.Appraisal
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
 
-	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
+	// check appraisal type exists
+	err := checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
+	if err != nil {
+		log.Error("invalid appraisal type")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal type"})
+		return
+	}
+
+	// checking appraisal flow id exists in db
+	var af models.AppraisalFlow
+	err = r.Db.Model(&models.AppraisalFlow{}).First(&af, appraisal.AppraisalFlowID).Error
+	if err != nil {
+		log.Error("invalid appraisal flow id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid appraisal flow id"})
+		return
+	}
+
+	err = controller.GetAppraisalByID(r.Db, &appraisal, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Error("appraisal record not found against the given id")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "record not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
 			return
 		}
 
@@ -172,40 +194,44 @@ func (r *ApprasialService) UpdateAppraisal(c *gin.Context) {
 
 	err = c.ShouldBindJSON(&appraisal)
 	if err != nil {
+		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Query apprasialflow struct using apprasialflowid value and update  apprasialflow id accordingly
-	var apprasialflow models.AppraisalFlow
-	err = r.Db.First(&apprasialflow, appraisal.AppraisalFlowID).Error
+	// Query appraisalFlow struct using appraisalflowid value and update appraisalFlow id accordingly
+	var appraisalFlow models.AppraisalFlow
+	err = r.Db.First(&appraisalFlow, appraisal.AppraisalFlowID).Error
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Appraisal Flow ID not exist"})
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal flow id"})
 		return
 	}
-	appraisal.AppraisalFlow = apprasialflow
 
-	appraisal, err = controller.UpdateAppraisal(r.Db, &appraisal, id)
+	appraisal.AppraisalFlow = appraisalFlow
+
+	dbAppraisal, err := controller.UpdateAppraisal(r.Db, &appraisal, id)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, appraisal)
+
+	c.JSON(http.StatusOK, dbAppraisal)
 }
 
-func (r *ApprasialService) DeleteApprasial(c *gin.Context) {
+func (r *AppraisalService) DeleteAppraisal(c *gin.Context) {
 	log.Info("Initializing DeleteAppraisal handler function...")
 
-	var appraisal models.Apprasial
-	id, _ := strconv.Atoi(c.Param("id"))
-	appraisal.ID = uint64(id)
+	var appraisal models.Appraisal
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
+	appraisal.ID = id
 
 	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Error("appraisal record not found against the given id")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "record not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
 			return
 		}
 
@@ -214,20 +240,22 @@ func (r *ApprasialService) DeleteApprasial(c *gin.Context) {
 		return
 	}
 
-	err = controller.DeleteApprasial(r.Db, &appraisal, id)
+	err = controller.DeleteAppraisal(r.Db, &appraisal, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.Status(http.StatusNoContent)
 }
 
-func checkAppraisalType(db *gorm.DB, appraisal_type string) ( error) {
+func checkAppraisalType(db *gorm.DB, appraisal_type string) error {
 	log.Info("Checking Appraisal type")
 	var appraisalTypeModel models.AppraisalType
-	err := db.Where("appraisal_type = ?", appraisal_type).First(&appraisalTypeModel).Error
+	err := db.Model(&models.AppraisalType{}).Where("appraisal_type = ?", appraisal_type).First(&appraisalTypeModel).Error
 	if err != nil {
-		return  err
+		return err
 	}
+
 	return nil
 }

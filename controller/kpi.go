@@ -6,6 +6,7 @@ import (
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func CreateKPI(db *gorm.DB, kpi *models.Kpi) (*models.Kpi, error) {
@@ -13,7 +14,7 @@ func CreateKPI(db *gorm.DB, kpi *models.Kpi) (*models.Kpi, error) {
 
 	// Check if KPI name already exists
 	var count int64
-	if err := db.Model(&models.Kpi{}).Where("kpi_name = ? AND id != ?", kpi.KpiName, kpi.ID).Count(&count).Error; err != nil {
+	if err := db.Model(&models.Kpi{}).Where("kpi_name = ?", kpi.KpiName).Count(&count).Error; err != nil {
 		log.Error(err.Error())
 		return nil, err
 	}
@@ -90,14 +91,15 @@ func GetKPIByID(db *gorm.DB, id uint64) (models.Kpi, error) {
 	return kpi, nil
 }
 
-func GetAllKPI(db *gorm.DB, kpi *[]models.Kpi) (err error) {
+func GetAllKPI(db *gorm.DB, kpi *[]models.Kpi) error {
 	log.Info("Getting all KPIs")
 
-	err = db.Model(&models.Kpi{}).Preload("Statements").Find(&kpi).Error
+	err := db.Model(&models.Kpi{}).Preload("Statements").Find(&kpi).Error
 	if err != nil {
 		log.Error(err.Error())
 		return err
 	}
+
 	return nil
 }
 
@@ -107,13 +109,13 @@ func DeleteKPI(db *gorm.DB, id uint64) error {
 
 	var kpi models.Kpi
 
-	if err := db.First(&kpi, id).Error; err != nil {
+	if err := db.Model(&models.Kpi{}).First(&kpi, id).Error; err != nil {
 		log.Error("kpi with the given id not found")
 		return errors.New("kpi not found")
 	}
 
 	// Delete the KPI
-	if err := db.Select("Statements").Delete(&kpi).Error; err != nil {
+	if err := db.Select(clause.Associations).Delete(&kpi).Error; err != nil {
 		log.Error("failed to delete kpi")
 		return errors.New("failed to delete KPI")
 	}
