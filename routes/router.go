@@ -88,7 +88,7 @@ func NewRouter() *gin.Engine {
 		appraisal_flows.DELETE("/:id", af.DeleteApprasialFlow)
 	}
 
-	appraisal := v1.Group("/appraisal")
+	appraisal := v1.Group("/appraisals")
 	{
 		appraisal.POST("", a.CreateAppraisal)
 		appraisal.GET("", a.GetAllApprasial)
