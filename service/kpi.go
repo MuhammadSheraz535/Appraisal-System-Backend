@@ -128,6 +128,14 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	// validate the kpi struct using the validator
+    err = kpi.Validate()
+    if  err != nil {
+        log.Error(err.Error())
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
 
 	kpi.ID = 0
 
@@ -165,21 +173,14 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 	}
 	// Validate MultiStatementKpiData fields
 	for _, mskd := range kpi.Statements {
-
-		if mskd.Statement == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "statement field is required"})
+		err = mskd.Validate()
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		if mskd.CorrectAnswer == "" {
 
-			c.JSON(http.StatusBadRequest, gin.H{"error": "correct answer field is required"})
-			return
-		}
-		if mskd.Weightage == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "weightage field is required"})
-			return
-
-		}
+		
 	}
 
 	dbKpi, err := controller.CreateKPI(s.Db, &kpi)

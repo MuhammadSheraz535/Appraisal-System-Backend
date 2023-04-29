@@ -79,6 +79,25 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+		// Validate each FlowStep struct
+	for _, ak := range appraisal.AppraisalKpis {
+		if ak.EmployeeID==0{
+			c.JSON(http.StatusBadRequest, gin.H{"error":"Employee id field is required"})
+			return
+			
+		}
+		if ak.KpiID==0{
+			c.JSON(http.StatusBadRequest, gin.H{"error":"Kpi ID  field is required " })
+			return
+			
+		}
+		if ak.Status==""{
+			c.JSON(http.StatusBadRequest, gin.H{"error":"Status field is required " })
+			return
+			
+		}
+
+	}
 
 	// check appraisal type exists
 	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
