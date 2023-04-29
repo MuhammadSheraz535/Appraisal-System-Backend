@@ -4,7 +4,7 @@ import "github.com/go-playground/validator/v10"
 
 type AppraisalFlow struct {
 	CommonModel
-	FlowName  string     `json:"flow_name" gorm:"type:varchar(255);not null;unique" validate:"required"`
+	FlowName  string     `json:"flow_name" gorm:"type:varchar(255);not null;unique" validate:"required,min=3,max=30"`
 	CreatedBy uint64     `json:"created_by" gorm:"not null" validate:"required"`
 	IsActive  bool       `json:"is_active" gorm:"not null" validate:"required"`
 	TeamId    uint64     `json:"team_id" gorm:"not null" validate:"required"`

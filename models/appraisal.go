@@ -2,7 +2,7 @@ package models
 
 type Appraisal struct {
 	CommonModel
-	AppraisalName    string         `gorm:"not null" json:"appraisal_name" binding:"required"`
+	AppraisalName    string         `gorm:"not null" json:"appraisal_name" binding:"required,min=3,max=30"`
 	TeamId           uint64         `gorm:"not null" json:"team_id" binding:"required"`
 	AppraisalFlowID  uint64         `gorm:"not null" json:"appraisal_flow_id" binding:"required"`
 	AppraisalFlow    AppraisalFlow  `json:"-"`
@@ -18,7 +18,7 @@ type AppraisalKpi struct {
 	EmployeeID  uint64 `gorm:"not null" json:"employee_id" binding:"required"`
 	KpiID       uint64 `gorm:"not null" json:"kpi_id" binding:"required"`
 	Kpi         Kpi    `json:"-"`
-	Status      string `gorm:"not null" json:"status"`
+	Status      string `gorm:"not null" json:"status" binding:"required"`
 }
 
 type AppraisalType struct {

@@ -19,7 +19,7 @@ type AssignType struct {
 
 type Kpi struct {
 	CommonModel
-	KpiName        string                  `gorm:"size:100;not null" json:"kpi_name" validate:"required,gte=3"`
+	KpiName        string                  `gorm:"size:100;not null" json:"kpi_name" validate:"required,min=3,max=30"`
 	KpiDescription string                  `gorm:"not null" json:"kpi_description" validate:"required"`
 	AssignTypeID   uint64                  `gorm:"not null" json:"assign_type" validate:"required"`
 	AssignType     AssignType              `gorm:"references:AssignTypeId;foreignKey:AssignTypeID" json:"-"`
@@ -27,7 +27,7 @@ type Kpi struct {
 	KpiType        KpiType                 `gorm:"references:KpiType;foreignKey:KpiTypeStr" json:"-"`
 	ApplicableFor  pq.StringArray          `gorm:"type:text[];not null" json:"applicable_for" validate:"required"`
 	Statement      string                  `json:"statement,omitempty"`
-	Statements     []MultiStatementKpiData `gorm:"foreignKey:KpiID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"statements,omitempty" validate:"required"`
+	Statements     []MultiStatementKpiData `gorm:"foreignKey:KpiID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"statements,omitempty"`
 }
 
 type MultiStatementKpiData struct {
