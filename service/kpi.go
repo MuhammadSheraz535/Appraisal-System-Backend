@@ -129,13 +129,12 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		return
 	}
 	// validate the kpi struct using the validator
-    err = kpi.Validate()
-    if  err != nil {
-        log.Error(err.Error())
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
-
+	err = kpi.Validate()
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	kpi.ID = 0
 
@@ -180,7 +179,6 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 			return
 		}
 
-		
 	}
 
 	dbKpi, err := controller.CreateKPI(s.Db, &kpi)
@@ -201,6 +199,13 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 	var err error
 
 	if err := c.ShouldBindJSON(&kpi); err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	// validate the kpi struct using the validator
+	err = kpi.Validate()
+	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -245,6 +250,16 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		}
 
 		kpi.Statement = ""
+	}
+	// Validate MultiStatementKpiData fields
+	for _, mskd := range kpi.Statements {
+		err = mskd.Validate()
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
 	}
 
 	dbKpi, err := controller.UpdateKPI(s.Db, &kpi)

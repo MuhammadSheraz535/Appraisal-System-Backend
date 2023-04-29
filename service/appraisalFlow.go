@@ -45,9 +45,9 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	appraisalFlow.ID = 0
 
-
-		// Validate each FlowStep struct
+	// Validate each FlowStep struct
 	for _, flowStep := range appraisalFlow.FlowSteps {
 		err = flowStep.Validate()
 		if err != nil {
@@ -112,9 +112,33 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	log.Info("Initializing UpdateAppraisalFlow handler function...")
 
 	var appraisalFlow models.AppraisalFlow
+	err := c.ShouldBindJSON(&appraisalFlow)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
 
-	err := controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
+
+	// Validate AppraisalFlow struct
+	err = appraisalFlow.Validate()
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Validate each FlowStep struct
+	for _, flowStep := range appraisalFlow.FlowSteps {
+		err = flowStep.Validate()
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
+		err = controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Error("appraisal flow record not found against the given id")
@@ -127,12 +151,6 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 		return
 	}
 
-	err = c.ShouldBindJSON(&appraisalFlow)
-	if err != nil {
-		log.Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 
 	err = controller.UpdateAppraisalFlow(r.Db, &appraisalFlow, id)
 	if err != nil {
