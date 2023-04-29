@@ -163,6 +163,24 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 
 		kpi.Statement = ""
 	}
+	// Validate MultiStatementKpiData fields
+	for _, mskd := range kpi.Statements {
+
+		if mskd.Statement == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "statement field is required"})
+			return
+		}
+		if mskd.CorrectAnswer == "" {
+
+			c.JSON(http.StatusBadRequest, gin.H{"error": "correct answer field is required"})
+			return
+		}
+		if mskd.Weightage == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "weightage field is required"})
+			return
+
+		}
+	}
 
 	dbKpi, err := controller.CreateKPI(s.Db, &kpi)
 	if err != nil {

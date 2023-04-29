@@ -38,6 +38,22 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	// Validate required fields in FlowStep struct
+	for _, flow := range appraisalFlow.FlowSteps {
+		if flow.StepName == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "step name field is required"})
+			return
+		}
+		if flow.StepOrder == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"err": "step order field is required"})
+			return
+		}
+		if flow.UserId == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"err": "user id field is required"})
+			return
+		}
+
+	}
 
 	dbAppraisalFlow, err := controller.CreateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
