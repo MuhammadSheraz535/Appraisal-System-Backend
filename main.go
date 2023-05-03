@@ -18,7 +18,7 @@ func main() {
 
 	// Initializing custom validator
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		v.RegisterValidation("enum", models.ValidateEnum)
+		_ = v.RegisterValidation("enum", models.ValidateEnum)
 	}
 
 	// Initializing logger
