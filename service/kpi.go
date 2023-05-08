@@ -7,29 +7,13 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mrehanabbasi/appraisal-system-backend/constants"
 	"github.com/mrehanabbasi/appraisal-system-backend/controller"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-)
-
-const (
-	FEEDBACK_KPI_TYPE      = "Feedback"
-	OBSERVATORY_KPI_TYPE   = "Observatory"
-	MEASURED_KPI_TYPE      = "Measured"
-	QUESTIONNAIRE_KPI_TYPE = "Questionnaire"
-)
-const (
-	SINGLE_KPI_TYPE = "Single"
-	MULTI_KPI_TYPE  = "Multi"
-)
-
-const (
-	ASSIGN_TYPE_ROLE       = "Role"
-	ASSIGN_TYPE_TEAM       = "Team"
-	ASSIGN_TYPE_INDIVIDUAL = "Individual"
 )
 
 type KPIService struct {
@@ -61,10 +45,10 @@ func NewKPIService() *KPIService {
 func populateKpiTypeTable(db *gorm.DB) error {
 	// TODO: Delete this table population and get KPI types from /kpi_types endpoint
 	kpiTypes := []string{
-		FEEDBACK_KPI_TYPE,
-		OBSERVATORY_KPI_TYPE,
-		MEASURED_KPI_TYPE,
-		QUESTIONNAIRE_KPI_TYPE,
+		constants.FEEDBACK_KPI_TYPE,
+		constants.OBSERVATORY_KPI_TYPE,
+		constants.MEASURED_KPI_TYPE,
+		constants.QUESTIONNAIRE_KPI_TYPE,
 	}
 
 	kpiTypesSlice := make([]models.KpiType, len(kpiTypes))
@@ -74,9 +58,9 @@ func populateKpiTypeTable(db *gorm.DB) error {
 			KpiType: v,
 		}
 		if k == 0 || k == 1 { // Feedback and Observatory will be 'Single'
-			newKpiType.BasicKpiType = SINGLE_KPI_TYPE
+			newKpiType.BasicKpiType = constants.SINGLE_KPI_TYPE
 		} else if k == 2 || k == 3 { // Measured and Questionnaire will be 'Multi'
-			newKpiType.BasicKpiType = MULTI_KPI_TYPE
+			newKpiType.BasicKpiType = constants.MULTI_KPI_TYPE
 		}
 
 		kpiTypesSlice[k] = newKpiType
@@ -93,9 +77,9 @@ func populateKpiTypeTable(db *gorm.DB) error {
 
 func populateAssignTypeTable(db *gorm.DB) error {
 	assignTypes := []string{
-		ASSIGN_TYPE_ROLE,
-		ASSIGN_TYPE_TEAM,
-		ASSIGN_TYPE_INDIVIDUAL,
+		constants.ASSIGN_TYPE_ROLE,
+		constants.ASSIGN_TYPE_TEAM,
+		constants.ASSIGN_TYPE_INDIVIDUAL,
 	}
 
 	// Make assign type ID as 0 = Role, 1 = Team and 2 = Individual
@@ -103,7 +87,7 @@ func populateAssignTypeTable(db *gorm.DB) error {
 	for i, a := range assignTypes {
 		newAssignType := models.AssignType{
 			AssignTypeId: uint64(i),
-			AssignType:   a,
+			AssignType:   models.AssignTypeStr(a),
 		}
 		assignTypesSlice[i] = newAssignType
 	}
@@ -153,7 +137,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 	}
 
 	switch kpiType.BasicKpiType {
-	case SINGLE_KPI_TYPE:
+	case constants.SINGLE_KPI_TYPE:
 		if kpi.Statement == "" {
 			log.Error("statement is nil in the request")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "statement is nil"})
@@ -161,7 +145,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		}
 
 		kpi.Statements = nil
-	case MULTI_KPI_TYPE:
+	case constants.MULTI_KPI_TYPE:
 		if len(kpi.Statements) == 0 {
 			log.Error("statements are nil in the request")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "statements field is nil"})
@@ -234,7 +218,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 	}
 
 	switch kpiType.BasicKpiType {
-	case SINGLE_KPI_TYPE:
+	case constants.SINGLE_KPI_TYPE:
 		if kpi.Statement == "" {
 			log.Error("statement is nil in the request")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "statement is nil"})
@@ -242,7 +226,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		}
 
 		kpi.Statements = nil
-	case MULTI_KPI_TYPE:
+	case constants.MULTI_KPI_TYPE:
 		if len(kpi.Statements) == 0 {
 			log.Error("statements are nil in the request")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "statements field is nil"})
