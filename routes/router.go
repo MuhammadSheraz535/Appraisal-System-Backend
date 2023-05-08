@@ -79,22 +79,22 @@ func NewRouter() *gin.Engine {
 		kpis.DELETE("/:id", kc.DeleteKPI)
 	}
 
-	appraisal_flows := v1.Group("/appraisal_flows")
+	appraisalFlows := v1.Group("/appraisal_flows")
 	{
-		appraisal_flows.POST("", af.CreateAppraisalFlow)
-		appraisal_flows.GET("", af.GetAllAppraisalFlows)
-		appraisal_flows.GET("/:id", af.GetAppraisalFlowByID)
-		appraisal_flows.PUT("/:id", af.UpdateAppraisalFlow)
-		appraisal_flows.DELETE("/:id", af.DeleteAppraisalFlow)
+		appraisalFlows.POST("", af.CreateAppraisalFlow)
+		appraisalFlows.GET("", af.GetAllAppraisalFlows)
+		appraisalFlows.GET("/:id", af.GetAppraisalFlowByID)
+		appraisalFlows.PUT("/:id", af.UpdateAppraisalFlow)
+		appraisalFlows.DELETE("/:id", af.DeleteAppraisalFlow)
 	}
 
-	appraisal := v1.Group("/appraisals")
+	appraisals := v1.Group("/appraisals")
 	{
-		appraisal.POST("", a.CreateAppraisal)
-		appraisal.GET("", a.GetAllAppraisals)
-		appraisal.GET("/:id", a.GetAppraisalByID)
-		appraisal.PUT("/:id", a.UpdateAppraisal)
-		appraisal.DELETE("/:id", a.DeleteAppraisal)
+		appraisals.POST("", a.CreateAppraisal)
+		appraisals.GET("", a.GetAllAppraisals)
+		appraisals.GET("/:id", a.GetAppraisalByID)
+		appraisals.PUT("/:id", a.UpdateAppraisal)
+		appraisals.DELETE("/:id", a.DeleteAppraisal)
 	}
 
 	return router
