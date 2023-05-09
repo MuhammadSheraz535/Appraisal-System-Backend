@@ -69,7 +69,7 @@ func UpdateKPI(db *gorm.DB, kpi *models.Kpi) (*models.Kpi, error) {
 	}
 
 	// Update KPI record
-	if err := db.Session(&gorm.Session{FullSaveAssociations: true}).Save(kpi).Error; err != nil {
+	if err := db.Session(&gorm.Session{FullSaveAssociations: true}).Where("id = ?", kpi.ID).Save(&kpi).Error; err != nil {
 		log.Error(err.Error())
 		return nil, err
 	}
