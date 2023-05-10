@@ -36,7 +36,7 @@ func UpdateKPI(db *gorm.DB, kpi *models.Kpi) (*models.Kpi, error) {
 
     // Check if KPI exists in the database
     var existingKpi models.Kpi
-    if err := db.First(&existingKpi, kpi.ID).Error; err != nil {
+    if err := db.Model(&models.Kpi{}).First(&existingKpi, kpi.ID).Error; err != nil {
         if errors.Is(err, gorm.ErrRecordNotFound) {
             log.Error("kpi with the given id not found")
             return nil, errors.New("kpi not found")
