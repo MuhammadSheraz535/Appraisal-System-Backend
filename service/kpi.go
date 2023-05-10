@@ -270,7 +270,7 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 	kpi, err := controller.GetKPIByID(s.Db, id)
 	if err != nil {
 		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
