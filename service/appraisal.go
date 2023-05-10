@@ -183,6 +183,33 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	// Validate each FlowStep struct
+	for _, ak := range appraisal.AppraisalKpis {
+		if ak.EmployeeID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Employee id field is required"})
+			return
+
+		}
+		if ak.KpiID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi ID  field is required "})
+			return
+
+		}
+		if ak.Status == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Status field is required "})
+			return
+
+		}
+
+	}
+
+	// check appraisal type exists
+	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	appraisal.ID = id
 	// Validate each FlowStep struct
 	for _, ak := range appraisal.AppraisalKpis {
@@ -215,11 +242,7 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 	// checking appraisal flow id exists in db
 	var af models.AppraisalFlow
 	err = r.Db.Model(&models.AppraisalFlow{}).First(&af, appraisal.AppraisalFlowID).Error
-	if err != nil {
-		log.Error("invalid appraisal flow id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid appraisal flow id"})
-		return
-	}
+	
 
 	dbAppraisal, err := controller.UpdateAppraisal(r.Db, &appraisal)
 	if err != nil {
