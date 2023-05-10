@@ -6,17 +6,13 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mrehanabbasi/appraisal-system-backend/constants"
 	"github.com/mrehanabbasi/appraisal-system-backend/controller"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-)
-
-const (
-	MID_YEAR_APPRAISAL = "Mid-Year"
-	ANNUAL_APPRAISAL   = "Annual"
 )
 
 type AppraisalService struct {
@@ -41,8 +37,8 @@ func NewAppraisalService() *AppraisalService {
 
 func populateAppraisalTypeTable(db *gorm.DB) error {
 	appraisalTypes := []string{
-		MID_YEAR_APPRAISAL,
-		ANNUAL_APPRAISAL,
+		constants.MID_YEAR_APPRAISAL,
+		constants.ANNUAL_APPRAISAL,
 	}
 
 	appraisalTypesSlice := make([]models.AppraisalType, len(appraisalTypes))
@@ -52,9 +48,9 @@ func populateAppraisalTypeTable(db *gorm.DB) error {
 			AppraisalType: v,
 		}
 		if k == 0 {
-			newAppraisalType.AppraisalType = MID_YEAR_APPRAISAL
+			newAppraisalType.AppraisalType = constants.MID_YEAR_APPRAISAL
 		} else if k == 2 {
-			newAppraisalType.AppraisalType = ANNUAL_APPRAISAL
+			newAppraisalType.AppraisalType = constants.ANNUAL_APPRAISAL
 		}
 
 		appraisalTypesSlice[k] = newAppraisalType
@@ -79,22 +75,22 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-		// Validate each FlowStep struct
+	// Validate each FlowStep struct
 	for _, ak := range appraisal.AppraisalKpis {
-		if ak.EmployeeID==0{
-			c.JSON(http.StatusBadRequest, gin.H{"error":"Employee id field is required"})
+		if ak.EmployeeID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Employee id field is required"})
 			return
-			
+
 		}
-		if ak.KpiID==0{
-			c.JSON(http.StatusBadRequest, gin.H{"error":"Kpi ID  field is required " })
+		if ak.KpiID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi ID  field is required "})
 			return
-			
+
 		}
-		if ak.Status==""{
-			c.JSON(http.StatusBadRequest, gin.H{"error":"Status field is required " })
+		if ak.Status == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Status field is required "})
 			return
-			
+
 		}
 
 	}
@@ -179,10 +175,37 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 	log.Info("Initializing UpdateAppraisal handler function...")
 
 	var appraisal models.Appraisal
+
+	err := c.ShouldBindJSON(&appraisal)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	// Validate each FlowStep struct
+	for _, ak := range appraisal.AppraisalKpis {
+		if ak.EmployeeID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Employee id field is required"})
+			return
+
+		}
+		if ak.KpiID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi ID  field is required "})
+			return
+
+		}
+		if ak.Status == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Status field is required "})
+			return
+
+		}
+
+	}
+
 	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
 
 	// check appraisal type exists
-	err := checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
+	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
 	if err != nil {
 		log.Error("invalid appraisal type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal type"})
@@ -206,13 +229,6 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 			return
 		}
 
-		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	err = c.ShouldBindJSON(&appraisal)
-	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
