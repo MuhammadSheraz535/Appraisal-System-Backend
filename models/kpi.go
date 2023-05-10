@@ -3,7 +3,6 @@ package models
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/lib/pq"
-	"github.com/mrehanabbasi/appraisal-system-backend/constants"
 )
 
 type BasicKpiType string
@@ -12,13 +11,13 @@ type AssignTypeStr string
 type KpiType struct {
 	CommonModel
 	KpiType      string       `gorm:"not null;unique" json:"kpi_type"`
-	BasicKpiType BasicKpiType `gorm:"not null" json:"basic_kpi_type" binding:"enum"`
+	BasicKpiType BasicKpiType `gorm:"not null" json:"basic_kpi_type"`
 }
 
 type AssignType struct {
 	CommonModel
 	AssignTypeId uint64        `gorm:"not null;unique" json:"assign_type_id"`
-	AssignType   AssignTypeStr `gorm:"not null;unique" json:"assign_type" binding:"enum"`
+	AssignType   AssignTypeStr `gorm:"not null;unique" json:"assign_type"`
 }
 
 type Kpi struct {
@@ -52,20 +51,3 @@ func (a *MultiStatementKpiData) Validate() error {
 	return validate.Struct(a)
 }
 
-func (b BasicKpiType) IsValid() bool {
-	switch b {
-	case constants.SINGLE_KPI_TYPE, constants.MULTI_KPI_TYPE:
-		return true
-	}
-
-	return false
-}
-
-func (a AssignTypeStr) IsValid() bool {
-	switch a {
-	case constants.ASSIGN_TYPE_ROLE, constants.ASSIGN_TYPE_TEAM, constants.ASSIGN_TYPE_INDIVIDUAL:
-		return true
-	}
-
-	return false
-}

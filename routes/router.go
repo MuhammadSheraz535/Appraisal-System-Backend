@@ -45,8 +45,8 @@ func NewRouter() *gin.Engine {
 
 	employee := v1.Group("/employees")
 	{
-		employee.POST("", ec.CreateEmployee)
-		employee.GET("", ec.GetEmployees)
+		employee.POST("/", ec.CreateEmployee)
+		employee.GET("/", ec.GetEmployees)
 		employee.GET("/:id", ec.GetEmployee)
 		employee.PUT("/:id", ec.UpdateEmployee)
 		employee.DELETE("/:id", ec.DeleteEmployee)
@@ -63,8 +63,8 @@ func NewRouter() *gin.Engine {
 
 	supervisors := v1.Group("/supervisors")
 	{
-		supervisors.POST("", sc.ConvertSupervisorToEmployee)
-		supervisors.GET("", sc.GetSupervisors)
+		supervisors.POST("/", sc.ConvertSupervisorToEmployee)
+		supervisors.GET("/", sc.GetSupervisors)
 		supervisors.GET("/:id", sc.GetSupervisorById)
 		supervisors.PUT("/:id", sc.UpdateSupervisor)
 		supervisors.DELETE("/:id", sc.DeleteSupervisor)
@@ -74,6 +74,7 @@ func NewRouter() *gin.Engine {
 	{
 		kpis.POST("", kc.CreateKPI)
 		kpis.GET("", kc.GetAllKPIs)
+		kpis.POST("/", kc.CreateKPI)
 		kpis.GET("/:id", kc.GetKPIByID)
 		kpis.PUT("/:id", kc.UpdateKPI)
 		kpis.DELETE("/:id", kc.DeleteKPI)
@@ -83,6 +84,7 @@ func NewRouter() *gin.Engine {
 	{
 		appraisalFlows.POST("", af.CreateAppraisalFlow)
 		appraisalFlows.GET("", af.GetAllAppraisalFlows)
+		appraisalFlows.POST("/", af.CreateAppraisalFlow)
 		appraisalFlows.GET("/:id", af.GetAppraisalFlowByID)
 		appraisalFlows.PUT("/:id", af.UpdateAppraisalFlow)
 		appraisalFlows.DELETE("/:id", af.DeleteAppraisalFlow)
