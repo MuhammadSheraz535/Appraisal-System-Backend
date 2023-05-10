@@ -12,10 +12,14 @@ import (
 func CreateAppraisal(db *gorm.DB, appraisal *models.Appraisal) (*models.Appraisal, error) {
 	log.Info("Creating appraisal")
 
-	err := checkKpiIdsExist(db, &appraisal.AppraisalKpis)
-	if err != nil {
-		log.Error(err.Error())
-		return nil, err
+	// Check if KPI IDs exist in KPIs table
+	for _, kpi := range appraisal.AppraisalKpis {
+		var k models.Kpi
+		err := db.First(&k, kpi.KpiID).Error
+		if err != nil {
+			log.Error(err.Error())
+			return appraisal, errors.New("KPI Id does not exist")
+		}
 	}
 
 	// Check if appraisal name already exists
@@ -60,15 +64,29 @@ func GetAllAppraisals(db *gorm.DB, appraisal *[]models.Appraisal) (err error) {
 	return nil
 }
 
-func UpdateAppraisal(db *gorm.DB, appraisal *models.Appraisal, id uint64) (*models.Appraisal, error) {
+func UpdateAppraisal(db *gorm.DB, appraisal *models.Appraisal) (*models.Appraisal, error) {
 	log.Info("Updating appraisal")
 
-	err := checkKpiIdsExist(db, &appraisal.AppraisalKpis)
-	if err != nil {
-		log.Error(err.Error())
-		return nil, err
-	}
 
+    // Check if appraisal exists in the database
+    var existingAppraisal models.Appraisal
+    if err := db.Model(&models.Appraisal{}).First(&existingAppraisal, appraisal.ID).Error; err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            log.Error("appraisal with the given id not found")
+            return nil, errors.New("appraisal not found")
+        }
+        log.Error(err.Error())
+        return nil, err
+    }
+	// Check if KPI IDs exist in KPIs table
+	for _, kpi := range appraisal.AppraisalKpis {
+		var k models.Kpi
+		err := db.First(&k, kpi.KpiID).Error
+		if err != nil {
+			log.Error(err.Error())
+			return appraisal, errors.New("KPI Id does not exist")
+		}
+	}
 	// Check if appraisal name already exists
 	var count int64
 	if err := db.Model(&models.Appraisal{}).Where("appraisal_name = ? AND id != ?", appraisal.AppraisalName, appraisal.ID).Count(&count).Error; err != nil {
@@ -80,7 +98,7 @@ func UpdateAppraisal(db *gorm.DB, appraisal *models.Appraisal, id uint64) (*mode
 		return nil, errors.New("appraisal name already exists")
 	}
 
-	err = db.Session(&gorm.Session{FullSaveAssociations: true}).Where("id = ?", id).Save(&appraisal).Error
+	err := db.Session(&gorm.Session{FullSaveAssociations: true}).Where("id = ?", appraisal.ID).Save(&appraisal).Error
 	if err != nil {
 		log.Error(err.Error())
 		return nil, err
@@ -96,22 +114,6 @@ func DeleteAppraisal(db *gorm.DB, appraisal *models.Appraisal, id uint64) error 
 	if err != nil {
 		log.Error(err.Error())
 		return err
-	}
-
-	return nil
-}
-
-// Checks if KPI IDs exist in kpis table
-func checkKpiIdsExist(db *gorm.DB, appraisalKpis *[]models.AppraisalKpi) error {
-	var kpiIds []uint64
-	for _, aKpi := range *appraisalKpis {
-		kpiIds = append(kpiIds, aKpi.KpiID)
-	}
-
-	var kpis []models.Kpi
-	if err := db.Model(&models.Kpi{}).Find(&kpis, kpiIds).Error; err != nil {
-		log.Error(err.Error())
-		return errors.New("kpi id does not exist")
 	}
 
 	return nil

@@ -173,6 +173,7 @@ func (r *AppraisalService) GetAllAppraisals(c *gin.Context) {
 
 func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 	log.Info("Initializing UpdateAppraisal handler function...")
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
 
 	var appraisal models.Appraisal
 
@@ -182,6 +183,7 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	appraisal.ID = id
 	// Validate each FlowStep struct
 	for _, ak := range appraisal.AppraisalKpis {
 		if ak.EmployeeID == 0 {
@@ -202,8 +204,6 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 
 	}
 
-	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
-
 	// check appraisal type exists
 	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
 	if err != nil {
@@ -221,31 +221,7 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 		return
 	}
 
-	err = controller.GetAppraisalByID(r.Db, &appraisal, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("appraisal record not found against the given id")
-			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
-			return
-		}
-
-		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Query appraisalFlow struct using appraisalflowid value and update appraisalFlow id accordingly
-	var appraisalFlow models.AppraisalFlow
-	err = r.Db.First(&appraisalFlow, appraisal.AppraisalFlowID).Error
-	if err != nil {
-		log.Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal flow id"})
-		return
-	}
-
-	appraisal.AppraisalFlow = appraisalFlow
-
-	dbAppraisal, err := controller.UpdateAppraisal(r.Db, &appraisal, id)
+	dbAppraisal, err := controller.UpdateAppraisal(r.Db, &appraisal)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
