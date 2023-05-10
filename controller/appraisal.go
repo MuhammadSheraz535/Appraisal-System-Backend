@@ -103,6 +103,7 @@ func UpdateAppraisal(db *gorm.DB, appraisal *models.Appraisal) (*models.Appraisa
 		log.Error(err.Error())
 		return nil, err
 	}
+	
 
 	return appraisal, nil
 }
