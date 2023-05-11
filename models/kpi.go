@@ -35,10 +35,10 @@ type Kpi struct {
 
 type MultiStatementKpiData struct {
 	CommonModel
-	KpiID         uint64 `gorm:"not null" json:"-"`
-	Statement     string `gorm:"not null" json:"statement" validate:"required"`
-	CorrectAnswer string `gorm:"not null" json:"correct_answer" validate:"required"`
-	Weightage     uint64 `gorm:"not null" json:"weightage" validate:"required"`
+	KpiID     uint64 `gorm:"not null" json:"-"`
+	Statement string `gorm:"not null" json:"statement" validate:"required"`
+	// CorrectAnswer string `gorm:"not null" json:"correct_answer" validate:"required"`
+	Weightage uint64 `gorm:"not null" json:"weightage" validate:"required"`
 }
 
 func (a *Kpi) Validate() error {
