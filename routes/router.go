@@ -12,6 +12,8 @@ import (
 
 func NewRouter() *gin.Engine {
 	router := gin.Default()
+	router.RedirectTrailingSlash = true
+	router.RedirectFixedPath = true
 
 	isCorsEnabled, _ := strconv.ParseBool(os.Getenv("ENABLE_CORS"))
 	if isCorsEnabled {
@@ -44,8 +46,8 @@ func NewRouter() *gin.Engine {
 
 	employee := v1.Group("/employees")
 	{
-		employee.POST("/", ec.CreateEmployee)
-		employee.GET("/", ec.GetEmployees)
+		employee.POST("", ec.CreateEmployee)
+		employee.GET("", ec.GetEmployees)
 		employee.GET("/:id", ec.GetEmployee)
 		employee.PUT("/:id", ec.UpdateEmployee)
 		employee.DELETE("/:id", ec.DeleteEmployee)
@@ -53,17 +55,17 @@ func NewRouter() *gin.Engine {
 
 	roles := v1.Group("/roles")
 	{
-		roles.GET("/", roleController.GetAllRoles)
+		roles.GET("", roleController.GetAllRoles)
 		roles.GET(":id", roleController.GetRoleByID)
-		roles.POST("/", roleController.CreateRole)
+		roles.POST("", roleController.CreateRole)
 		roles.PUT(":id", roleController.UpdateRole)
 		roles.DELETE(":id", roleController.DeleteRole)
 	}
 
 	supervisors := v1.Group("/supervisors")
 	{
-		supervisors.POST("/", sc.ConvertSupervisorToEmployee)
-		supervisors.GET("/", sc.GetSupervisors)
+		supervisors.POST("", sc.ConvertSupervisorToEmployee)
+		supervisors.GET("", sc.GetSupervisors)
 		supervisors.GET("/:id", sc.GetSupervisorById)
 		supervisors.PUT("/:id", sc.UpdateSupervisor)
 		supervisors.DELETE("/:id", sc.DeleteSupervisor)
@@ -71,8 +73,8 @@ func NewRouter() *gin.Engine {
 
 	kpis := v1.Group("/kpis")
 	{
-		kpis.POST("/", kc.CreateKPI)
-		kpis.GET("/", kc.GetAllKPI)
+		kpis.POST("", kc.CreateKPI)
+		kpis.GET("", kc.GetAllKPI)
 		kpis.GET("/:id", kc.GetKPIByID)
 		kpis.PUT("/:id", kc.UpdateKPI)
 		kpis.DELETE("/:id", kc.DeleteKPI)
@@ -80,8 +82,8 @@ func NewRouter() *gin.Engine {
 
 	appraisalFlows := v1.Group("/appraisal_flows")
 	{
-		appraisalFlows.POST("/", af.CreateAppraisalFlow)
-		appraisalFlows.GET("/", af.GetAllApprasialFlow)
+		appraisalFlows.POST("", af.CreateAppraisalFlow)
+		appraisalFlows.GET("", af.GetAllApprasialFlow)
 		appraisalFlows.GET("/:id", af.GetAppraisalFlowByID)
 		appraisalFlows.PUT("/:id", af.UpdateAppraisalFlow)
 		appraisalFlows.DELETE("/:id", af.DeleteApprasialFlow)
