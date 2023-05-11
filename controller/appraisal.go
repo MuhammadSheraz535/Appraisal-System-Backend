@@ -15,10 +15,10 @@ func CreateAppraisal(db *gorm.DB, appraisal *models.Appraisal) (*models.Appraisa
 	// Check if KPI IDs exist in KPIs table
 	for _, kpi := range appraisal.AppraisalKpis {
 		var k models.Kpi
-		err := db.First(&k, kpi.KpiID).Error
+		err := db.Model(&models.Kpi{}).First(&k, kpi.KpiID).Error
 		if err != nil {
 			log.Error(err.Error())
-			return appraisal, errors.New("KPI Id does not exist")
+			return appraisal, errors.New("Kpi id does not exist")
 		}
 	}
 
@@ -80,10 +80,10 @@ func UpdateAppraisal(db *gorm.DB, appraisal *models.Appraisal) (*models.Appraisa
 	// Check if KPI IDs exist in KPIs table
 	for _, kpi := range appraisal.AppraisalKpis {
 		var k models.Kpi
-		err := db.First(&k, kpi.KpiID).Error
+		err := db.Model(&models.Kpi{}).First(&k, kpi.KpiID).Error
 		if err != nil {
 			log.Error(err.Error())
-			return appraisal, errors.New("KPI Id does not exist")
+			return appraisal, errors.New("Kpi id does not exist")
 		}
 	}
 
