@@ -225,6 +225,15 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 			return
 		}
 
+		// If the Kpi is being updated from a MultiStatementKpi to a SingleStatementKpi,
+		// delete all existing MultiStatementKpiData records for the given KpiID.
+		err = s.Db.Where("kpi_id = ?", kpi.ID).Delete(&models.MultiStatementKpiData{}).Error
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
 		kpi.Statements = nil
 	case constants.MULTI_KPI_TYPE:
 		if len(kpi.Statements) == 0 {
