@@ -173,6 +173,7 @@ func (r *AppraisalService) GetAllAppraisals(c *gin.Context) {
 
 func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 	log.Info("Initializing UpdateAppraisal handler function...")
+
 	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
 
 	var appraisal models.Appraisal
@@ -211,8 +212,8 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 		return
 	}
 	appraisal.ID = id
-	
-// checking appraisal flow id exists in db
+
+	// checking appraisal flow id exists in db
 	var appraisalFlow models.AppraisalFlow
 	err = r.Db.Model(&models.AppraisalFlow{}).First(&appraisalFlow, appraisal.AppraisalFlowID).Error
 	if err != nil {
@@ -220,7 +221,7 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid appraisal flow id"})
 		return
 	}
-
+//callling controller update function
 	dbAppraisal, err := controller.UpdateAppraisal(r.Db, &appraisal)
 	if err != nil {
 		log.Error(err.Error())

@@ -112,14 +112,14 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	log.Info("Initializing UpdateAppraisalFlow handler function...")
 
 	var appraisalFlow models.AppraisalFlow
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
+
 	err := c.ShouldBindJSON(&appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
-
 
 	// Validate AppraisalFlow struct
 	err = appraisalFlow.Validate()
@@ -128,7 +128,7 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
+	appraisalFlow.ID = id
 	// Validate each FlowStep struct
 	for _, flowStep := range appraisalFlow.FlowSteps {
 		err = flowStep.Validate()
@@ -138,21 +138,8 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 			return
 		}
 	}
-		err = controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("appraisal flow record not found against the given id")
-			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
-			return
-		}
-
-		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-
-	err = controller.UpdateAppraisalFlow(r.Db, &appraisalFlow, id)
+//calling controller update method
+	err = controller.UpdateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
