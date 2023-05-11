@@ -112,6 +112,13 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	// validate the kpi struct using the validator
+	err = kpi.Validate()
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	kpi.ID = 0
 
@@ -147,6 +154,16 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 
 		kpi.Statement = ""
 	}
+	// Validate MultiStatementKpiData fields
+	for _, mskd := range kpi.Statements {
+		err = mskd.Validate()
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+	}
 
 	dbKpi, err := controller.CreateKPI(s.Db, &kpi)
 	if err != nil {
@@ -166,6 +183,13 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 	var err error
 
 	if err := c.ShouldBindJSON(&kpi); err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	// validate the kpi struct using the validator
+	err = kpi.Validate()
+	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -220,6 +244,16 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 
 		kpi.Statement = ""
 	}
+	// Validate MultiStatementKpiData fields
+	for _, mskd := range kpi.Statements {
+		err = mskd.Validate()
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+	}
 
 	dbKpi, err := controller.UpdateKPI(s.Db, &kpi)
 	if err != nil {
@@ -245,14 +279,14 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 	kpi, err := controller.GetKPIByID(s.Db, id)
 	if err != nil {
 		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, kpi)
 }
 
-func (s *KPIService) GetAllKPI(c *gin.Context) {
+func (s *KPIService) GetAllKPIs(c *gin.Context) {
 	log.Info("Initializing GetAllKPI handler function...")
 
 	var kpis []models.Kpi

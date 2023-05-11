@@ -50,3 +50,4 @@ func (a *MultiStatementKpiData) Validate() error {
 	validate := validator.New()
 	return validate.Struct(a)
 }
+

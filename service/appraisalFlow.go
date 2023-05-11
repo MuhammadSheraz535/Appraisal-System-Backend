@@ -13,11 +13,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type ApprasialFlowService struct {
+type AppraisalFlowService struct {
 	Db *gorm.DB
 }
 
-func NewApprasialFlowService() *ApprasialFlowService {
+func NewAppraisalFlowService() *AppraisalFlowService {
 	db := database.DB
 	err := db.AutoMigrate(&models.AppraisalFlow{}, &models.FlowStep{})
 	if err != nil {
@@ -25,20 +25,37 @@ func NewApprasialFlowService() *ApprasialFlowService {
 		panic(err)
 	}
 
-	return &ApprasialFlowService{Db: db}
+	return &AppraisalFlowService{Db: db}
 }
 
-func (r *ApprasialFlowService) CreateAppraisalFlow(c *gin.Context) {
+func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 	log.Info("Initializing CreateAppraisalFlow handler function...")
 
 	var appraisalFlow models.AppraisalFlow
 	err := c.ShouldBindJSON(&appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	// Validate AppraisalFlow struct
+	err = appraisalFlow.Validate()
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	appraisalFlow.ID = 0
 
+	// Validate each FlowStep struct
+	for _, flowStep := range appraisalFlow.FlowSteps {
+		err = flowStep.Validate()
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
 	dbAppraisalFlow, err := controller.CreateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
@@ -49,7 +66,7 @@ func (r *ApprasialFlowService) CreateAppraisalFlow(c *gin.Context) {
 	c.JSON(http.StatusCreated, dbAppraisalFlow)
 }
 
-func (r *ApprasialFlowService) GetAppraisalFlowByID(c *gin.Context) {
+func (r *AppraisalFlowService) GetAppraisalFlowByID(c *gin.Context) {
 	log.Info("Initializing GetAppraisalFlowByID handler function...")
 
 	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
@@ -59,7 +76,7 @@ func (r *ApprasialFlowService) GetAppraisalFlowByID(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Error("appraisal flow record not found against the given id")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "record not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
 			return
 		}
 
@@ -71,7 +88,7 @@ func (r *ApprasialFlowService) GetAppraisalFlowByID(c *gin.Context) {
 	c.JSON(http.StatusOK, appraisalFlow)
 }
 
-func (r *ApprasialFlowService) GetAllApprasialFlow(c *gin.Context) {
+func (r *AppraisalFlowService) GetAllAppraisalFlows(c *gin.Context) {
 	log.Info("Initializing GetAllAppraisalFlow handler function...")
 
 	var appraisalFlows []models.AppraisalFlow
@@ -80,7 +97,7 @@ func (r *ApprasialFlowService) GetAllApprasialFlow(c *gin.Context) {
 	isActive := c.Query("is_active")
 	teamId := c.Query("team_id")
 
-	err := controller.GetAllApprasialFlow(flowName, isActive, teamId, r.Db, &appraisalFlows)
+	err := controller.GetAllAppraisalFlow(flowName, isActive, teamId, r.Db, &appraisalFlows)
 
 	if err != nil {
 		log.Error(err.Error())
@@ -91,33 +108,38 @@ func (r *ApprasialFlowService) GetAllApprasialFlow(c *gin.Context) {
 	c.JSON(http.StatusOK, appraisalFlows)
 }
 
-func (r *ApprasialFlowService) UpdateAppraisalFlow(c *gin.Context) {
+func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	log.Info("Initializing UpdateAppraisalFlow handler function...")
 
 	var appraisalFlow models.AppraisalFlow
 	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
 
-	err := controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
+	err := c.ShouldBindJSON(&appraisalFlow)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("appraisal flow record not found against the given id")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "record not found"})
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Validate AppraisalFlow struct
+	err = appraisalFlow.Validate()
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	appraisalFlow.ID = id
+	// Validate each FlowStep struct
+	for _, flowStep := range appraisalFlow.FlowSteps {
+		err = flowStep.Validate()
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-
-		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
 	}
-
-	err = c.ShouldBindJSON(&appraisalFlow)
-	if err != nil {
-		log.Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-		return
-	}
-
-	err = controller.UpdateAppraisalFlow(r.Db, &appraisalFlow, id)
+//calling controller update method
+	err = controller.UpdateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -127,7 +149,7 @@ func (r *ApprasialFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	c.JSON(http.StatusOK, appraisalFlow)
 }
 
-func (r *ApprasialFlowService) DeleteApprasialFlow(c *gin.Context) {
+func (r *AppraisalFlowService) DeleteAppraisalFlow(c *gin.Context) {
 	log.Info("Initializing DeleteAppraisalFlow handler function...")
 
 	var appraisalFlow models.AppraisalFlow
@@ -138,7 +160,7 @@ func (r *ApprasialFlowService) DeleteApprasialFlow(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Error("appraisal flow record not found against the given id")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "record not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
 			return
 		}
 
@@ -147,7 +169,7 @@ func (r *ApprasialFlowService) DeleteApprasialFlow(c *gin.Context) {
 		return
 	}
 
-	err = controller.DeleteApprasialFlow(r.Db, &appraisalFlow, id)
+	err = controller.DeleteAppraisalFlow(r.Db, &appraisalFlow, id)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
