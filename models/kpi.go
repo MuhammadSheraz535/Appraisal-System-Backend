@@ -1,6 +1,9 @@
 package models
 
 import (
+	"reflect"
+	"strings"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/lib/pq"
 )
@@ -43,6 +46,13 @@ type MultiStatementKpiData struct {
 
 func (a *Kpi) Validate() error {
 	validate := validator.New()
+	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		if name == "-" {
+			return ""
+		}
+		return name
+	})
 	return validate.Struct(a)
 }
 
@@ -50,4 +60,3 @@ func (a *MultiStatementKpiData) Validate() error {
 	validate := validator.New()
 	return validate.Struct(a)
 }
-

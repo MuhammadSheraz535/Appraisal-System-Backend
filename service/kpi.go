@@ -112,11 +112,19 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	// validate the kpi struct using the validator
 	err = kpi.Validate()
 	if err != nil {
+		errs, ok := controller.ErrValidationSlice(err)
+		if !ok {
+			log.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
 		log.Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"errors": errs})
 		return
 	}
 
@@ -187,11 +195,19 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	// validate the kpi struct using the validator
 	err = kpi.Validate()
 	if err != nil {
+		errs, ok := controller.ErrValidationSlice(err)
+		if !ok {
+			log.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
 		log.Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"errors": errs})
 		return
 	}
 
