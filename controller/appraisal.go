@@ -56,7 +56,7 @@ func GetAppraisalByID(db *gorm.DB, appraisal *models.Appraisal, id uint64) error
 func GetAllAppraisals(db *gorm.DB, appraisal *[]models.Appraisal) (err error) {
 	log.Info("Getting all appraisals")
 
-	err = db.Model(models.Appraisal{}).Preload("AppraisalKpis").Find(&appraisal).Error
+	err = db.Model(models.Appraisal{}).Preload("AppraisalKpis").Order("id ASC").Find(&appraisal).Error
 	if err != nil {
 		return err
 	}

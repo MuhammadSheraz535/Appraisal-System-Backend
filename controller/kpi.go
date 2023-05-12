@@ -33,56 +33,56 @@ func CreateKPI(db *gorm.DB, kpi *models.Kpi) (*models.Kpi, error) {
 }
 
 func UpdateKPI(db *gorm.DB, kpi *models.Kpi) (*models.Kpi, error) {
-    log.Info("Updating KPI")
+	log.Info("Updating KPI")
 
-    // Check if KPI exists in the database
-    var existingKpi models.Kpi
-    if err := db.Model(&models.Kpi{}).First(&existingKpi, kpi.ID).Error; err != nil {
-        if errors.Is(err, gorm.ErrRecordNotFound) {
-            log.Error("kpi with the given id not found")
-            return nil, errors.New("kpi not found")
-        }
-        log.Error(err.Error())
-        return nil, err
-    }
+	// Check if KPI exists in the database
+	var existingKpi models.Kpi
+	if err := db.Model(&models.Kpi{}).First(&existingKpi, kpi.ID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error("kpi with the given id not found")
+			return nil, errors.New("kpi not found")
+		}
+		log.Error(err.Error())
+		return nil, err
+	}
 
-    // Check if KPI name already exists
-    var count int64
-    if err := db.Model(&models.Kpi{}).Where("kpi_name = ? AND id != ?", kpi.KpiName, kpi.ID).Count(&count).Error; err != nil {
-        log.Error(err.Error())
-        return nil, err
-    }
-    if count > 0 {
-        log.Error("invalid kpi id or kpi name already exists")
-        return nil, errors.New("invalid kpi id or kpi name already exists")
-    }
+	// Check if KPI name already exists
+	var count int64
+	if err := db.Model(&models.Kpi{}).Where("kpi_name = ? AND id != ?", kpi.KpiName, kpi.ID).Count(&count).Error; err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+	if count > 0 {
+		log.Error("invalid kpi id or kpi name already exists")
+		return nil, errors.New("invalid kpi id or kpi name already exists")
+	}
 
-    // Retrieve statements for the existing KPI
-    var statements []models.MultiStatementKpiData
-    if err := db.Model(&models.MultiStatementKpiData{}).Find(&statements, "kpi_id = ?", kpi.ID).Error; err != nil {
-        log.Error(err.Error())
-        return nil, err
-    }
+	// Retrieve statements for the existing KPI
+	var statements []models.MultiStatementKpiData
+	if err := db.Model(&models.MultiStatementKpiData{}).Find(&statements, "kpi_id = ?", kpi.ID).Error; err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
 
-    // Assigning statements' IDs to the request statements
-    if len(statements) <= len(kpi.Statements) && len(statements) != 0 && len(kpi.Statements) != 0 {
-        for k, v := range statements {
-            kpi.Statements[k].ID = v.ID
-        }
-    }
-    if len(statements) > len(kpi.Statements) && len(statements) != 0 && len(kpi.Statements) != 0 {
-        for k := range kpi.Statements {
-            kpi.Statements[k].ID = statements[k].ID
-        }
-    }
+	// Assigning statements' IDs to the request statements
+	if len(statements) <= len(kpi.Statements) && len(statements) != 0 && len(kpi.Statements) != 0 {
+		for k, v := range statements {
+			kpi.Statements[k].ID = v.ID
+		}
+	}
+	if len(statements) > len(kpi.Statements) && len(statements) != 0 && len(kpi.Statements) != 0 {
+		for k := range kpi.Statements {
+			kpi.Statements[k].ID = statements[k].ID
+		}
+	}
 
-    // Update KPI record
-    if err := db.Session(&gorm.Session{FullSaveAssociations: true}).Where("id = ?", kpi.ID).Save(&kpi).Error; err != nil {
-        log.Error(err.Error())
-        return nil, err
-    }
+	// Update KPI record
+	if err := db.Session(&gorm.Session{FullSaveAssociations: true}).Where("id = ?", kpi.ID).Save(&kpi).Error; err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
 
-    return kpi, nil
+	return kpi, nil
 }
 
 func GetKPIByID(db *gorm.DB, id uint64) (models.Kpi, error) {
@@ -101,7 +101,7 @@ func GetKPIByID(db *gorm.DB, id uint64) (models.Kpi, error) {
 func GetAllKPI(db *gorm.DB, kpi *[]models.Kpi) error {
 	log.Info("Getting all KPIs")
 
-	err := db.Model(&models.Kpi{}).Preload("Statements").Find(&kpi).Error
+	err := db.Model(&models.Kpi{}).Preload("Statements").Order("id ASC").Find(&kpi).Error
 	if err != nil {
 		log.Error(err.Error())
 		return err

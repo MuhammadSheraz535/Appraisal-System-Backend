@@ -67,7 +67,7 @@ func GetAllAppraisalFlow(flowName, isActive, teamId string, db *gorm.DB, apprais
 		db = db.Where("team_id = ?", teamId)
 	}
 
-	err := db.Find(&appraisalFlows).Error
+	err := db.Order("id ASC").Find(&appraisalFlows).Error
 	if err != nil {
 		log.Error(err.Error())
 		return err
