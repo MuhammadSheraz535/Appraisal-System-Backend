@@ -38,24 +38,49 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	// Validate AppraisalFlow struct
 	err = appraisalFlow.Validate()
 	if err != nil {
+		errs, ok := controller.ErrValidationSlice(err)
+		if !ok {
+			log.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
 		log.Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		if len(errs) > 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"errors": errs})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": errs[0]})
+		}
 		return
 	}
+
 	appraisalFlow.ID = 0
 
 	// Validate each FlowStep struct
 	for _, flowStep := range appraisalFlow.FlowSteps {
 		err = flowStep.Validate()
 		if err != nil {
+			errs, ok := controller.ErrValidationSlice(err)
+			if !ok {
+				log.Error(err.Error())
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+
 			log.Error(err.Error())
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			if len(errs) > 1 {
+				c.JSON(http.StatusBadRequest, gin.H{"errors": errs})
+			} else {
+				c.JSON(http.StatusBadRequest, gin.H{"error": errs[0]})
+			}
 			return
 		}
 	}
+
 	dbAppraisalFlow, err := controller.CreateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
@@ -124,21 +149,46 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	// Validate AppraisalFlow struct
 	err = appraisalFlow.Validate()
 	if err != nil {
-		log.Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	appraisalFlow.ID = id
-	// Validate each FlowStep struct
-	for _, flowStep := range appraisalFlow.FlowSteps {
-		err = flowStep.Validate()
-		if err != nil {
+		errs, ok := controller.ErrValidationSlice(err)
+		if !ok {
 			log.Error(err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+
+		log.Error(err.Error())
+		if len(errs) > 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"errors": errs})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": errs[0]})
+		}
+		return
 	}
-//calling controller update method
+
+	appraisalFlow.ID = id
+
+	// Validate each FlowStep struct
+	for _, flowStep := range appraisalFlow.FlowSteps {
+		err = flowStep.Validate()
+		if err != nil {
+			errs, ok := controller.ErrValidationSlice(err)
+			if !ok {
+				log.Error(err.Error())
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+
+			log.Error(err.Error())
+			if len(errs) > 1 {
+				c.JSON(http.StatusBadRequest, gin.H{"errors": errs})
+			} else {
+				c.JSON(http.StatusBadRequest, gin.H{"error": errs[0]})
+			}
+			return
+		}
+	}
+
+	// calling controller update method
 	err = controller.UpdateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())

@@ -22,7 +22,7 @@ func ErrValidationSlice(err error) ([]string, bool) {
 func errMsgFromValidator(field, tag, value string) string {
 	switch tag {
 	case "required":
-		return fmt.Sprintf("%s is required", field)
+		return fmt.Sprintf("%s field is required", field)
 	case "email":
 		return fmt.Sprintf("invalid email")
 	case "min":

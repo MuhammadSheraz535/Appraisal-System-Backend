@@ -124,7 +124,11 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		}
 
 		log.Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"errors": errs})
+		if len(errs) > 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"errors": errs})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": errs[0]})
+		}
 		return
 	}
 
@@ -207,7 +211,11 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		}
 
 		log.Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"errors": errs})
+		if len(errs) > 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"errors": errs})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": errs[0]})
+		}
 		return
 	}
 
