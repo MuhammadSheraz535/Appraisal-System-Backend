@@ -24,7 +24,7 @@ func errMsgFromValidator(field, tag, value string) string {
 	case "required":
 		return fmt.Sprintf("%s field is required", field)
 	case "email":
-		return fmt.Sprintf("invalid email")
+		return "invalid email"
 	case "min":
 		return fmt.Sprintf("minimum %v characters required for %s", value, field)
 	case "max":
