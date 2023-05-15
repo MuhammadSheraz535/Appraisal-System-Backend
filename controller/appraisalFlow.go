@@ -84,7 +84,7 @@ func UpdateAppraisalFlow(db *gorm.DB, appraisalFlow *models.AppraisalFlow) error
 	if err := db.Model(&models.AppraisalFlow{}).First(&existingAppraisalFlow, appraisalFlow.ID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Error("Appraisal flow with the given id not found")
-			return errors.New("Appraisal flow not found")
+			return errors.New("appraisal flow not found")
 		}
 		log.Error(err.Error())
 		return err
