@@ -3,7 +3,7 @@ package models
 type Appraisal struct {
 	CommonModel
 	AppraisalName    string         `gorm:"not null" json:"appraisal_name" binding:"required,min=3,max=30"`
-	AppraisalYear    uint32           `gorm:"not null" json:"appraisal_year" binding:"required,min=2023"`
+	AppraisalYear    uint32         `gorm:"not null" json:"appraisal_year" binding:"required,min=2023"`
 	TeamId           uint64         `gorm:"not null" json:"team_id" binding:"required"`
 	AppraisalFlowID  uint64         `gorm:"not null" json:"appraisal_flow_id" binding:"required"`
 	AppraisalFlow    AppraisalFlow  `json:"-"`
