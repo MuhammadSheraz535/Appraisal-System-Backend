@@ -2,7 +2,11 @@ package main
 
 import (
 	"os"
+	"reflect"
+	"strings"
 
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	"github.com/mrehanabbasi/appraisal-system-backend/logger"
@@ -12,6 +16,16 @@ import (
 func main() {
 	// Load environment variables from .env file
 	_ = godotenv.Load(".env")
+
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterTagNameFunc(func(fld reflect.StructField) string {
+			name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+			if name == "-" {
+				return ""
+			}
+			return name
+		})
+	}
 
 	// Initializing logger
 	logger.TextLogInit()

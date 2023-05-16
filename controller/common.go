@@ -29,6 +29,8 @@ func errMsgFromValidator(field, tag, value string) string {
 		return fmt.Sprintf("minimum %v characters required for %s", value, field)
 	case "max":
 		return fmt.Sprintf("maximum %v characters allowed for %s", value, field)
+	case "gte":
+		return fmt.Sprintf("%s should be greater or equal to %v", field, value)
 	}
 	return tag
 }
