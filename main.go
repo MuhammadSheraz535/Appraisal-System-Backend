@@ -17,6 +17,7 @@ func main() {
 	// Load environment variables from .env file
 	_ = godotenv.Load(".env")
 
+	// Convert fe.Field() from StructField to json field for custom validation messages
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterTagNameFunc(func(fld reflect.StructField) string {
 			name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
