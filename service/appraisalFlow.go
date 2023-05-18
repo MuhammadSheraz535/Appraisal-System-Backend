@@ -6,11 +6,13 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mrehanabbasi/appraisal-system-backend/constants"
 	"github.com/mrehanabbasi/appraisal-system-backend/controller"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type AppraisalFlowService struct {
@@ -19,13 +21,49 @@ type AppraisalFlowService struct {
 
 func NewAppraisalFlowService() *AppraisalFlowService {
 	db := database.DB
-	err := db.AutoMigrate(&models.AppraisalFlow{}, &models.FlowStep{})
+	err := db.AutoMigrate(models.AppraisalType{}, &models.AppraisalFlow{}, &models.FlowStep{})
 	if err != nil {
 		log.Panic(err.Error())
 		panic(err)
 	}
 
+	// Populate appraisal_types table
+	err = populateAppraisalTypeTable(db)
+	if err != nil {
+		panic(err)
+	}
+
 	return &AppraisalFlowService{Db: db}
+}
+
+func populateAppraisalTypeTable(db *gorm.DB) error {
+	appraisalTypes := []string{
+		constants.MID_YEAR_APPRAISAL,
+		constants.ANNUAL_APPRAISAL,
+	}
+
+	appraisalTypesSlice := make([]models.AppraisalType, len(appraisalTypes))
+
+	for k, v := range appraisalTypes {
+		newAppraisalType := models.AppraisalType{
+			AppraisalType: v,
+		}
+		if k == 0 {
+			newAppraisalType.AppraisalType = constants.MID_YEAR_APPRAISAL
+		} else if k == 2 {
+			newAppraisalType.AppraisalType = constants.ANNUAL_APPRAISAL
+		}
+
+		appraisalTypesSlice[k] = newAppraisalType
+	}
+
+	err := db.Clauses(clause.OnConflict{DoNothing: true}).Create(&appraisalTypesSlice).Error
+	if err != nil {
+		log.Error(err.Error())
+		return err
+	}
+
+	return nil
 }
 
 func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {

@@ -31,6 +31,7 @@ type Kpi struct {
 	AssignType     AssignType              `gorm:"references:AssignTypeId;foreignKey:AssignTypeID" json:"-"`
 	KpiTypeStr     string                  `gorm:"not null" json:"kpi_type" validate:"required"`
 	KpiType        KpiType                 `gorm:"references:KpiType;foreignKey:KpiTypeStr" json:"-"`
+	KpiWeight      uint32                  `gorm:"not null" json:"kpi_weight" validate:"required"`
 	ApplicableFor  pq.StringArray          `gorm:"type:text[];not null" json:"applicable_for" validate:"required"`
 	Statement      string                  `json:"statement,omitempty"`
 	Statements     []MultiStatementKpiData `gorm:"foreignKey:KpiID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"statements,omitempty"`
@@ -41,7 +42,7 @@ type MultiStatementKpiData struct {
 	KpiID     uint64 `gorm:"not null" json:"-"`
 	Statement string `gorm:"not null" json:"statement" validate:"required"`
 	// CorrectAnswer string `gorm:"not null" json:"correct_answer" validate:"required"`
-	Weightage uint64 `gorm:"not null" json:"weightage" validate:"required"`
+	Weightage uint32 `gorm:"not null" json:"weightage" validate:"required"`
 }
 
 func (a *Kpi) Validate() error {
