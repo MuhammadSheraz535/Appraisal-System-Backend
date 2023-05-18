@@ -170,8 +170,19 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 	for _, mskd := range kpi.Statements {
 		err = mskd.Validate()
 		if err != nil {
+			errs, ok := controller.ErrValidationSlice(err)
+			if !ok {
+				log.Error(err.Error())
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+
 			log.Error(err.Error())
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			if len(errs) > 1 {
+				c.JSON(http.StatusBadRequest, gin.H{"errors": errs})
+			} else {
+				c.JSON(http.StatusBadRequest, gin.H{"error": errs[0]})
+			}
 			return
 		}
 
@@ -272,8 +283,19 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 	for _, mskd := range kpi.Statements {
 		err = mskd.Validate()
 		if err != nil {
+			errs, ok := controller.ErrValidationSlice(err)
+			if !ok {
+				log.Error(err.Error())
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+
 			log.Error(err.Error())
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			if len(errs) > 1 {
+				c.JSON(http.StatusBadRequest, gin.H{"errors": errs})
+			} else {
+				c.JSON(http.StatusBadRequest, gin.H{"error": errs[0]})
+			}
 			return
 		}
 
