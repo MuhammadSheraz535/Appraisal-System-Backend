@@ -6,13 +6,11 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mrehanabbasi/appraisal-system-backend/constants"
 	"github.com/mrehanabbasi/appraisal-system-backend/controller"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type AppraisalService struct {
@@ -21,48 +19,13 @@ type AppraisalService struct {
 
 func NewAppraisalService() *AppraisalService {
 	db := database.DB
-	err := db.AutoMigrate(&models.Appraisal{}, models.AppraisalType{}, models.AppraisalKpi{})
-	if err != nil {
-		panic(err)
-	}
-
-	// Populate appraisal_types table
-	err = populateAppraisalTypeTable(db)
+	// TODO: Remove migration of Score to it's own service
+	err := db.AutoMigrate(&models.Appraisal{}, models.AppraisalKpi{}, models.Score{})
 	if err != nil {
 		panic(err)
 	}
 
 	return &AppraisalService{Db: db}
-}
-
-func populateAppraisalTypeTable(db *gorm.DB) error {
-	appraisalTypes := []string{
-		constants.MID_YEAR_APPRAISAL,
-		constants.ANNUAL_APPRAISAL,
-	}
-
-	appraisalTypesSlice := make([]models.AppraisalType, len(appraisalTypes))
-
-	for k, v := range appraisalTypes {
-		newAppraisalType := models.AppraisalType{
-			AppraisalType: v,
-		}
-		if k == 0 {
-			newAppraisalType.AppraisalType = constants.MID_YEAR_APPRAISAL
-		} else if k == 2 {
-			newAppraisalType.AppraisalType = constants.ANNUAL_APPRAISAL
-		}
-
-		appraisalTypesSlice[k] = newAppraisalType
-	}
-
-	err := db.Clauses(clause.OnConflict{DoNothing: true}).Create(&appraisalTypesSlice).Error
-	if err != nil {
-		log.Error(err.Error())
-		return err
-	}
-
-	return nil
 }
 
 func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
