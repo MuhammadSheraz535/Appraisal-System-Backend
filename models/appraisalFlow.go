@@ -13,7 +13,7 @@ type AppraisalFlow struct {
 	CreatedBy        uint64        `json:"created_by" gorm:"not null" validate:"required"`
 	IsActive         bool          `json:"is_active" gorm:"not null" validate:"required"`
 	TeamId           uint64        `json:"team_id" gorm:"not null" validate:"required"`
-	AppraisalTypeStr string        `json:"appraisal_type" gorm:"not null" binding:"required"`
+	AppraisalTypeStr string        `json:"appraisal_type" gorm:"not null" validate:"required"`
 	AppraisalType    AppraisalType `json:"-" gorm:"references:AppraisalType;foreignKey:AppraisalTypeStr"`
 	FlowSteps        []FlowStep    `json:"flow_steps" gorm:"foreignKey:FlowID;not null" validate:"required"`
 }
