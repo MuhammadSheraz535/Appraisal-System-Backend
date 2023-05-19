@@ -118,7 +118,13 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 			return
 		}
 	}
-
+	// check appraisal type exists
+	err = checkAppraisalType(r.Db, appraisalFlow.AppraisalTypeStr)
+	if err != nil {
+		log.Error("invalid appraisal type")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal type"})
+		return
+	}
 	dbAppraisalFlow, err := controller.CreateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
@@ -225,6 +231,15 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 			return
 		}
 	}
+
+	// check appraisal type exists
+	err = checkAppraisalType(r.Db, appraisalFlow.AppraisalTypeStr)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal type"})
+		return
+	}
+	appraisalFlow.ID = id
 
 	// calling controller update method
 	err = controller.UpdateAppraisalFlow(r.Db, &appraisalFlow)
