@@ -57,22 +57,29 @@ func UpdateKPI(db *gorm.DB, kpi *models.Kpi) (*models.Kpi, error) {
 		return nil, errors.New("invalid kpi id or kpi name already exists")
 	}
 
+	
 	// Retrieve statements for the existing KPI
-	var statements []models.MultiStatementKpiData
-	if err := db.Model(&models.MultiStatementKpiData{}).Find(&statements, "kpi_id = ?", kpi.ID).Error; err != nil {
+	var existingStatements []models.MultiStatementKpiData
+	if err := db.Model(&models.MultiStatementKpiData{}).Find(&existingStatements, "kpi_id = ?", kpi.ID).Error; err != nil {
 		log.Error(err.Error())
 		return nil, err
 	}
 
-	// Assigning statements' IDs to the request statements
-	if len(statements) <= len(kpi.Statements) && len(statements) != 0 && len(kpi.Statements) != 0 {
-		for k, v := range statements {
-			kpi.Statements[k].ID = v.ID
+	// Delete remaining statements if the number of statements is reduced
+	if len(existingStatements) > len(kpi.Statements) {
+		deletedStatements := existingStatements[len(kpi.Statements):]
+		for _, statement := range deletedStatements {
+			if err := db.Delete(&statement).Error; err != nil {
+				log.Error(err.Error())
+				return nil, err
+			}
 		}
 	}
-	if len(statements) > len(kpi.Statements) && len(statements) != 0 && len(kpi.Statements) != 0 {
-		for k := range kpi.Statements {
-			kpi.Statements[k].ID = statements[k].ID
+
+	// Assign statements' IDs to the request statements
+	for k := range kpi.Statements {
+		if k < len(existingStatements) {
+			kpi.Statements[k].ID = existingStatements[k].ID
 		}
 	}
 

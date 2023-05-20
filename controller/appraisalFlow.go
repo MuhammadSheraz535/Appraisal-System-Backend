@@ -111,22 +111,28 @@ func UpdateAppraisalFlow(db *gorm.DB, appraisalFlow *models.AppraisalFlow) error
 		stepNames = append(stepNames, flow.StepName)
 	}
 
-	// Retrieve flowsteps for the existing KPI
-	var flowsteps []models.FlowStep
-	if err := db.Model(&models.FlowStep{}).Find(&flowsteps, "flow_id = ?", appraisalFlow.ID).Error; err != nil {
+	// Retrieve flow steps for the existing AppraisalFlow
+	var existingFlowSteps []models.FlowStep
+	if err := db.Model(&models.FlowStep{}).Find(&existingFlowSteps, "flow_id = ?", appraisalFlow.ID).Error; err != nil {
 		log.Error(err.Error())
 		return err
 	}
 
-	// Assigning flowsteps' IDs to the request flow steps
-	if len(flowsteps) <= len(appraisalFlow.FlowSteps) && len(flowsteps) != 0 && len(appraisalFlow.FlowSteps) != 0 {
-		for k, v := range flowsteps {
-			appraisalFlow.FlowSteps[k].ID = v.ID
+	// Delete remaining flow steps if the number of steps is reduced
+	if len(existingFlowSteps) > len(appraisalFlow.FlowSteps) {
+		deletedFlowSteps := existingFlowSteps[len(appraisalFlow.FlowSteps):]
+		for _, flowStep := range deletedFlowSteps {
+			if err := db.Delete(&flowStep).Error; err != nil {
+				log.Error(err.Error())
+				return err
+			}
 		}
 	}
-	if len(flowsteps) > len(appraisalFlow.FlowSteps) && len(flowsteps) != 0 && len(appraisalFlow.FlowSteps) != 0 {
-		for k := range appraisalFlow.FlowSteps {
-			appraisalFlow.FlowSteps[k].ID = flowsteps[k].ID
+
+	// Assign flow steps' IDs to the request flow steps
+	for k := range appraisalFlow.FlowSteps {
+		if k < len(existingFlowSteps) {
+			appraisalFlow.FlowSteps[k].ID = existingFlowSteps[k].ID
 		}
 	}
 
