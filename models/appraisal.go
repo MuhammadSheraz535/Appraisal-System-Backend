@@ -10,7 +10,7 @@ type Appraisal struct {
 	SupervisorID     uint64         `gorm:"not null" json:"supervisor_id" binding:"required"`
 	AppraisalTypeStr string         `gorm:"not null" json:"appraisal_type" binding:"required"`
 	AppraisalType    AppraisalType  `gorm:"references:AppraisalType;foreignKey:AppraisalTypeStr" json:"-"`
-	AppraisalKpis    []AppraisalKpi `gorm:"foreignKey:AppraisalID;not null" json:"appraisal_kpis"`
+	AppraisalKpis    []AppraisalKpi `gorm:"foreignKey:AppraisalID;not null" json:"appraisal_kpis" binding:"required"`
 }
 
 type AppraisalKpi struct {
