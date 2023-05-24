@@ -8,7 +8,7 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func SendEmail(to []string, from, subject string) error {
+func SendEmail(to []string, from string, subject string) error {
 
 	// Get SMTP credentials from environment variables
 	smtpHost := os.Getenv("SMTP_HOST")
