@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"reflect"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	"github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/routes"
+	"github.com/mrehanabbasi/appraisal-system-backend/utils"
 )
 
 func main() {
@@ -42,4 +44,15 @@ func main() {
 		port = "8080"
 	}
 	_ = server.Run(":" + port)
+
+	toAddresses := []string{"hamza.imtiaz47022@gmail.com", "real.hashmi1@gmail.com"}
+	fromAddress := "hamzaimtiazshah@gmail.com"
+	subject := "Feedback Request"
+	//Calling SendEmail function
+	err := utils.SendEmail(toAddresses, fromAddress, subject)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Email sent successfully!")
 }
