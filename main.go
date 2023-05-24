@@ -11,6 +11,7 @@ import (
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	"github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/routes"
+	"github.com/mrehanabbasi/appraisal-system-backend/utils"
 )
 
 func main() {
@@ -36,6 +37,8 @@ func main() {
 
 	// Register all the routes
 	server := routes.NewRouter()
+
+	utils.SendEmail([]string{"muhammadsheraz535535@gmail.com", "mskhan7507@gmail.com"}, "mskhan7507@gmail.com", "Feedback")
 
 	port := os.Getenv("PORT")
 	if port == "" {

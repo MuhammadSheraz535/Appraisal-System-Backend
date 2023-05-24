@@ -3,13 +3,13 @@ module github.com/mrehanabbasi/appraisal-system-backend
 go 1.18
 
 require (
+	github.com/Shopify/gomail v0.0.0-20220729171026-0784ece65e69
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.2
 	github.com/go-playground/validator/v10 v10.11.2
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.7
 	github.com/sirupsen/logrus v1.9.0
-	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gorm.io/driver/postgres v1.5.0
 	gorm.io/gorm v1.24.7-0.20230306060331-85eaf9eeda11
 )
