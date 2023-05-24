@@ -9,7 +9,7 @@ import (
 )
 
 // SendEmail sends an email using a remote SMTP server.
-func SendEmail(toAddresses []string, fromAddress, subject string) error {
+func SendEmail(toAddresses []string, fromAddress, subject, employeeName, employeeCode string) error {
 	// SMTP server credentials
 	smtpHost := os.Getenv("SMTP_HOST")
 	smtpPortStr := os.Getenv("SMTP_PORT")
@@ -31,7 +31,7 @@ func SendEmail(toAddresses []string, fromAddress, subject string) error {
 	message.SetHeader("Subject", subject)
 
 	// Set the HTML body
-	message.SetBody("text/html", getHTMLBody())
+	message.SetBody("text/html", getHTMLBody(employeeName, employeeCode))
 
 	// Create the SMTP dialer
 	dialer := gomail.NewDialer(smtpHost, smtpPort, smtpUsername, smtpPassword)
@@ -45,9 +45,9 @@ func SendEmail(toAddresses []string, fromAddress, subject string) error {
 }
 
 // getHTMLBody returns the HTML body content of the email
-func getHTMLBody() string {
+func getHTMLBody(employeeName, employeeCode string) string {
 	// You can customize the HTML body template here
-	htmlBody := `
+	htmlBody := fmt.Sprintf(`
 		<!DOCTYPE html>
 		<html>
 			<head>
@@ -58,10 +58,10 @@ func getHTMLBody() string {
 			</head>
 			<body>
 				<h1>Your feedback is pending</h1>
-				<p>Please click <a href="https://asdemo.teo-intl.com/dashboard">here</a> to provide feedback for Employee 1.</p>
+				<p>Please click <a href="https://asdemo.teo-intl.com/dashboard">here</a> to provide feedback for %s (Employee Code: %s).</p>
 			</body>
 		</html>
-	`
+	`, employeeName, employeeCode)
 
 	return htmlBody
 }
