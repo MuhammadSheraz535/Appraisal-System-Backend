@@ -3,6 +3,8 @@
 package service
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -182,6 +184,143 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 			} else {
 				c.JSON(http.StatusBadRequest, gin.H{"error": errs[0]})
 			}
+			return
+		}
+
+	}
+
+	// Check if SelectedAssignID exists in the API
+	assignType := kpi.AssignTypeID
+	selectedAssignID := kpi.SelectedAssignID
+
+	if assignType == 1 {
+		method := "GET"
+		url := "https://irp-tossapi.teo-intl.com/api/Employee/GetSystemRolesList"
+		body := []byte("request body")
+
+		resp, err := controller.SendRequest(method, url, body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		responseBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		type SystemRole struct {
+			Value int    `json:"value"`
+			Label string `json:"label"`
+		}
+
+		type SystemRolesResponse struct {
+			SystemRoles []SystemRole `json:"systemRoles"`
+		}
+
+		var response SystemRolesResponse
+		if err := json.Unmarshal(responseBody, &response); err != nil {
+			log.Fatal(err)
+		}
+
+		selectedAssignID := int(selectedAssignID) // Convert to int
+
+		found := false
+		for _, role := range response.SystemRoles {
+			if role.Value == selectedAssignID {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid selected Role ID"})
+			return
+		}
+
+		// Continue with the rest of the code if the role is valid
+	}
+
+	if assignType == 2 {
+		method := "GET"
+		url := "https://irp-tossapi.teo-intl.com/api/Project/GetAllProjects"
+		body := []byte("request body")
+
+		resp, err := controller.SendRequest(method, url, body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		responseBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var projects []struct {
+			ProjectDetails struct {
+				ProjectID int `json:"projectId"`
+			} `json:"projectDetails"`
+		}
+
+		if err := json.Unmarshal(responseBody, &projects); err != nil {
+			log.Fatal(err)
+		}
+
+		selectedAssignID := int(selectedAssignID) // Convert to int
+
+		found := false
+		for _, project := range projects {
+			if project.ProjectDetails.ProjectID == selectedAssignID {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid selected team id"})
+			return
+
+		}
+	}
+
+	if assignType == 3 {
+		method := "GET"
+		url := "https://irp-tossapi.teo-intl.com/api/Employee/GetAllEmployees"
+		body := []byte("request body")
+
+		resp, err := controller.SendRequest(method, url, body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		responseBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var Employees []struct {
+			EmployeeID int `json:"employeeId"`
+		}
+		if err := json.Unmarshal(responseBody, &Employees); err != nil {
+			log.Fatal(err)
+		}
+
+		selectedAssignID := int(selectedAssignID) // Convert to int
+
+		found := false
+		for _, employee := range Employees {
+			if employee.EmployeeID == selectedAssignID { // Compare with converted value
+				found = true
+				break
+			}
+		}
+
+		// ...
+
+		if !found {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid selected Employee id"})
 			return
 		}
 
