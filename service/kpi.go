@@ -82,11 +82,10 @@ func populateAssignTypeTable(db *gorm.DB) error {
 		constants.ASSIGN_TYPE_INDIVIDUAL,
 	}
 
-	// Make assign type ID as 0 = Role, 1 = Team and 2 = Individual
 	assignTypesSlice := make([]models.AssignType, len(assignTypes))
 	for i, a := range assignTypes {
 		newAssignType := models.AssignType{
-			AssignTypeId: uint64(i),
+			AssignTypeId: uint64(i + 1), // Increment the value by 1
 			AssignType:   models.AssignTypeStr(a),
 		}
 		assignTypesSlice[i] = newAssignType
