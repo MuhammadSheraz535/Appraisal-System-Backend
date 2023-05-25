@@ -473,6 +473,9 @@ func (s *KPIService) GetAllKPIs(c *gin.Context) {
 	kpiName := c.Query("kpi_name")
 	assignType := c.Query("assign_type")
 	kpiType := c.Query("kpi_type")
+	teamId := c.Query("team_id")
+	employeeId := c.Query("employee_id")
+	roleId := c.Query("role_id")
 
 	if kpiName != "" {
 		db = db.Where("kpi_name LIKE ?", "%"+kpiName+"%")
@@ -484,6 +487,21 @@ func (s *KPIService) GetAllKPIs(c *gin.Context) {
 
 	if kpiType != "" {
 		db = db.Where("kpi_type_str = ?", kpiType)
+	}
+
+	if teamId != "" {
+		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
+			Where("kpis.selected_assign_id = ? AND assign_types.assign_type = ?", teamId, constants.ASSIGN_TYPE_TEAM)
+	}
+
+	if employeeId != "" {
+		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
+			Where("kpis.selected_assign_id = ? AND assign_types.assign_type = ?", employeeId, constants.ASSIGN_TYPE_INDIVIDUAL)
+	}
+
+	if roleId != "" {
+		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
+			Where("kpis.selected_assign_id = ? AND assign_types.assign_type = ?", roleId, constants.ASSIGN_TYPE_ROLE)
 	}
 
 	if err := controller.GetAllKPI(db, &kpis); err != nil {
