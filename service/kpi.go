@@ -14,6 +14,7 @@ import (
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
+	"github.com/mrehanabbasi/appraisal-system-backend/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -198,7 +199,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		url := "https://irp-tossapi.teo-intl.com/api/Employee/GetSystemRolesList"
 		body := []byte("request body")
 
-		resp, err := controller.SendRequest(method, url, body)
+		resp, err := utils.SendRequest(method, url, body)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -246,7 +247,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		url := "https://irp-tossapi.teo-intl.com/api/Project/GetAllProjects"
 		body := []byte("request body")
 
-		resp, err := controller.SendRequest(method, url, body)
+		resp, err := utils.SendRequest(method, url, body)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -289,7 +290,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		url := "https://irp-tossapi.teo-intl.com/api/Employee/GetAllEmployees"
 		body := []byte("request body")
 
-		resp, err := controller.SendRequest(method, url, body)
+		resp, err := utils.SendRequest(method, url, body)
 		if err != nil {
 			log.Fatal(err)
 		}
