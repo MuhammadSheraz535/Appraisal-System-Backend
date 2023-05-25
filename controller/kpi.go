@@ -135,3 +135,4 @@ func DeleteKPI(db *gorm.DB, id uint64) error {
 
 	return nil
 }
+
