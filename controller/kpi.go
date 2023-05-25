@@ -1,7 +1,11 @@
 package controller
 
 import (
+	"bytes"
 	"errors"
+	"net/http"
+	"os"
+	"time"
 
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
@@ -136,3 +140,25 @@ func DeleteKPI(db *gorm.DB, id uint64) error {
 	return nil
 }
 
+func SendRequest(method string, url string, body []byte) (*http.Response, error) {
+	req, err := http.NewRequest(method, url, bytes.NewReader(body))
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	token := os.Getenv("TOSS_BEARER_TOKEN")
+	req.Header.Add("Authorization", "Bearer "+token)
+
+	client := &http.Client{
+		Timeout: time.Second * 20,
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	return resp, nil
+}
