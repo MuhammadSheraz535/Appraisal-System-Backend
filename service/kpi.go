@@ -102,7 +102,6 @@ func populateAssignTypeTable(db *gorm.DB) error {
 
 	return nil
 }
-
 func (s *KPIService) CreateKPI(c *gin.Context) {
 	log.Info("Initializing CreateKPI handler function...")
 
@@ -190,11 +189,12 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 
 	}
 
-	// Check if SelectedAssignID exists in the API
 	assignType := kpi.AssignTypeID
+	// Check if SelectedAssignID exists in the API
 	selectedAssignID := kpi.SelectedAssignID
 
-	if assignType == 1 {
+	switch assignType {
+	case 1:
 		method := "GET"
 		url := "https://irp-tossapi.teo-intl.com/api/Employee/GetSystemRolesList"
 		body := []byte("request body")
@@ -239,10 +239,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 			return
 		}
 
-		// Continue with the rest of the code if the role is valid
-	}
-
-	if assignType == 2 {
+	case 2:
 		method := "GET"
 		url := "https://irp-tossapi.teo-intl.com/api/Project/GetAllProjects"
 		body := []byte("request body")
@@ -283,9 +280,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 			return
 
 		}
-	}
-
-	if assignType == 3 {
+	case 3:
 		method := "GET"
 		url := "https://irp-tossapi.teo-intl.com/api/Employee/GetAllEmployees"
 		body := []byte("request body")
@@ -317,8 +312,6 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 				break
 			}
 		}
-
-		// ...
 
 		if !found {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid selected Employee id"})
