@@ -5,6 +5,7 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -360,8 +361,8 @@ func (s *KPIService) GetAllKPIs(c *gin.Context) {
 	assignType := c.Query("assign_type")
 	kpiType := c.Query("kpi_type")
 	teamId := c.Query("team_id")
-	employeeId := c.Query("employee_id")
-	roleId := c.Query("role_id")
+	// employeeId := c.Query("employee_id")
+	// roleId := c.Query("role_id")
 
 	if kpiName != "" {
 		db = db.Where("kpi_name LIKE ?", "%"+kpiName+"%")
@@ -376,19 +377,20 @@ func (s *KPIService) GetAllKPIs(c *gin.Context) {
 	}
 
 	if teamId != "" {
+		empIds, err := getEmployeesID(teamId)
+		roleids,_:=getRolesID(empIds)
+		if err != nil {
+			log.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee IDs"})
+			return
+		}
+
 		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
-			Where("kpis.selected_assign_id = ? AND assign_types.assign_type = ?", teamId, constants.ASSIGN_TYPE_TEAM)
+			Where("(kpis.selected_assign_id = ? AND assign_types.assign_type = ?) OR (kpis.selected_assign_id IN ? AND assign_types.assign_type = ?) OR (kpis.selected_assign_id IN ? AND assign_types.assign_type = ?)",
+				teamId, constants.ASSIGN_TYPE_TEAM, empIds, constants.ASSIGN_TYPE_INDIVIDUAL,roleids, constants.ASSIGN_TYPE_ROLE)
 	}
 
-	if employeeId != "" {
-		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
-			Where("kpis.selected_assign_id = ? AND assign_types.assign_type = ?", employeeId, constants.ASSIGN_TYPE_INDIVIDUAL)
-	}
 
-	if roleId != "" {
-		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
-			Where("kpis.selected_assign_id = ? AND assign_types.assign_type = ?", roleId, constants.ASSIGN_TYPE_ROLE)
-	}
 
 	if err := controller.GetAllKPI(db, &kpis); err != nil {
 		log.Error("failed to fetch kpis")
@@ -572,4 +574,83 @@ func checkKpiAgainstTossApis(selectedAssignID uint64, assignType string) (int, e
 	}
 
 	return 0, nil
+}
+
+func getEmployeesID(id string) ([]uint64, error) {
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
+	method := http.MethodGet
+	url := tossBaseUrl + "/api/Project/" + id + "/GetProjectEmployees"
+
+	resp, err := utils.SendRequest(method, url, nil)
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	var employees []struct {
+		EmployeeID uint64 `json:"empId"`
+	}
+	if err := json.Unmarshal(responseBody, &employees); err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	employeeIDs := make([]uint64, len(employees))
+	for i, employee := range employees {
+		employeeIDs[i] = employee.EmployeeID
+	}
+
+	return employeeIDs, nil
+}
+
+func getRolesID(ids []uint64) ([]uint64, error) {
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
+	method := http.MethodGet
+
+	var roleIDs []uint64
+
+	for _, id := range ids {
+		url := fmt.Sprintf("%s/api/Employee/%d", tossBaseUrl, id)
+
+		resp, err := utils.SendRequest(method, url, nil)
+		if err != nil {
+			log.Error(err.Error())
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			errMsg := fmt.Sprintf("Failed to get role ID for employee ID %d. Status code: %d", id, resp.StatusCode)
+			log.Error(errMsg)
+			return nil, errors.New(errMsg)
+		}
+
+		responseBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Error(err.Error())
+			return nil, err
+		}
+
+		var employee struct {
+			RoleID uint64 `json:"empRole"`
+		}
+
+		if err := json.Unmarshal(responseBody, &employee); err != nil {
+			log.Error(err.Error())
+			return nil, err
+		}
+
+		roleIDs = append(roleIDs, employee.RoleID)
+
+
+	}
+
+	return roleIDs, nil
 }
