@@ -378,23 +378,23 @@ func (s *KPIService) GetAllKPIs(c *gin.Context) {
 
 	if teamId != "" {
 		empIds, err := getEmployeesID(teamId)
-		roleids,_:=getRolesID(empIds)
+		roleIds, _ := getRolesID(empIds)
 		if err != nil {
 			log.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee IDs"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee ids"})
 			return
 		}
 
 		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
-			Where("(kpis.selected_assign_id = ? AND assign_types.assign_type = ?) OR (kpis.selected_assign_id IN ? AND assign_types.assign_type = ?) OR (kpis.selected_assign_id IN ? AND assign_types.assign_type = ?)",
-				teamId, constants.ASSIGN_TYPE_TEAM, empIds, constants.ASSIGN_TYPE_INDIVIDUAL,roleids, constants.ASSIGN_TYPE_ROLE)
+			Where(`(kpis.selected_assign_id = ? AND assign_types.assign_type = ?)
+        OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)
+        OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)`,
+				teamId, constants.ASSIGN_TYPE_TEAM, empIds, constants.ASSIGN_TYPE_INDIVIDUAL, roleIds, constants.ASSIGN_TYPE_ROLE)
 	}
-
-
 
 	if err := controller.GetAllKPI(db, &kpis); err != nil {
 		log.Error("failed to fetch kpis")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPIs"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch kpis"})
 		return
 	}
 
@@ -535,7 +535,7 @@ func checkKpiAgainstTossApis(selectedAssignID uint64, assignType string) (int, e
 		}
 	case constants.ASSIGN_TYPE_INDIVIDUAL:
 		method := http.MethodGet
-		url := tossBaseUrl + "/api/Employee/GetAllEmployees"
+		url := tossBaseUrl + "/api/Employee/GetAllEmployees?AllEmployees=true"
 
 		resp, err := utils.SendRequest(method, url, nil)
 		if err != nil {
@@ -576,10 +576,10 @@ func checkKpiAgainstTossApis(selectedAssignID uint64, assignType string) (int, e
 	return 0, nil
 }
 
-func getEmployeesID(id string) ([]uint64, error) {
+func getEmployeesID(teamId string) ([]uint64, error) {
 	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
 	method := http.MethodGet
-	url := tossBaseUrl + "/api/Project/" + id + "/GetProjectEmployees"
+	url := tossBaseUrl + "/api/Project/" + teamId + "/GetProjectEmployees"
 
 	resp, err := utils.SendRequest(method, url, nil)
 	if err != nil {
@@ -602,22 +602,22 @@ func getEmployeesID(id string) ([]uint64, error) {
 		return nil, err
 	}
 
-	employeeIDs := make([]uint64, len(employees))
+	employeeIds := make([]uint64, len(employees))
 	for i, employee := range employees {
-		employeeIDs[i] = employee.EmployeeID
+		employeeIds[i] = employee.EmployeeID
 	}
 
-	return employeeIDs, nil
+	return employeeIds, nil
 }
 
-func getRolesID(ids []uint64) ([]uint64, error) {
+func getRolesID(empIds []uint64) ([]uint64, error) {
 	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
 	method := http.MethodGet
 
 	var roleIDs []uint64
 
-	for _, id := range ids {
-		url := fmt.Sprintf("%s/api/Employee/%d", tossBaseUrl, id)
+	for _, empId := range empIds {
+		url := tossBaseUrl + "/api/Employee/" + strconv.FormatUint(empId, 10)
 
 		resp, err := utils.SendRequest(method, url, nil)
 		if err != nil {
@@ -627,7 +627,7 @@ func getRolesID(ids []uint64) ([]uint64, error) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			errMsg := fmt.Sprintf("Failed to get role ID for employee ID %d. Status code: %d", id, resp.StatusCode)
+			errMsg := fmt.Sprintf("failed to get role id against employee id %d. status code: %d", empId, resp.StatusCode)
 			log.Error(errMsg)
 			return nil, errors.New(errMsg)
 		}
@@ -648,7 +648,6 @@ func getRolesID(ids []uint64) ([]uint64, error) {
 		}
 
 		roleIDs = append(roleIDs, employee.RoleID)
-
 
 	}
 
