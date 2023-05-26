@@ -669,7 +669,5 @@ func getEmployeesId(teamID uint64) ([]uint64, error) {
 		}
 	}
 
-	fmt.Printf("employee id: %v", employeeIDs)
-	log.Info(employeeIDs)
 	return employeeIDs, nil
 }
