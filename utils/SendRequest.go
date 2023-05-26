@@ -23,6 +23,8 @@ func SendRequest(method string, url string, body []byte) (*http.Response, error)
 		Timeout: time.Second * 20,
 	}
 
+	log.Info("Sending %s request to %s", method, url)
+
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Error(err.Error())
