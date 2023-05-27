@@ -361,8 +361,6 @@ func (s *KPIService) GetAllKPIs(c *gin.Context) {
 	assignType := c.Query("assign_type")
 	kpiType := c.Query("kpi_type")
 	teamId := c.Query("team_id")
-	// employeeId := c.Query("employee_id")
-	// roleId := c.Query("role_id")
 
 	if kpiName != "" {
 		db = db.Where("kpi_name LIKE ?", "%"+kpiName+"%")
@@ -377,11 +375,18 @@ func (s *KPIService) GetAllKPIs(c *gin.Context) {
 	}
 
 	if teamId != "" {
-		empIds, err := getEmployeesID(teamId)
-		roleIds, _ := getRolesID(empIds)
+		teamID, _ := strconv.ParseUint(teamId, 10, 64)
+		empIds, err := getEmployeesId(teamID)
 		if err != nil {
 			log.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee ids"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to fetch employee ids"})
+			return
+		}
+		roleIds, err := getRolesID(empIds)
+
+		if err != nil {
+			log.Error(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to fetch roles ids"})
 			return
 		}
 
@@ -576,40 +581,6 @@ func checkKpiAgainstTossApis(selectedAssignID uint64, assignType string) (int, e
 	return 0, nil
 }
 
-func getEmployeesID(teamId string) ([]uint64, error) {
-	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
-	method := http.MethodGet
-	url := tossBaseUrl + "/api/Project/" + teamId + "/GetProjectEmployees"
-
-	resp, err := utils.SendRequest(method, url, nil)
-	if err != nil {
-		log.Error(err.Error())
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	responseBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Error(err.Error())
-		return nil, err
-	}
-
-	var employees []struct {
-		EmployeeID uint64 `json:"empId"`
-	}
-	if err := json.Unmarshal(responseBody, &employees); err != nil {
-		log.Error(err.Error())
-		return nil, err
-	}
-
-	employeeIds := make([]uint64, len(employees))
-	for i, employee := range employees {
-		employeeIds[i] = employee.EmployeeID
-	}
-
-	return employeeIds, nil
-}
-
 func getRolesID(empIds []uint64) ([]uint64, error) {
 	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
 	method := http.MethodGet
@@ -652,4 +623,55 @@ func getRolesID(empIds []uint64) ([]uint64, error) {
 	}
 
 	return roleIDs, nil
+}
+
+func getEmployeesId(teamID uint64) ([]uint64, error) {
+	type ProjectResponse struct {
+		ProjectDetails struct {
+			ProjectID    uint64 `json:"projectId"`
+			SupervisorID uint64 `json:"supervisorId"`
+		} `json:"projectDetails"`
+		AllocateTo []struct {
+			EmployeeID uint64 `json:"employeeId"`
+		} `json:"allocateTo"`
+	}
+
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
+	method := http.MethodGet
+	url := tossBaseUrl + "/api/Project/GetAllProjects"
+
+	resp, err := utils.SendRequest(method, url, nil)
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	var projects []ProjectResponse
+
+	if err := json.Unmarshal(responseBody, &projects); err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	var employeeIDs []uint64
+
+	for _, project := range projects {
+		if project.ProjectDetails.ProjectID == teamID {
+			for _, allocateTo := range project.AllocateTo {
+				if allocateTo.EmployeeID != project.ProjectDetails.SupervisorID {
+					employeeIDs = append(employeeIDs, allocateTo.EmployeeID)
+				}
+			}
+			break
+		}
+	}
+
+	return employeeIDs, nil
 }
