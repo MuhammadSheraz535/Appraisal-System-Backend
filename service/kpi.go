@@ -91,7 +91,7 @@ func populateAssignTypeTable(db *gorm.DB) error {
 	assignTypesSlice := make([]models.AssignType, len(assignTypes))
 	for i, a := range assignTypes {
 		newAssignType := models.AssignType{
-			AssignTypeId: uint64(i + 1), // Increment the value by 1
+			AssignTypeId: uint64(i),
 			AssignType:   models.AssignTypeStr(a),
 		}
 		assignTypesSlice[i] = newAssignType
@@ -146,7 +146,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		return
 	}
 
-	assignType, err := checkAssignType(s.Db, kpi.AssignTypeID)
+	assignType, err := checkAssignType(s.Db, uint64(*kpi.AssignTypeID))
 	if err != nil {
 		log.Error("invalid assign type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
@@ -257,7 +257,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		return
 	}
 
-	assignType, err := checkAssignType(s.Db, kpi.AssignTypeID)
+	assignType, err := checkAssignType(s.Db, uint64(*kpi.AssignTypeID))
 	if err != nil {
 		log.Error("invalid assign type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})

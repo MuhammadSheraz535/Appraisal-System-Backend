@@ -27,7 +27,7 @@ type Kpi struct {
 	CommonModel
 	KpiName          string                  `gorm:"size:100;not null" json:"kpi_name" validate:"required,min=3,max=30"`
 	KpiDescription   string                  `gorm:"not null" json:"kpi_description" validate:"required"`
-	AssignTypeID     uint64                  `gorm:"not null" json:"assign_type" validate:"required"`
+	AssignTypeID     *int32                  `gorm:"not null" json:"assign_type" validate:"required"`
 	AssignType       AssignType              `gorm:"references:AssignTypeId;foreignKey:AssignTypeID" json:"-"`
 	SelectedAssignID uint64                  `gorm:"not null" json:"selected_assign_id" validate:"required"`
 	KpiTypeStr       string                  `gorm:"not null" json:"kpi_type" validate:"required"`
@@ -55,6 +55,7 @@ func (a *Kpi) Validate() error {
 		}
 		return name
 	})
+
 	return validate.Struct(a)
 }
 
