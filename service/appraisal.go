@@ -147,7 +147,7 @@ func (r *AppraisalService) GetAllAppraisals(c *gin.Context) {
 func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 	log.Info("Initializing UpdateAppraisal handler function...")
 
-	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 16)
 
 	var appraisal models.Appraisal
 
@@ -194,7 +194,7 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal type"})
 		return
 	}
-	appraisal.ID = id
+	appraisal.ID = uint16(id)
 
 	// checking appraisal flow id exists in db
 	var appraisalFlow models.AppraisalFlow
@@ -220,8 +220,8 @@ func (r *AppraisalService) DeleteAppraisal(c *gin.Context) {
 	log.Info("Initializing DeleteAppraisal handler function...")
 
 	var appraisal models.Appraisal
-	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
-	appraisal.ID = id
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 16)
+	appraisal.ID = uint16(id)
 
 	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
 	if err != nil {

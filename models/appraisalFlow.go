@@ -10,9 +10,9 @@ import (
 type AppraisalFlow struct {
 	CommonModel
 	FlowName         string        `json:"flow_name" gorm:"type:varchar(255);not null;unique" validate:"required,min=3,max=30"`
-	CreatedBy        uint64        `json:"created_by" gorm:"not null" validate:"required"`
+	CreatedBy        uint16        `json:"created_by" gorm:"not null" validate:"required"`
 	IsActive         bool          `json:"is_active" gorm:"not null" validate:"required"`
-	TeamId           uint64        `json:"team_id" gorm:"not null" validate:"required"`
+	TeamId           uint16        `json:"team_id" gorm:"not null" validate:"required"`
 	AppraisalTypeStr string        `json:"appraisal_type" gorm:"not null" validate:"required"`
 	AppraisalType    AppraisalType `json:"-" gorm:"references:AppraisalType;foreignKey:AppraisalTypeStr"`
 	FlowSteps        []FlowStep    `json:"flow_steps" gorm:"foreignKey:FlowID;not null" validate:"required"`
@@ -20,7 +20,7 @@ type AppraisalFlow struct {
 
 type FlowStep struct {
 	CommonModel
-	FlowID    uint64 `json:"-" gorm:"not null"`
+	FlowID    uint16 `json:"-" gorm:"not null"`
 	StepName  string `json:"step_name"  gorm:"type:varchar(255);not null" validate:"required"`
 	StepOrder uint64 `json:"step_order"  gorm:"not null" validate:"required"`
 	UserId    uint64 `json:"user_id"  gorm:"not null" validate:"required"`

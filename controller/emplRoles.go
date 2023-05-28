@@ -58,7 +58,7 @@ func UpdateRole(db *gorm.DB, role *models.Role) error {
 }
 
 // delete roles
-func DeleteRole(db *gorm.DB, role *models.Role, id int) error {
+func DeleteRole(db *gorm.DB, role *models.Role, id uint16) error {
 	err := db.Table("roles").Where("id = ?", id).Delete(&role).Error
 	if err != nil {
 		return err

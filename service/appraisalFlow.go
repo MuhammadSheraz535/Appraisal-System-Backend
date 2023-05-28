@@ -181,7 +181,7 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	log.Info("Initializing UpdateAppraisalFlow handler function...")
 
 	var appraisalFlow models.AppraisalFlow
-	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 16)
 
 	err := c.ShouldBindJSON(&appraisalFlow)
 	if err != nil {
@@ -209,7 +209,7 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 		return
 	}
 
-	appraisalFlow.ID = id
+	appraisalFlow.ID = uint16(id)
 
 	// Validate each FlowStep struct
 	for _, flowStep := range appraisalFlow.FlowSteps {
@@ -239,7 +239,7 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal type"})
 		return
 	}
-	appraisalFlow.ID = id
+	appraisalFlow.ID = uint16(id)
 
 	// calling controller update method
 	err = controller.UpdateAppraisalFlow(r.Db, &appraisalFlow)
@@ -256,8 +256,8 @@ func (r *AppraisalFlowService) DeleteAppraisalFlow(c *gin.Context) {
 	log.Info("Initializing DeleteAppraisalFlow handler function...")
 
 	var appraisalFlow models.AppraisalFlow
-	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
-	appraisalFlow.ID = id
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 16)
+	appraisalFlow.ID = uint16(id)
 
 	err := controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
 	if err != nil {
