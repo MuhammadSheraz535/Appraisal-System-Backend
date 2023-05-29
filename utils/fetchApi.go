@@ -105,3 +105,60 @@ func GetEmployeesId(teamID uint16) ([]uint16, error) {
 
 	return employeeIDs, nil // Return the list of employee IDs
 }
+
+func VerifyTeamAndSupervisorID(teamID, supervisorID uint16) (int, error) {
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
+
+	method := http.MethodGet
+	url := tossBaseUrl + "/api/Project/GetAllProjects"
+
+	resp, err := SendRequest(method, url, nil)
+	if err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+
+	var projects []struct {
+		ProjectDetails struct {
+			ProjectID    uint16 `json:"projectId"`
+			SupervisorID uint16 `json:"supervisorId"`
+		} `json:"projectDetails"`
+	}
+
+	if err := json.Unmarshal(responseBody, &projects); err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+
+	foundteam, foundsupervisor := false, false
+	for _, project := range projects {
+		if project.ProjectDetails.ProjectID == teamID {
+			foundteam = true
+			if project.ProjectDetails.SupervisorID == supervisorID {
+
+				foundsupervisor = true
+				break
+			}
+			break
+		}
+	}
+
+	if !foundteam {
+		err := errors.New("invalid selected team id")
+		log.Error(err.Error())
+		return http.StatusBadRequest, err
+	}
+	if !foundsupervisor {
+		err := errors.New("invalid selected supervisor id")
+		log.Error(err.Error())
+		return http.StatusBadRequest, err
+	}
+	return 0, nil
+}

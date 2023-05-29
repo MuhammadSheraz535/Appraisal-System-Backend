@@ -10,6 +10,7 @@ import (
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
+	"github.com/mrehanabbasi/appraisal-system-backend/utils"
 	"gorm.io/gorm"
 )
 
@@ -52,6 +53,8 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 
 	// Validate each FlowStep struct
 	for _, ak := range appraisal.AppraisalKpis {
+		//check employee id exist in toss api
+
 		if ak.EmployeeID == 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "employee_id field is required"})
 			return
@@ -66,6 +69,20 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "status field is required "})
 			return
 		}
+		errCode, err := utils.CheckIndividualAgainstToss(ak.EmployeeID)
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	//check team ans supervisor id exist in toss api
+	errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.TeamId, appraisal.SupervisorID)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(errCode, gin.H{"error": err.Error()})
+		return
 	}
 
 	// check appraisal type exists
