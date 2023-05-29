@@ -69,6 +69,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "status field is required "})
 			return
 		}
+		//check employees id in toss api
 		errCode, err := utils.CheckIndividualAgainstToss(ak.EmployeeID)
 		if err != nil {
 			log.Error(err.Error())
@@ -202,6 +203,20 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "status field is required "})
 			return
 		}
+		//check employees id in toss api
+		errCode, err := utils.CheckIndividualAgainstToss(ak.EmployeeID)
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
+	}
+	//check team ans supervisor id exist in toss api
+	errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.TeamId, appraisal.SupervisorID)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(errCode, gin.H{"error": err.Error()})
+		return
 	}
 
 	// check appraisal type exists
