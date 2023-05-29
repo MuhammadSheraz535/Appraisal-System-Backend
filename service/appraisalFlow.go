@@ -253,6 +253,13 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	}
 	appraisalFlow.ID = uint16(id)
 
+	errCode, err := CheckIndividualAgainstToss(appraisalFlow.CreatedBy)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(errCode, gin.H{"error": err.Error()})
+		return
+	}
+
 	// calling controller update method
 	err = controller.UpdateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
