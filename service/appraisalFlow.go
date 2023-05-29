@@ -267,6 +267,13 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 		return
 	}
 
+	teamErr, err := CheckTeamAgainstToss(appraisalFlow.TeamId)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(teamErr, gin.H{"error": err.Error()})
+		return
+	}
+
 	// calling controller update method
 	err = controller.UpdateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
