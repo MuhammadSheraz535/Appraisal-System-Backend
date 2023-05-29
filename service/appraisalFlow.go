@@ -1,8 +1,11 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -11,6 +14,7 @@ import (
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
+	"github.com/mrehanabbasi/appraisal-system-backend/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -125,6 +129,14 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal type"})
 		return
 	}
+
+	errCode, err := CheckIndividualAgainstToss(appraisalFlow.CreatedBy)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(errCode, gin.H{"error": err.Error()})
+		return
+	}
+
 	dbAppraisalFlow, err := controller.CreateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
@@ -280,4 +292,48 @@ func (r *AppraisalFlowService) DeleteAppraisalFlow(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+func CheckIndividualAgainstToss(CreatedBy uint16) (int, error) {
+	// Check which SelectedAssignID exists in the API
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
+
+	method := http.MethodGet
+	url := tossBaseUrl + "/api/Employee/GetAllEmployees?AllEmployees=true"
+	resp, err := utils.SendRequest(method, url, nil)
+	if err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+
+	var Employees []struct {
+		EmployeeID uint16 `json:"employeeId"`
+	}
+	if err := json.Unmarshal(responseBody, &Employees); err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+
+	found := false
+	for _, employee := range Employees {
+		if employee.EmployeeID == CreatedBy {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		err := errors.New("invalid selected employee id")
+		log.Error(err.Error())
+		return http.StatusBadRequest, err
+	}
+
+	return 0, nil
 }
