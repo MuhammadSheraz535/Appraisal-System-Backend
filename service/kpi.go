@@ -5,7 +5,7 @@ package service
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -468,7 +468,7 @@ func checkKpiAgainstTossApis(selectedAssignID uint16, assignType string) (int, e
 		}
 		defer resp.Body.Close()
 
-		responseBody, err := ioutil.ReadAll(resp.Body)
+		responseBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Error(err.Error())
 			return http.StatusInternalServerError, err
@@ -513,7 +513,7 @@ func checkKpiAgainstTossApis(selectedAssignID uint16, assignType string) (int, e
 		}
 		defer resp.Body.Close()
 
-		responseBody, err := ioutil.ReadAll(resp.Body)
+		responseBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Error(err.Error())
 			return http.StatusInternalServerError, err
@@ -554,7 +554,7 @@ func checkKpiAgainstTossApis(selectedAssignID uint16, assignType string) (int, e
 		}
 		defer resp.Body.Close()
 
-		responseBody, err := ioutil.ReadAll(resp.Body)
+		responseBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Error(err.Error())
 			return http.StatusInternalServerError, err
