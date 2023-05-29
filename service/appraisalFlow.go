@@ -137,6 +137,13 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 		return
 	}
 
+	teamErr, err := CheckTeamAgainstToss(appraisalFlow.TeamId)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(teamErr, gin.H{"error": err.Error()})
+		return
+	}
+
 	dbAppraisalFlow, err := controller.CreateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
@@ -302,7 +309,7 @@ func (r *AppraisalFlowService) DeleteAppraisalFlow(c *gin.Context) {
 }
 
 func CheckIndividualAgainstToss(CreatedBy uint16) (int, error) {
-	// Check which SelectedAssignID exists in the API
+
 	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
 
 	method := http.MethodGet
@@ -342,5 +349,52 @@ func CheckIndividualAgainstToss(CreatedBy uint16) (int, error) {
 		return http.StatusBadRequest, err
 	}
 
+	return 0, nil
+}
+
+func CheckTeamAgainstToss(TeamId uint16) (int, error) {
+
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
+
+	method := http.MethodGet
+	url := tossBaseUrl + "/api/Project/GetAllProjects"
+
+	resp, err := utils.SendRequest(method, url, nil)
+	if err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+
+	var projects []struct {
+		ProjectDetails struct {
+			ProjectID uint16 `json:"projectId"`
+		} `json:"projectDetails"`
+	}
+
+	if err := json.Unmarshal(responseBody, &projects); err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+
+	found := false
+	for _, project := range projects {
+		if project.ProjectDetails.ProjectID == TeamId {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		err := errors.New("invalid selected team id")
+		log.Error(err.Error())
+		return http.StatusBadRequest, err
+	}
 	return 0, nil
 }
