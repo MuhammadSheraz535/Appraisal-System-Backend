@@ -1,11 +1,8 @@
 package service
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -130,14 +127,14 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 		return
 	}
 
-	errCode, err := CheckIndividualAgainstToss(appraisalFlow.CreatedBy)
+	errCode, err := utils.CheckIndividualAgainstToss(appraisalFlow.CreatedBy)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(errCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	teamErr, err := CheckTeamAgainstToss(appraisalFlow.TeamId)
+	teamErr, err := utils.CheckTeamAgainstToss(appraisalFlow.TeamId)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(teamErr, gin.H{"error": err.Error()})
@@ -260,14 +257,14 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	}
 	appraisalFlow.ID = uint16(id)
 
-	errCode, err := CheckIndividualAgainstToss(appraisalFlow.CreatedBy)
+	errCode, err := utils.CheckIndividualAgainstToss(appraisalFlow.CreatedBy)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(errCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	teamErr, err := CheckTeamAgainstToss(appraisalFlow.TeamId)
+	teamErr, err := utils.CheckTeamAgainstToss(appraisalFlow.TeamId)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(teamErr, gin.H{"error": err.Error()})
@@ -313,95 +310,4 @@ func (r *AppraisalFlowService) DeleteAppraisalFlow(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
-}
-
-func CheckIndividualAgainstToss(CreatedBy uint16) (int, error) {
-
-	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
-
-	method := http.MethodGet
-	url := tossBaseUrl + "/api/Employee/GetAllEmployees?AllEmployees=true"
-	resp, err := utils.SendRequest(method, url, nil)
-	if err != nil {
-		log.Error(err.Error())
-		return http.StatusInternalServerError, err
-	}
-	defer resp.Body.Close()
-
-	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Error(err.Error())
-		return http.StatusInternalServerError, err
-	}
-
-	var Employees []struct {
-		EmployeeID uint16 `json:"employeeId"`
-	}
-	if err := json.Unmarshal(responseBody, &Employees); err != nil {
-		log.Error(err.Error())
-		return http.StatusInternalServerError, err
-	}
-
-	found := false
-	for _, employee := range Employees {
-		if employee.EmployeeID == CreatedBy {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		err := errors.New("invalid selected employee id")
-		log.Error(err.Error())
-		return http.StatusBadRequest, err
-	}
-
-	return 0, nil
-}
-
-func CheckTeamAgainstToss(TeamId uint16) (int, error) {
-
-	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
-
-	method := http.MethodGet
-	url := tossBaseUrl + "/api/Project/GetAllProjects"
-
-	resp, err := utils.SendRequest(method, url, nil)
-	if err != nil {
-		log.Error(err.Error())
-		return http.StatusInternalServerError, err
-	}
-	defer resp.Body.Close()
-
-	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Error(err.Error())
-		return http.StatusInternalServerError, err
-	}
-
-	var projects []struct {
-		ProjectDetails struct {
-			ProjectID uint16 `json:"projectId"`
-		} `json:"projectDetails"`
-	}
-
-	if err := json.Unmarshal(responseBody, &projects); err != nil {
-		log.Error(err.Error())
-		return http.StatusInternalServerError, err
-	}
-
-	found := false
-	for _, project := range projects {
-		if project.ProjectDetails.ProjectID == TeamId {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		err := errors.New("invalid selected team id")
-		log.Error(err.Error())
-		return http.StatusBadRequest, err
-	}
-	return 0, nil
 }
