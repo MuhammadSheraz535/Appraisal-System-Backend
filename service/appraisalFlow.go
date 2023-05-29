@@ -71,6 +71,7 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 	log.Info("Initializing CreateAppraisalFlow handler function...")
 
 	var appraisalFlow models.AppraisalFlow
+
 	err := c.ShouldBindJSON(&appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
@@ -101,6 +102,12 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 
 	// Validate each FlowStep struct
 	for _, flowStep := range appraisalFlow.FlowSteps {
+		errCode, err := utils.CheckIndividualAgainstToss(uint16(flowStep.UserId))
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
 		err = flowStep.Validate()
 		if err != nil {
 			errs, ok := controller.ErrValidationSlice(err)
@@ -127,14 +134,14 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 		return
 	}
 
-	errCode, err := utils.CheckIndividualAgainstToss(appraisalFlow.CreatedBy)
+	errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(errCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	teamErr, err := utils.CheckTeamAgainstToss(appraisalFlow.TeamId)
+	teamErr, err := utils.CheckTeamAgainstToss(uint16(appraisalFlow.TeamId))
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(teamErr, gin.H{"error": err.Error()})
@@ -229,6 +236,12 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 
 	// Validate each FlowStep struct
 	for _, flowStep := range appraisalFlow.FlowSteps {
+		errCode, err := utils.CheckIndividualAgainstToss(uint16(flowStep.UserId))
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
 		err = flowStep.Validate()
 		if err != nil {
 			errs, ok := controller.ErrValidationSlice(err)
@@ -257,14 +270,14 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	}
 	appraisalFlow.ID = uint16(id)
 
-	errCode, err := utils.CheckIndividualAgainstToss(appraisalFlow.CreatedBy)
+	errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(errCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	teamErr, err := utils.CheckTeamAgainstToss(appraisalFlow.TeamId)
+	teamErr, err := utils.CheckTeamAgainstToss(uint16(appraisalFlow.TeamId))
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(teamErr, gin.H{"error": err.Error()})
