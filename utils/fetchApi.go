@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -34,7 +34,7 @@ func GetRolesID(empIds []uint16) ([]uint16, error) {
 			return nil, errors.New(errMsg) // Return an error if the response status code is not OK
 		}
 
-		responseBody, err := ioutil.ReadAll(resp.Body) // Read the response body
+		responseBody, err := io.ReadAll(resp.Body) // Read the response body
 		if err != nil {
 			log.Error(err.Error())
 			return nil, err // Return an error if there's an issue reading the response body
@@ -73,14 +73,14 @@ func GetEmployeesId(teamID uint16) ([]uint16, error) {
 	resp, err := SendRequest(method, url, nil) // Send the HTTP request to fetch all projects
 	if err != nil {
 		log.Error(err.Error())
-		return nil, err 
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	responseBody, err := ioutil.ReadAll(resp.Body)
+	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(err.Error())
-		return nil, err 
+		return nil, err
 	}
 
 	var projects []ProjectResponse // Slice to store the unmarshaled project responses
@@ -90,7 +90,7 @@ func GetEmployeesId(teamID uint16) ([]uint16, error) {
 		return nil, err
 	}
 
-	var employeeIDs []uint16 
+	var employeeIDs []uint16
 
 	for _, project := range projects {
 		if project.ProjectDetails.ProjectID == teamID { // Check if the project ID matches the provided team ID
