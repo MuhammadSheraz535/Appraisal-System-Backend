@@ -375,18 +375,24 @@ func (s *KPIService) GetAllKPIs(c *gin.Context) {
 	}
 
 	if teamId != "" {
-		teamID, _ := strconv.ParseUint(teamId, 10, 16)
+		teamID, err:= strconv.ParseUint(teamId, 10, 16)
+		if err != nil {
+			log.Error(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "unable to parse team id"})
+			return
+		}
+
 		empIds, err := getEmployeesId(uint16(teamID))
 		if err != nil {
 			log.Error(err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to fetch employee ids"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee ids"})
 			return
 		}
 		roleIds, err := getRolesID(empIds)
 
 		if err != nil {
 			log.Error(err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to fetch roles ids"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch roles ids"})
 			return
 		}
 
