@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/mrehanabbasi/appraisal-system-backend/constants"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
@@ -234,4 +235,46 @@ func CheckTeamAgainstToss(TeamId uint16) (int, error) {
 		return http.StatusBadRequest, err
 	}
 	return 0, nil
+}
+
+func GetSupervisorName(SprID uint16) (string, error) {
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL") // Get the TOSS base URL from the environment variable
+	method := http.MethodGet                  // HTTP method for sending the request
+
+	url := tossBaseUrl + "/api/Project/GetAllProjects" // Construct the URL for fetching all projects
+
+	resp, err := SendRequest(method, url, nil) // Send the HTTP request to the specified URL
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		errMsg := "Failed to get supervisor name for supervisor ID: " + strconv.Itoa(int(SprID)) + ". Status code: " + strconv.Itoa(resp.StatusCode)
+		return "", errors.New(errMsg) // Return an error if the response status code is not OK
+	}
+
+	var projects []struct {
+		ProjectDetails struct {
+			SupervisorID   uint16 `json:"supervisorId"`
+			SupervisorName string `json:"supervisorName"`
+		} `json:"projectDetails"`
+	}
+
+	responseBody, err := io.ReadAll(resp.Body) // Read the response body
+	if err != nil {
+		return "", err // Return an error if there's an issue reading the response body
+	}
+
+	if err := json.Unmarshal(responseBody, &projects); err != nil {
+		return "", err // Return an error if there's an issue unmarshaling the JSON response
+	}
+
+	for _, project := range projects {
+		if project.ProjectDetails.SupervisorID == SprID {
+			return project.ProjectDetails.SupervisorName, nil // Return the Supervisor Name if the supervisor ID matches
+		}
+	}
+
+	return "", errors.New("Supervisor not found") // Return an error if the supervisor ID is not found in the projects
 }

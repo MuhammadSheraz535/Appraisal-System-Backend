@@ -93,16 +93,23 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal type"})
 		return
 	}
-
-	// checking appraisal flow id exists in db
 	var appraisalFlow models.AppraisalFlow
 	err = r.Db.Model(&models.AppraisalFlow{}).First(&appraisalFlow, appraisal.AppraisalFlowID).Error
 	if err != nil {
-		log.Error("invalid appraisal flow id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid appraisal flow id"})
+		log.Error("invalid appraisal flow ID")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid appraisal flow ID"})
 		return
 	}
 	appraisal.FlowName = appraisalFlow.FlowName
+
+	// Call GetSupervisorName function to retrieve the supervisor name
+	supervisorName, err := utils.GetSupervisorName(appraisal.SupervisorID)
+	if err != nil {
+		log.Error("failed to get supervisor name")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get supervisor name"})
+		return
+	}
+	appraisal.SupervisorName = supervisorName
 
 	dbAppraisal, err := controller.CreateAppraisal(r.Db, &appraisal)
 	if err != nil {
