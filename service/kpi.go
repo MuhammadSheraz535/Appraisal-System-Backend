@@ -12,6 +12,7 @@ import (
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
+	"github.com/mrehanabbasi/appraisal-system-backend/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -82,11 +83,10 @@ func populateAssignTypeTable(db *gorm.DB) error {
 		constants.ASSIGN_TYPE_INDIVIDUAL,
 	}
 
-	// Make assign type ID as 0 = Role, 1 = Team and 2 = Individual
 	assignTypesSlice := make([]models.AssignType, len(assignTypes))
 	for i, a := range assignTypes {
 		newAssignType := models.AssignType{
-			AssignTypeId: uint64(i),
+			AssignTypeId: uint16(i+1),
 			AssignType:   models.AssignTypeStr(a),
 		}
 		assignTypesSlice[i] = newAssignType
@@ -141,7 +141,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		return
 	}
 
-	_, err = checkAssignType(s.Db, kpi.AssignTypeID)
+	assignType, err := checkAssignType(s.Db, uint16(kpi.AssignTypeID))
 	if err != nil {
 		log.Error("invalid assign type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
@@ -166,6 +166,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 
 		kpi.Statement = ""
 	}
+
 	// Validate MultiStatementKpiData fields
 	for _, mskd := range kpi.Statements {
 		err = mskd.Validate()
@@ -185,7 +186,13 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 			}
 			return
 		}
+	}
 
+	errCode, err := utils.CheckKpiAgainstTossApis(kpi.SelectedAssignID, string(assignType.AssignType))
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(errCode, gin.H{"error": err.Error()})
+		return
 	}
 
 	dbKpi, err := controller.CreateKPI(s.Db, &kpi)
@@ -230,13 +237,13 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		return
 	}
 
-	id, err := strconv.ParseUint(kpiID, 0, 64)
+	id, err := strconv.ParseUint(kpiID, 0, 16)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	kpi.ID = id
+	kpi.ID = uint16(id)
 
 	kpiType, err := checkKpiType(s.Db, kpi.KpiTypeStr)
 	if err != nil {
@@ -245,7 +252,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		return
 	}
 
-	_, err = checkAssignType(s.Db, kpi.AssignTypeID)
+	assignType, err := checkAssignType(s.Db, uint16(kpi.AssignTypeID))
 	if err != nil {
 		log.Error("invalid assign type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
@@ -279,6 +286,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 
 		kpi.Statement = ""
 	}
+
 	// Validate MultiStatementKpiData fields
 	for _, mskd := range kpi.Statements {
 		err = mskd.Validate()
@@ -298,7 +306,13 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 			}
 			return
 		}
+	}
 
+	errCode, err := utils.CheckKpiAgainstTossApis(kpi.SelectedAssignID, string(assignType.AssignType))
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(errCode, gin.H{"error": err.Error()})
+		return
 	}
 
 	dbKpi, err := controller.UpdateKPI(s.Db, &kpi)
@@ -315,7 +329,7 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 	log.Info("Initializing GetKPIByID handler function...")
 
 	kpiID := c.Param("id")
-	id, err := strconv.ParseUint(kpiID, 0, 64)
+	id, err := strconv.ParseUint(kpiID, 0, 16)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -341,6 +355,7 @@ func (s *KPIService) GetAllKPIs(c *gin.Context) {
 	kpiName := c.Query("kpi_name")
 	assignType := c.Query("assign_type")
 	kpiType := c.Query("kpi_type")
+	teamId := c.Query("team_id")
 
 	if kpiName != "" {
 		db = db.Where("kpi_name LIKE ?", "%"+kpiName+"%")
@@ -354,9 +369,38 @@ func (s *KPIService) GetAllKPIs(c *gin.Context) {
 		db = db.Where("kpi_type_str = ?", kpiType)
 	}
 
+	if teamId != "" {
+		teamID, err := strconv.ParseUint(teamId, 10, 16)
+		if err != nil {
+			log.Error(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "unable to parse team id"})
+			return
+		}
+
+		empIds, err := utils.GetEmployeesId(uint16(teamID))
+		if err != nil {
+			log.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee ids"})
+			return
+		}
+		roleIds, err := utils.GetRolesID(empIds)
+
+		if err != nil {
+			log.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch roles ids"})
+			return
+		}
+
+		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
+			Where(`(kpis.selected_assign_id = ? AND assign_types.assign_type = ?)
+        OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)
+        OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)`,
+				teamId, constants.ASSIGN_TYPE_TEAM, empIds, constants.ASSIGN_TYPE_INDIVIDUAL, roleIds, constants.ASSIGN_TYPE_ROLE)
+	}
+
 	if err := controller.GetAllKPI(db, &kpis); err != nil {
 		log.Error("failed to fetch kpis")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch KPIs"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch kpis"})
 		return
 	}
 
@@ -368,7 +412,7 @@ func (s *KPIService) DeleteKPI(c *gin.Context) {
 	log.Info("Initializing DeleteKPI handler function...")
 
 	kpiID := c.Param("id")
-	id, err := strconv.ParseUint(kpiID, 0, 64)
+	id, err := strconv.ParseUint(kpiID, 0, 16)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -394,7 +438,7 @@ func checkKpiType(db *gorm.DB, kpiType string) (models.KpiType, error) {
 	return kpiTypeModel, nil
 }
 
-func checkAssignType(db *gorm.DB, assignType uint64) (models.AssignType, error) {
+func checkAssignType(db *gorm.DB, assignType uint16) (models.AssignType, error) {
 	log.Info("Checking assign type")
 	var assignTypeModel models.AssignType
 	err := db.Where("assign_type_id = ?", assignType).First(&assignTypeModel).Error

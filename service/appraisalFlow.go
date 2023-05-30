@@ -11,6 +11,7 @@ import (
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
+	"github.com/mrehanabbasi/appraisal-system-backend/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -70,6 +71,7 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 	log.Info("Initializing CreateAppraisalFlow handler function...")
 
 	var appraisalFlow models.AppraisalFlow
+
 	err := c.ShouldBindJSON(&appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
@@ -100,6 +102,12 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 
 	// Validate each FlowStep struct
 	for _, flowStep := range appraisalFlow.FlowSteps {
+		errCode, err := utils.CheckIndividualAgainstToss(uint16(flowStep.UserId))
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
 		err = flowStep.Validate()
 		if err != nil {
 			errs, ok := controller.ErrValidationSlice(err)
@@ -125,6 +133,21 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal type"})
 		return
 	}
+
+	errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(errCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	teamErr, err := utils.CheckTeamAgainstToss(uint16(appraisalFlow.TeamId))
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(teamErr, gin.H{"error": err.Error()})
+		return
+	}
+
 	dbAppraisalFlow, err := controller.CreateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
 		log.Error(err.Error())
@@ -181,7 +204,7 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	log.Info("Initializing UpdateAppraisalFlow handler function...")
 
 	var appraisalFlow models.AppraisalFlow
-	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 16)
 
 	err := c.ShouldBindJSON(&appraisalFlow)
 	if err != nil {
@@ -209,10 +232,16 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 		return
 	}
 
-	appraisalFlow.ID = id
+	appraisalFlow.ID = uint16(id)
 
 	// Validate each FlowStep struct
 	for _, flowStep := range appraisalFlow.FlowSteps {
+		errCode, err := utils.CheckIndividualAgainstToss(uint16(flowStep.UserId))
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
 		err = flowStep.Validate()
 		if err != nil {
 			errs, ok := controller.ErrValidationSlice(err)
@@ -239,7 +268,21 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal type"})
 		return
 	}
-	appraisalFlow.ID = id
+	appraisalFlow.ID = uint16(id)
+
+	errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(errCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	teamErr, err := utils.CheckTeamAgainstToss(uint16(appraisalFlow.TeamId))
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(teamErr, gin.H{"error": err.Error()})
+		return
+	}
 
 	// calling controller update method
 	err = controller.UpdateAppraisalFlow(r.Db, &appraisalFlow)
@@ -256,8 +299,8 @@ func (r *AppraisalFlowService) DeleteAppraisalFlow(c *gin.Context) {
 	log.Info("Initializing DeleteAppraisalFlow handler function...")
 
 	var appraisalFlow models.AppraisalFlow
-	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
-	appraisalFlow.ID = id
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 16)
+	appraisalFlow.ID = uint16(id)
 
 	err := controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
 	if err != nil {

@@ -57,7 +57,6 @@ func UpdateKPI(db *gorm.DB, kpi *models.Kpi) (*models.Kpi, error) {
 		return nil, errors.New("invalid kpi id or kpi name already exists")
 	}
 
-	
 	// Retrieve statements for the existing KPI
 	var existingStatements []models.MultiStatementKpiData
 	if err := db.Model(&models.MultiStatementKpiData{}).Find(&existingStatements, "kpi_id = ?", kpi.ID).Error; err != nil {
