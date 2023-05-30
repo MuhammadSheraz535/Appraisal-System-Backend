@@ -276,5 +276,5 @@ func GetSupervisorName(SprID uint16) (string, error) {
 		}
 	}
 
-	return "", errors.New("Supervisor not found") // Return an error if the supervisor ID is not found in the projects
+	return "", errors.New("supervisor not found") // Return an error if the supervisor ID is not found in the projects
 }
