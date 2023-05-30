@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mrehanabbasi/appraisal-system-backend/constants"
 	"github.com/mrehanabbasi/appraisal-system-backend/controller"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
@@ -79,12 +80,12 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 	}
 
 	//check team ans supervisor id exist in toss api
-	errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.TeamId, appraisal.SupervisorID)
-	if err != nil {
-		log.Error(err.Error())
-		c.JSON(errCode, gin.H{"error": err.Error()})
-		return
-	}
+	// errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.TeamId, appraisal.SupervisorID)
+	// if err != nil {
+	// 	log.Error(err.Error())
+	// 	c.JSON(errCode, gin.H{"error": err.Error()})
+	// 	return
+	// }
 
 	// check appraisal type exists
 	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
@@ -150,6 +151,9 @@ func (r *AppraisalService) GetAllAppraisals(c *gin.Context) {
 
 	appraisalName := c.Query("appraisal_name")
 	supervisorID := c.Query("supervisor_id")
+	teamId := c.Query("team_id")
+	roleId := c.Query("role_id")
+	employeeId := c.Query("employee_id")
 
 	if appraisalName != "" {
 		db = db.Where("appraisal_name LIKE ?", "%"+appraisalName+"%")
@@ -158,8 +162,47 @@ func (r *AppraisalService) GetAllAppraisals(c *gin.Context) {
 	if supervisorID != "" {
 		db = db.Where("supervisor_id = ?", supervisorID)
 	}
+	teamID, err := strconv.ParseUint(teamId, 10, 16)
+	if err != nil {
+		log.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to parse team id"})
+		return
+	}
 
-	err := controller.GetAllAppraisals(db, &appraisals)
+	empIds, err := utils.GetEmployeesId(uint16(teamID))
+	if err != nil {
+		log.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee ids"})
+		return
+	}
+	roleIds, err := utils.GetRolesID(empIds)
+
+	if err != nil {
+		log.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch roles ids"})
+		return
+	}
+	if teamId != "" {
+
+		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
+			Where(`(kpis.selected_assign_id = ? AND assign_types.assign_type = ?)
+        OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)
+        OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)`,
+				teamId, constants.ASSIGN_TYPE_TEAM, empIds, constants.ASSIGN_TYPE_INDIVIDUAL, roleIds, constants.ASSIGN_TYPE_ROLE)
+	}
+	if roleId != "" {
+		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
+			Where(`(kpis.selected_assign_id = ? AND assign_types.assign_type = ?)`,
+				roleIds, constants.ASSIGN_TYPE_ROLE)
+	}
+	if employeeId != "" {
+		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
+			Where(`(kpis.selected_assign_id = ? AND assign_types.assign_type = ?)`,
+				empIds, constants.ASSIGN_TYPE_INDIVIDUAL)
+
+	}
+
+	err = controller.GetAllAppraisals(db, &appraisals)
 
 	if err != nil {
 		log.Error(err.Error())
@@ -220,12 +263,12 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 		}
 	}
 	//check team ans supervisor id exist in toss api
-	errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.TeamId, appraisal.SupervisorID)
-	if err != nil {
-		log.Error(err.Error())
-		c.JSON(errCode, gin.H{"error": err.Error()})
-		return
-	}
+	// errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.TeamId, appraisal.SupervisorID)
+	// if err != nil {
+	// 	log.Error(err.Error())
+	// 	c.JSON(errCode, gin.H{"error": err.Error()})
+	// 	return
+	// }
 
 	// check appraisal type exists
 	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
