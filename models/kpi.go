@@ -19,7 +19,7 @@ type KpiType struct {
 
 type AssignType struct {
 	CommonModel
-	AssignTypeId uint64        `gorm:"not null;unique" json:"assign_type_id"`
+	AssignTypeId uint16        `gorm:"not null;unique" json:"assign_type_id"`
 	AssignType   AssignTypeStr `gorm:"not null;unique" json:"assign_type"`
 }
 
@@ -27,7 +27,7 @@ type Kpi struct {
 	CommonModel
 	KpiName          string                  `gorm:"size:100;not null" json:"kpi_name" validate:"required,min=3,max=30"`
 	KpiDescription   string                  `gorm:"not null" json:"kpi_description" validate:"required"`
-	AssignTypeID     *uint16                 `gorm:"not null" json:"assign_type" validate:"required"`
+	AssignTypeID     uint16                  `gorm:"not null" json:"assign_type"`
 	AssignType       AssignType              `gorm:"references:AssignTypeId;foreignKey:AssignTypeID" json:"-"`
 	SelectedAssignID uint16                  `gorm:"not null" json:"selected_assign_id" validate:"required"`
 	KpiTypeStr       string                  `gorm:"not null" json:"kpi_type" validate:"required"`
