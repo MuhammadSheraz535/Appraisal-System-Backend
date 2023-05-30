@@ -86,7 +86,7 @@ func populateAssignTypeTable(db *gorm.DB) error {
 	assignTypesSlice := make([]models.AssignType, len(assignTypes))
 	for i, a := range assignTypes {
 		newAssignType := models.AssignType{
-			AssignTypeId: uint64(i),
+			AssignTypeId: uint16(i+1),
 			AssignType:   models.AssignTypeStr(a),
 		}
 		assignTypesSlice[i] = newAssignType
@@ -141,7 +141,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		return
 	}
 
-	assignType, err := checkAssignType(s.Db, uint64(*kpi.AssignTypeID))
+	assignType, err := checkAssignType(s.Db, uint16(kpi.AssignTypeID))
 	if err != nil {
 		log.Error("invalid assign type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
@@ -252,7 +252,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		return
 	}
 
-	assignType, err := checkAssignType(s.Db, uint64(*kpi.AssignTypeID))
+	assignType, err := checkAssignType(s.Db, uint16(kpi.AssignTypeID))
 	if err != nil {
 		log.Error("invalid assign type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
@@ -329,7 +329,7 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 	log.Info("Initializing GetKPIByID handler function...")
 
 	kpiID := c.Param("id")
-	id, err := strconv.ParseUint(kpiID, 0, 64)
+	id, err := strconv.ParseUint(kpiID, 0, 16)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -412,7 +412,7 @@ func (s *KPIService) DeleteKPI(c *gin.Context) {
 	log.Info("Initializing DeleteKPI handler function...")
 
 	kpiID := c.Param("id")
-	id, err := strconv.ParseUint(kpiID, 0, 64)
+	id, err := strconv.ParseUint(kpiID, 0, 16)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -438,7 +438,7 @@ func checkKpiType(db *gorm.DB, kpiType string) (models.KpiType, error) {
 	return kpiTypeModel, nil
 }
 
-func checkAssignType(db *gorm.DB, assignType uint64) (models.AssignType, error) {
+func checkAssignType(db *gorm.DB, assignType uint16) (models.AssignType, error) {
 	log.Info("Checking assign type")
 	var assignTypeModel models.AssignType
 	err := db.Where("assign_type_id = ?", assignType).First(&assignTypeModel).Error
