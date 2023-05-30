@@ -86,7 +86,7 @@ func populateAssignTypeTable(db *gorm.DB) error {
 	assignTypesSlice := make([]models.AssignType, len(assignTypes))
 	for i, a := range assignTypes {
 		newAssignType := models.AssignType{
-			AssignTypeId: uint16(i+1),
+			AssignTypeId: uint16(i + 1),
 			AssignType:   models.AssignTypeStr(a),
 		}
 		assignTypesSlice[i] = newAssignType
@@ -141,12 +141,14 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		return
 	}
 
-	assignType, err := checkAssignType(s.Db, uint16(kpi.AssignTypeID))
+	assignType, name, err := checkAssignType(s.Db, uint16(kpi.AssignTypeID), kpi.AssignTypeName)
+
 	if err != nil {
 		log.Error("invalid assign type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
 		return
 	}
+	kpi.AssignTypeName = name
 
 	switch kpiType.BasicKpiType {
 	case constants.SINGLE_KPI_TYPE:
@@ -252,12 +254,13 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		return
 	}
 
-	assignType, err := checkAssignType(s.Db, uint16(kpi.AssignTypeID))
+	assignType, name, err := checkAssignType(s.Db, uint16(kpi.AssignTypeID), kpi.AssignTypeName)
 	if err != nil {
 		log.Error("invalid assign type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
 		return
 	}
+	kpi.AssignTypeName = name
 
 	switch kpiType.BasicKpiType {
 	case constants.SINGLE_KPI_TYPE:
@@ -438,12 +441,13 @@ func checkKpiType(db *gorm.DB, kpiType string) (models.KpiType, error) {
 	return kpiTypeModel, nil
 }
 
-func checkAssignType(db *gorm.DB, assignType uint16) (models.AssignType, error) {
+func checkAssignType(db *gorm.DB, assignType uint16, assigntypename string) (models.AssignType, string, error) {
 	log.Info("Checking assign type")
 	var assignTypeModel models.AssignType
 	err := db.Where("assign_type_id = ?", assignType).First(&assignTypeModel).Error
 	if err != nil {
-		return assignTypeModel, err
+		return assignTypeModel, "", err
 	}
-	return assignTypeModel, nil
+	assigntypename = string(assignTypeModel.AssignType)
+	return assignTypeModel, assigntypename, nil
 }
