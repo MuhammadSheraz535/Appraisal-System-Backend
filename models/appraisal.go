@@ -2,18 +2,21 @@ package models
 
 type Appraisal struct {
 	CommonModel
-	AppraisalName    string         `gorm:"not null" json:"appraisal_name" binding:"required,min=3,max=20"`
-	AppraisalYear    uint16         `gorm:"not null" json:"appraisal_year" binding:"required,gte=2023"`
-	TeamId           uint16         `gorm:"not null" json:"team_id" binding:"required"`
-	AppraisalFlowID  uint16         `gorm:"not null" json:"appraisal_flow_id" binding:"required"`
-	FlowName         string         `json:"flow_name,omitempty"`
-	AppraisalFlow    AppraisalFlow  `json:"-"`
-	SupervisorID     uint16         `gorm:"not null" json:"supervisor_id" binding:"required"`
-	SupervisorName   string         `json:"supervisor_name,omitempty"`
-	AppraisalTypeStr string         `gorm:"not null" json:"appraisal_type" binding:"required"`
-	AppraisalType    AppraisalType  `gorm:"references:AppraisalType;foreignKey:AppraisalTypeStr" json:"-"`
-	Status           *bool          `gorm:"not null" json:"status" binding:"required"`
-	AppraisalKpis    []AppraisalKpi `gorm:"foreignKey:AppraisalID;not null" json:"appraisal_kpis" binding:"required"`
+	AppraisalName    string        `gorm:"not null" json:"appraisal_name" binding:"required,min=3,max=20"`
+	AppraisalYear    uint16        `gorm:"not null" json:"appraisal_year" binding:"required,gte=2023"`
+	AppraisalTypeStr string        `gorm:"not null" json:"appraisal_type" binding:"required"`
+	AppraisalType    AppraisalType `gorm:"references:AppraisalType;foreignKey:AppraisalTypeStr" json:"-"`
+	SupervisorID     uint16        `gorm:"not null" json:"supervisor_id" binding:"required"`
+	SupervisorName   string        `json:"supervisor_name,omitempty"`
+	AppraisalFlowID  uint16        `gorm:"not null" json:"appraisal_flow_id" binding:"required"`
+	FlowName         string        `json:"flow_name,omitempty"`
+	AppraisalFlow    AppraisalFlow `json:"-"`
+	AssignTypeID     uint16        `gorm:"not null" json:"assign_type"`
+	AssignType       AssignType    `gorm:"references:AssignTypeId;foreignKey:AssignTypeID" json:"-"`
+	SelectedAssignID uint16        `gorm:"not null" json:"selected_assign_id" validate:"required"`
+	// TeamId           uint16         `gorm:"not null" json:"team_id" binding:"required"`
+	Status        *bool          `gorm:"not null" json:"status" binding:"required"`
+	AppraisalKpis []AppraisalKpi `gorm:"foreignKey:AppraisalID;not null" json:"appraisal_kpis" binding:"required"`
 }
 
 type AppraisalKpi struct {

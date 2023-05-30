@@ -79,12 +79,12 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 	}
 
 	//check team ans supervisor id exist in toss api
-	errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.TeamId, appraisal.SupervisorID)
-	if err != nil {
-		log.Error(err.Error())
-		c.JSON(errCode, gin.H{"error": err.Error()})
-		return
-	}
+	// errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.TeamId, appraisal.SupervisorID)
+	// if err != nil {
+	// 	log.Error(err.Error())
+	// 	c.JSON(errCode, gin.H{"error": err.Error()})
+	// 	return
+	// }
 
 	// check appraisal type exists
 	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
@@ -213,12 +213,12 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 		}
 	}
 	//check team ans supervisor id exist in toss api
-	errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.TeamId, appraisal.SupervisorID)
-	if err != nil {
-		log.Error(err.Error())
-		c.JSON(errCode, gin.H{"error": err.Error()})
-		return
-	}
+	// errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.TeamId, appraisal.SupervisorID)
+	// if err != nil {
+	// 	log.Error(err.Error())
+	// 	c.JSON(errCode, gin.H{"error": err.Error()})
+	// 	return
+	// }
 
 	// check appraisal type exists
 	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
