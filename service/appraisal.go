@@ -102,6 +102,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid appraisal flow id"})
 		return
 	}
+	appraisal.FlowName = appraisalFlow.FlowName
 
 	dbAppraisal, err := controller.CreateAppraisal(r.Db, &appraisal)
 	if err != nil {
