@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mrehanabbasi/appraisal-system-backend/constants"
 	"github.com/mrehanabbasi/appraisal-system-backend/controller"
 	"github.com/mrehanabbasi/appraisal-system-backend/database"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
@@ -78,13 +79,40 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 	}
 
-	//check team ans supervisor id exist in toss api
-	// errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.TeamId, appraisal.SupervisorID)
-	// if err != nil {
-	// 	log.Error(err.Error())
-	// 	c.JSON(errCode, gin.H{"error": err.Error()})
-	// 	return
-	// }
+	_, name, err := checkAssignType(r.Db, uint16(appraisal.AppraisalFor))
+
+	if err != nil {
+		log.Error("invalid assign type")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
+		return
+	}
+	appraisal.AppraisalForName = name
+
+	switch appraisal.AppraisalForName {
+	case constants.ASSIGN_TYPE_TEAM:
+		errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.AppraisalForID, appraisal.SupervisorID)
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
+
+	case constants.ASSIGN_TYPE_INDIVIDUAL:
+		errCode, err := utils.VerifyIndividualAndSupervisorID(appraisal.AppraisalForID, appraisal.SupervisorID)
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
+
+	case constants.ASSIGN_TYPE_ROLE:
+		errCode, err := utils.CheckRoleExists(appraisal.AppraisalForID)
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
+	}
 
 	// check appraisal type exists
 	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
@@ -219,15 +247,7 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 			return
 		}
 	}
-	//check team ans supervisor id exist in toss api
-	// errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.TeamId, appraisal.SupervisorID)
-	// if err != nil {
-	// 	log.Error(err.Error())
-	// 	c.JSON(errCode, gin.H{"error": err.Error()})
-	// 	return
-	// }
 
-	// check appraisal type exists
 	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
 	if err != nil {
 		log.Error(err.Error())
