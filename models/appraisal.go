@@ -11,10 +11,10 @@ type Appraisal struct {
 	AppraisalFlowID  uint16         `gorm:"not null" json:"appraisal_flow_id" binding:"required"`
 	FlowName         string         `json:"flow_name,omitempty"`
 	AppraisalFlow    AppraisalFlow  `json:"-"`
-	AppraisalFor     uint16         `gorm:"not null" json:"appraisal_for"`
+	AppraisalFor     uint16         `gorm:"not null" json:"appraisal_for"  binding:"required"`
 	AppraisalForName string         `json:"appraisal_for_name,omitempty"`
 	AssignType       AssignType     `gorm:"references:AssignTypeId;foreignKey:AppraisalFor" json:"-"`
-	AppraisalForID   uint16         `gorm:"not null" json:"appraisal_for_id" validate:"required"`
+	AppraisalForID   uint16         `gorm:"not null" json:"appraisal_for_id" binding:"required"`
 	Status           *bool          `gorm:"not null" json:"status" binding:"required"`
 	AppraisalKpis    []AppraisalKpi `gorm:"foreignKey:AppraisalID;not null" json:"appraisal_kpis" binding:"required"`
 }
