@@ -247,6 +247,41 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 			return
 		}
 	}
+	//check assigns type
+	_, name, err := checkAssignType(r.Db, uint16(appraisal.AppraisalFor))
+
+	if err != nil {
+		log.Error("invalid assign type")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
+		return
+	}
+	appraisal.AppraisalForName = name
+
+	switch appraisal.AppraisalForName {
+	case constants.ASSIGN_TYPE_TEAM:
+		errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.AppraisalForID, appraisal.SupervisorID)
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
+
+	case constants.ASSIGN_TYPE_INDIVIDUAL:
+		errCode, err := utils.VerifyIndividualAndSupervisorID(appraisal.AppraisalForID, appraisal.SupervisorID)
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
+
+	case constants.ASSIGN_TYPE_ROLE:
+		errCode, err := utils.CheckRoleExists(appraisal.AppraisalForID)
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
+	}
 
 	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
 	if err != nil {
@@ -264,6 +299,16 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid appraisal flow id"})
 		return
 	}
+	appraisal.FlowName = appraisalFlow.FlowName
+
+	// Call GetSupervisorName function to retrieve the supervisor name
+	supervisorName, err := utils.GetSupervisorName(appraisal.SupervisorID)
+	if err != nil {
+		log.Error("failed to get supervisor name")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get supervisor name"})
+		return
+	}
+	appraisal.SupervisorName = supervisorName
 
 	// callling controller update function
 	dbAppraisal, err := controller.UpdateAppraisal(r.Db, &appraisal)
