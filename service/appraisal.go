@@ -218,7 +218,6 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid appraisal flow ID"})
 		return
 	}
-	appraisal.FlowName = appraisalFlow.FlowName
 
 	// Call GetSupervisorName function to retrieve the supervisor name
 	supervisorName, err := utils.GetSupervisorName(appraisal.SupervisorID)
@@ -389,7 +388,6 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid appraisal flow id"})
 		return
 	}
-	appraisal.FlowName = appraisalFlow.FlowName
 
 	// Call GetSupervisorName function to retrieve the supervisor name
 	supervisorName, err := utils.GetSupervisorName(appraisal.SupervisorID)
