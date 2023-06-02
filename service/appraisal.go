@@ -79,6 +79,46 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 	}
 
+	// Fetch all employee IDs from the AppraisalKpis table
+	existingEmployeeIDs := make([]int, 0)
+	if err := r.Db.Model(&models.AppraisalKpi{}).Pluck("employee_id", &existingEmployeeIDs).Error; err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve existing employee IDs"})
+		return
+	}
+
+	// Check if the provided employee IDs exist in the AppraisalKpis table
+	for _, ed := range appraisal.EmployeesList {
+
+		errCode, err := utils.CheckRoleExists(ed.Designation)
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
+
+		employeeIDExists := false
+		for _, existingID := range existingEmployeeIDs {
+			if existingID == int(ed.TossEmpID) {
+				employeeIDExists = true
+				break
+			}
+		}
+
+		if !employeeIDExists {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "No KPI found against this Employee"})
+			return
+		}
+
+		// Check employee ID in the Toss API
+		errCode, err = utils.CheckIndividualAgainstToss(ed.TossEmpID)
+		if err != nil {
+			log.Error(err.Error())
+			c.JSON(errCode, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
 	_, name, err := checkAssignType(r.Db, uint16(appraisal.AppraisalFor))
 
 	if err != nil {
