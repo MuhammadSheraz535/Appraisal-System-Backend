@@ -278,3 +278,53 @@ func GetSupervisorName(SprID uint16) (string, error) {
 
 	return "", errors.New("supervisor not found") // Return an error if the supervisor ID is not found in the projects
 }
+
+func CheckRoleExists(AppraisalForID uint16) (int, error) {
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
+	method := http.MethodGet
+	url := tossBaseUrl + "/api/Employee/GetSystemRolesList"
+
+	resp, err := SendRequest(method, url, nil)
+	if err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+
+	type SystemRole struct {
+		Value uint16 `json:"value"`
+		Label string `json:"label"`
+	}
+
+	type SystemRolesResponse struct {
+		SystemRoles []SystemRole `json:"systemRoles"`
+	}
+
+	var response SystemRolesResponse
+	if err := json.Unmarshal(responseBody, &response); err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+
+	found := false
+	for _, role := range response.SystemRoles {
+		if role.Value == AppraisalForID {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		err := errors.New("invalid selected role id")
+		log.Error(err.Error())
+		return http.StatusBadRequest, err
+	}
+
+	return 0, nil
+}

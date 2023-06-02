@@ -28,6 +28,7 @@ type Kpi struct {
 	KpiName          string                  `gorm:"size:100;not null" json:"kpi_name" validate:"required,min=3,max=30"`
 	KpiDescription   string                  `gorm:"not null" json:"kpi_description" validate:"required"`
 	AssignTypeID     uint16                  `gorm:"not null" json:"assign_type"`
+	AssignTypeName   string                  `json:"assign_type_name,omitempty"`
 	AssignType       AssignType              `gorm:"references:AssignTypeId;foreignKey:AssignTypeID" json:"-"`
 	SelectedAssignID uint16                  `gorm:"not null" json:"selected_assign_id" validate:"required"`
 	KpiTypeStr       string                  `gorm:"not null" json:"kpi_type" validate:"required"`

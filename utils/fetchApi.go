@@ -142,7 +142,6 @@ func VerifyTeamAndSupervisorID(teamID, supervisorID uint16) (int, error) {
 		if project.ProjectDetails.ProjectID == teamID {
 			foundteam = true
 			if project.ProjectDetails.SupervisorID == supervisorID {
-
 				foundsupervisor = true
 				break
 			}
@@ -161,4 +160,66 @@ func VerifyTeamAndSupervisorID(teamID, supervisorID uint16) (int, error) {
 		return http.StatusBadRequest, err
 	}
 	return 0, nil
+}
+
+func VerifyIndividualAndSupervisorID(indId, supervisorID uint16) (int, error) {
+	type ProjectResponse struct {
+		ProjectDetails struct {
+			SupervisorID uint16 `json:"supervisorId"`
+			TeamId       uint16 `json:"projectId"`
+		} `json:"projectDetails"`
+		AllocateTo []struct {
+			EmployeeID uint16 `json:"employeeId"`
+		} `json:"allocateTo"`
+	}
+
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL")          // Get the TOSS base URL from environment variable
+	method := http.MethodGet                           // HTTP method for sending the request
+	url := tossBaseUrl + "/api/Project/GetAllProjects" // Construct the URL for fetching all projects
+
+	resp, err := SendRequest(method, url, nil) // Send the HTTP request to fetch all projects
+	if err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+
+	var projects []ProjectResponse // Slice to store the unmarshaled project responses
+
+	if err := json.Unmarshal(responseBody, &projects); err != nil {
+		log.Error(err.Error())
+		return http.StatusInternalServerError, err
+	}
+
+	foundindividual, foundsupervisor := false, false
+	for _, project := range projects {
+		if project.ProjectDetails.SupervisorID == supervisorID {
+			foundsupervisor = true
+			for _, allocateTo := range project.AllocateTo {
+				if allocateTo.EmployeeID == indId {
+					foundindividual = true
+				}
+			}
+		}
+	}
+
+	if !foundsupervisor {
+		err := errors.New("invalid selected supervisor id")
+		log.Error(err.Error())
+		return http.StatusBadRequest, err
+	}
+	if !foundindividual {
+		err := errors.New("invalid selected individual id")
+		log.Error(err.Error())
+		return http.StatusBadRequest, err
+	}
+
+	return 0, nil // Return the list of employee IDs
+
 }

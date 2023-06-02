@@ -9,10 +9,13 @@ type Appraisal struct {
 	SupervisorID     uint16        `gorm:"not null" json:"supervisor_id" binding:"required"`
 	SupervisorName   string        `json:"supervisor_name,omitempty"`
 	AppraisalFlowID  uint16        `gorm:"not null" json:"appraisal_flow_id" binding:"required"`
-	FlowName         string        `json:"flow_name,omitempty"`
-	AppraisalFlow    AppraisalFlow `json:"-"`
-	Status        *bool          `gorm:"not null" json:"status" binding:"required"`
-	AppraisalKpis []AppraisalKpi `gorm:"foreignKey:AppraisalID;not null" json:"appraisal_kpis" binding:"required"`
+	AppraisalFlow    AppraisalFlow
+	AppraisalFor     uint16         `gorm:"not null" json:"appraisal_for"  binding:"required"`
+	AppraisalForName string         `json:"appraisal_for_name,omitempty"`
+	AssignType       AssignType     `gorm:"references:AssignTypeId;foreignKey:AppraisalFor" json:"-"`
+	AppraisalForID   uint16         `gorm:"not null" json:"appraisal_for_id" binding:"required"`
+	Status           *bool          `gorm:"not null" json:"status" binding:"required"`
+	AppraisalKpis    []AppraisalKpi `gorm:"foreignKey:AppraisalID;not null" json:"appraisal_kpis" binding:"required"`
 }
 
 type AppraisalKpi struct {

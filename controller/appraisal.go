@@ -44,7 +44,7 @@ func CreateAppraisal(db *gorm.DB, appraisal *models.Appraisal) (*models.Appraisa
 func GetAppraisalByID(db *gorm.DB, appraisal *models.Appraisal, id uint64) error {
 	log.Info("Getting appraisal by ID")
 
-	err := db.Model(&models.Appraisal{}).Preload("AppraisalKpis").Where("id = ?", id).First(&appraisal).Error
+	err := db.Model(&models.Appraisal{}).Preload("AppraisalFlow").Preload("AppraisalFlow.FlowSteps").Preload("AppraisalKpis").Where("id = ?", id).First(&appraisal).Error
 	if err != nil {
 		log.Error(err.Error())
 		return err
@@ -56,7 +56,7 @@ func GetAppraisalByID(db *gorm.DB, appraisal *models.Appraisal, id uint64) error
 func GetAllAppraisals(db *gorm.DB, appraisal *[]models.Appraisal) (err error) {
 	log.Info("Getting all appraisals")
 
-	err = db.Model(models.Appraisal{}).Preload("AppraisalKpis").Order("id ASC").Find(&appraisal).Error
+	err = db.Model(models.Appraisal{}).Preload("AppraisalFlow").Preload("AppraisalFlow.FlowSteps").Preload("AppraisalKpis").Order("id ASC").Find(&appraisal).Error
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func UpdateAppraisal(db *gorm.DB, appraisal *models.Appraisal) (*models.Appraisa
 		log.Error("appraisal name already exists")
 		return nil, errors.New("appraisal name already exists")
 	}
-		// Retrieve AppraisalKpis for the existing Appraisal
+	// Retrieve AppraisalKpis for the existing Appraisal
 	var existingAppraisalKpis []models.AppraisalKpi
 	if err := db.Model(&models.AppraisalKpi{}).Find(&existingAppraisalKpis, "appraisal_id = ?", appraisal.ID).Error; err != nil {
 		log.Error(err.Error())
