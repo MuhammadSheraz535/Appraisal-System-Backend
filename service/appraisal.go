@@ -116,8 +116,8 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		db := r.Db.Model(&models.Kpi{})
 		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
 			Where(`(kpis.selected_assign_id = ? AND assign_types.assign_type = ?)
-        OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)
-        OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)`,
+			OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)
+			OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)`,
 				appraisal.AppraisalForID, constants.ASSIGN_TYPE_TEAM, empIds, constants.ASSIGN_TYPE_INDIVIDUAL, roleIds, constants.ASSIGN_TYPE_ROLE)
 		err = db.Model(&models.Kpi{}).Order("id ASC").Find(&kpis).Error
 		if err != nil {
@@ -131,13 +131,44 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 
 		for _, kpi := range kpis {
-			appraisalKpi := models.AppraisalKpi{
-				AppraisalID: appraisal.ID,
-				EmployeeID:  appraisal.AppraisalForID,
-				KpiID:       kpi.ID,
-				Status:      "pending",
+			if kpi.AssignTypeName == constants.ASSIGN_TYPE_INDIVIDUAL {
+				appraisalKpi := models.AppraisalKpi{
+					AppraisalID: appraisal.ID,
+					EmployeeID:  kpi.SelectedAssignID,
+					KpiID:       kpi.ID,
+					Status:      "pending",
+				}
+				appraisal.AppraisalKpis = append(appraisal.AppraisalKpis, appraisalKpi)
 			}
-			appraisal.AppraisalKpis = append(appraisal.AppraisalKpis, appraisalKpi)
+			if kpi.AssignTypeName == constants.ASSIGN_TYPE_TEAM {
+				// Get the individual employee IDs for the team
+				teamEmployeeIDs, err := utils.GetEmployeesId(kpi.SelectedAssignID)
+				if err != nil {
+					log.Error(err)
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch team employees"})
+					return
+				}
+				// Filter the teamEmployeeIDs based on empIds (employees that satisfy the condition)
+				filteredEmployeeIDs := make([]uint16, 0)
+				for _, empID := range teamEmployeeIDs {
+					for _, id := range empIds {
+						if empID == id {
+							filteredEmployeeIDs = append(filteredEmployeeIDs, empID)
+							break
+						}
+					}
+				}
+				// Assign the KPI to individual employees that satisfy the condition
+				for _, employeeID := range filteredEmployeeIDs {
+					appraisalKpi := models.AppraisalKpi{
+						AppraisalID: appraisal.ID,
+						EmployeeID:  employeeID,
+						KpiID:       kpi.ID,
+						Status:      "pending",
+					}
+					appraisal.AppraisalKpis = append(appraisal.AppraisalKpis, appraisalKpi)
+				}
+			}
 
 		}
 
