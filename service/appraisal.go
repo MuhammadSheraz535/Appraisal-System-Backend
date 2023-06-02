@@ -22,7 +22,7 @@ type AppraisalService struct {
 func NewAppraisalService() *AppraisalService {
 	db := database.DB
 	// TODO: Remove migration of Score to it's own service
-	err := db.AutoMigrate(&models.Appraisal{}, models.AppraisalKpi{}, models.Score{})
+	err := db.AutoMigrate(&models.Appraisal{}, models.EmployeeData{}, models.AppraisalKpi{}, models.Score{})
 	if err != nil {
 		panic(err)
 	}
