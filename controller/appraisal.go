@@ -121,6 +121,32 @@ func UpdateAppraisal(db *gorm.DB, appraisal *models.Appraisal) (*models.Appraisa
 			appraisal.AppraisalKpis[k].ID = existingAppraisalKpis[k].ID
 		}
 	}
+
+	// Retrieve existing EmployeeData for the existing Appraisal
+	var existingEmployeeData []models.EmployeeData
+	if err := db.Model(&models.EmployeeData{}).Find(&existingEmployeeData, "appraisal_id = ?", appraisal.ID).Error; err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	// Delete remaining EmployeeData if the number of employees is reduced
+	if len(existingEmployeeData) > len(appraisal.EmployeesList) {
+		deletedEmployeeData := existingEmployeeData[len(appraisal.EmployeesList):]
+		for _, employeeData := range deletedEmployeeData {
+			if err := db.Delete(&employeeData).Error; err != nil {
+				log.Error(err.Error())
+				return nil, err
+			}
+		}
+	}
+
+	// Assign EmployeeData IDs to the request EmployeeData
+	for i := range appraisal.EmployeesList {
+		if i < len(existingEmployeeData) {
+			appraisal.EmployeesList[i].ID = existingEmployeeData[i].ID
+		}
+	}
+
 	err := db.Session(&gorm.Session{FullSaveAssociations: true}).Where("id = ?", appraisal.ID).Save(&appraisal).Error
 	if err != nil {
 		log.Error(err.Error())
