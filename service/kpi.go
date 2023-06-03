@@ -190,7 +190,7 @@ func (s *KPIService) CreateKPI(c *gin.Context) {
 		}
 	}
 
-	errCode, name, err := utils.CheckKpiAgainstTossApis(kpi.SelectedAssignID, string(assignType.AssignType))
+	errCode, name, err := utils.VerifyIdAgainstTossApis(kpi.SelectedAssignID, string(assignType.AssignType))
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(errCode, gin.H{"error": err.Error()})
@@ -312,7 +312,7 @@ func (s *KPIService) UpdateKPI(c *gin.Context) {
 		}
 	}
 
-	errCode, name, err := utils.CheckKpiAgainstTossApis(kpi.SelectedAssignID, string(assignType.AssignType))
+	errCode, name, err := utils.VerifyIdAgainstTossApis(kpi.SelectedAssignID, string(assignType.AssignType))
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(errCode, gin.H{"error": err.Error()})
