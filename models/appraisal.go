@@ -16,7 +16,7 @@ type Appraisal struct {
 	AppraisalForID   uint16         `gorm:"not null" json:"appraisal_for_id" binding:"required"`
 	Status           *bool          `gorm:"not null" json:"status" binding:"required"`
 	AppraisalKpis    []AppraisalKpi `gorm:"foreignKey:AppraisalID" json:"appraisal_kpis"`
-	EmployeesList    []EmployeeData `gorm:"foreignKey:AppraisalID" json:"employee_data"`
+	EmployeesList    []EmployeeData `gorm:"foreignKey:AppraisalID" json:"employee_data,omitempty"`
 }
 
 type EmployeeData struct {

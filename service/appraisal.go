@@ -88,7 +88,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 	}
 
 	// Check if the provided employee IDs exist in the AppraisalKpis table
-	for _, ed := range appraisal.EmployeesList {
+	for i, ed := range appraisal.EmployeesList {
 
 		errCode, err := utils.CheckRoleExists(ed.Designation)
 		if err != nil {
@@ -118,13 +118,13 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			return
 		}
 
-		empname, err := utils.GetEmployeeName(ed.TossEmpID)
+		empName, err := utils.GetEmployeeName(ed.TossEmpID)
 		if err != nil {
 			log.Error("Invalid Employee ID")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Employee ID"})
 			return
 		}
-		ed.EmployeeName = empname
+		appraisal.EmployeesList[i].EmployeeName = empName
 
 		rolename, err := utils.GetRoleName(ed.Designation)
 		if err != nil {
@@ -132,7 +132,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Role ID"})
 			return
 		}
-		ed.DesignationName = rolename
+		appraisal.EmployeesList[i].DesignationName = rolename
 
 	}
 
