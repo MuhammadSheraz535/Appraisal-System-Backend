@@ -29,9 +29,9 @@ type Kpi struct {
 	KpiDescription     string                  `gorm:"not null" json:"kpi_description" validate:"required"`
 	AssignTypeID       uint16                  `gorm:"not null" json:"assign_type_id" validate:"required"`
 	AssignTypeName     string                  `json:"assign_type_name,omitempty"`
-	AssignType         AssignType              `gorm:"references:AssignTypeId;foreignKey:AssignTypeID" json:"-"`
 	SelectedAssignID   uint16                  `gorm:"not null" json:"selected_assign_id" validate:"required"`
 	SelectedAssignName string                  `json:"selected_assign_name,omitempty"`
+	AssignType         AssignType              `gorm:"references:AssignTypeId;foreignKey:AssignTypeID" json:"-"`
 	KpiTypeStr         string                  `gorm:"not null" json:"kpi_type" validate:"required"`
 	KpiType            KpiType                 `gorm:"references:KpiType;foreignKey:KpiTypeStr" json:"-"`
 	KpiWeight          uint8                   `gorm:"not null" json:"kpi_weight" validate:"required"`
