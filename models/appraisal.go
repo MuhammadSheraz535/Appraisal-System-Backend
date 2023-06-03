@@ -23,7 +23,9 @@ type EmployeeData struct {
 	CommonModel
 	AppraisalID     uint16 `gorm:"not null" json:"-"`
 	TossEmpID       uint16 `gorm:"not null" json:"emp_id" binding:"required"`
+	EmployeeName    string `json:"employee_name,omitempty"`
 	Designation     uint16 `gorm:"not null" json:"designation_id"`
+	DesignationName string `json:"designation_name,omitempty"`
 	AppraisalStatus bool   `gorm:"not null" json:"appraisal_status"`
 }
 

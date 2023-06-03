@@ -117,6 +117,23 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			c.JSON(errCode, gin.H{"error": err.Error()})
 			return
 		}
+
+		empname, err := utils.GetEmployeeName(ed.TossEmpID)
+		if err != nil {
+			log.Error("Invalid Employee ID")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Employee ID"})
+			return
+		}
+		ed.EmployeeName = empname
+
+		rolename, err := utils.GetRoleName(ed.Designation)
+		if err != nil {
+			log.Error("Invalid Role ID")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Role ID"})
+			return
+		}
+		ed.DesignationName = rolename
+
 	}
 
 	_, name, err := checkAssignType(r.Db, uint16(appraisal.AppraisalFor))
@@ -328,7 +345,14 @@ func (r *AppraisalService) GetAppraisalByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, appraisal)
+	// Create a response structure with the required fields
+	response := struct {
+		Appraisal models.Appraisal `json:"appraisal"`
+	}{
+		Appraisal: appraisal,
+	}
+
+	c.JSON(http.StatusCreated, response)
 }
 
 func (r *AppraisalService) GetAllAppraisals(c *gin.Context) {
