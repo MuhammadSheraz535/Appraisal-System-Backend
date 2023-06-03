@@ -87,54 +87,54 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		return
 	}
 
-	// Check if the provided employee IDs exist in the AppraisalKpis table
-	for i, ed := range appraisal.EmployeesList {
+	// // Check if the provided employee IDs exist in the AppraisalKpis table
+	// for i, ed := range appraisal.EmployeesList {
 
-		errCode, err := utils.CheckRoleExists(ed.Designation)
-		if err != nil {
-			log.Error(err.Error())
-			c.JSON(errCode, gin.H{"error": err.Error()})
-			return
-		}
+	// 	errCode, err := utils.CheckRoleExists(ed.Designation)
+	// 	if err != nil {
+	// 		log.Error(err.Error())
+	// 		c.JSON(errCode, gin.H{"error": err.Error()})
+	// 		return
+	// 	}
 
-		employeeIDExists := false
-		for _, existingID := range existingEmployeeIDs {
-			if existingID == int(ed.TossEmpID) {
-				employeeIDExists = true
-				break
-			}
-		}
+	// 	employeeIDExists := false
+	// 	for _, existingID := range existingEmployeeIDs {
+	// 		if existingID == int(ed.TossEmpID) {
+	// 			employeeIDExists = true
+	// 			break
+	// 		}
+	// 	}
 
-		if !employeeIDExists {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "No KPI found against this Employee"})
-			return
-		}
+	// 	if !employeeIDExists {
+	// 		c.JSON(http.StatusBadRequest, gin.H{"error": "No KPI found against this Employee"})
+	// 		return
+	// 	}
 
-		// Check employee ID in the Toss API
-		errCode, err = utils.CheckIndividualAgainstToss(ed.TossEmpID)
-		if err != nil {
-			log.Error(err.Error())
-			c.JSON(errCode, gin.H{"error": err.Error()})
-			return
-		}
+	// 	// Check employee ID in the Toss API
+	// 	errCode, err = utils.CheckIndividualAgainstToss(ed.TossEmpID)
+	// 	if err != nil {
+	// 		log.Error(err.Error())
+	// 		c.JSON(errCode, gin.H{"error": err.Error()})
+	// 		return
+	// 	}
 
-		empName, err := utils.GetEmployeeName(ed.TossEmpID)
-		if err != nil {
-			log.Error("Invalid Employee ID")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Employee ID"})
-			return
-		}
-		appraisal.EmployeesList[i].EmployeeName = empName
+	// 	empName, err := utils.GetEmployeeName(ed.TossEmpID)
+	// 	if err != nil {
+	// 		log.Error("Invalid Employee ID")
+	// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Employee ID"})
+	// 		return
+	// 	}
+	// 	appraisal.EmployeesList[i].EmployeeName = empName
 
-		rolename, err := utils.GetRoleName(ed.Designation)
-		if err != nil {
-			log.Error("Invalid Role ID")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Role ID"})
-			return
-		}
-		appraisal.EmployeesList[i].DesignationName = rolename
+	// 	rolename, err := utils.GetRoleName(ed.Designation)
+	// 	if err != nil {
+	// 		log.Error("Invalid Role ID")
+	// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Role ID"})
+	// 		return
+	// 	}
+	// 	appraisal.EmployeesList[i].DesignationName = rolename
 
-	}
+	// }
 
 	_, name, err := checkAssignType(r.Db, uint16(appraisal.AppraisalFor))
 
@@ -236,6 +236,28 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			c.JSON(errCode, gin.H{"error": err.Error()})
 			return
 		}
+
+		// Fetch employee name
+		empName, err := utils.GetEmployeeName(appraisal.AppraisalForID)
+		if err != nil {
+			log.Error("Invalid Employee ID")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Employee ID"})
+			return
+		}
+
+		// Create EmployeeData instance
+		employeeData := models.EmployeeData{
+			AppraisalID:     appraisal.ID,
+			TossEmpID:       appraisal.AppraisalForID,
+			EmployeeName:    empName,
+			Designation:     1,
+			DesignationName: "Employee",
+			AppraisalStatus: true,
+		}
+
+		// Append EmployeeData to Appraisal
+		appraisal.EmployeesList = []models.EmployeeData{employeeData}
+
 		kpis := make([]models.Kpi, 0)
 		if err := r.Db.Where("assign_type_id = ? AND selected_assign_id = ?", appraisal.AppraisalFor, appraisal.AppraisalForID).Find(&kpis).Error; err != nil {
 			log.Error(err.Error())
@@ -244,7 +266,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 
 		if len(kpis) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi does not exists for the Individual"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi does not exist for the Individual"})
 			return
 		}
 
@@ -256,7 +278,6 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				Status:      "pending",
 			}
 			appraisal.AppraisalKpis = append(appraisal.AppraisalKpis, appraisalKpi)
-
 		}
 
 	case constants.ASSIGN_TYPE_ROLE:
