@@ -136,14 +136,6 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				AppraisalStatus: true,
 			}
 			employeesList = append(employeesList, employeeData)
-
-			// // Save EmployeeData to the database
-			// err := r.Db.Create(&employeeData).Error
-			// if err != nil {
-			// 	log.Error(err.Error())
-			// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save employee data"})
-			// 	return
-			// }
 		}
 
 		// Append EmployeeData to Appraisal
