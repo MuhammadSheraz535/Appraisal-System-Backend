@@ -86,56 +86,6 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve existing employee IDs"})
 		return
 	}
-
-	// // Check if the provided employee IDs exist in the AppraisalKpis table
-	// for i, ed := range appraisal.EmployeesList {
-
-	// 	errCode, err := utils.CheckRoleExists(ed.Designation)
-	// 	if err != nil {
-	// 		log.Error(err.Error())
-	// 		c.JSON(errCode, gin.H{"error": err.Error()})
-	// 		return
-	// 	}
-
-	// 	employeeIDExists := false
-	// 	for _, existingID := range existingEmployeeIDs {
-	// 		if existingID == int(ed.TossEmpID) {
-	// 			employeeIDExists = true
-	// 			break
-	// 		}
-	// 	}
-
-	// 	if !employeeIDExists {
-	// 		c.JSON(http.StatusBadRequest, gin.H{"error": "No KPI found against this Employee"})
-	// 		return
-	// 	}
-
-	// 	// Check employee ID in the Toss API
-	// 	errCode, err = utils.CheckIndividualAgainstToss(ed.TossEmpID)
-	// 	if err != nil {
-	// 		log.Error(err.Error())
-	// 		c.JSON(errCode, gin.H{"error": err.Error()})
-	// 		return
-	// 	}
-
-	// 	empName, err := utils.GetEmployeeName(ed.TossEmpID)
-	// 	if err != nil {
-	// 		log.Error("Invalid Employee ID")
-	// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Employee ID"})
-	// 		return
-	// 	}
-	// 	appraisal.EmployeesList[i].EmployeeName = empName
-
-	// 	rolename, err := utils.GetRoleName(ed.Designation)
-	// 	if err != nil {
-	// 		log.Error("Invalid Role ID")
-	// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Role ID"})
-	// 		return
-	// 	}
-	// 	appraisal.EmployeesList[i].DesignationName = rolename
-
-	// }
-
 	_, name, err := checkAssignType(r.Db, uint16(appraisal.AppraisalFor))
 
 	if err != nil {
@@ -154,9 +104,54 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			return
 		}
 
+		// Get the individual employee IDs for the team
+		empIds, err := utils.GetEmployeesId(uint16(appraisal.AppraisalForID))
+		if err != nil {
+			log.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee ids"})
+			return
+		}
+
+		// Fetch employee names for each employee ID
+		employeeNames := make(map[uint16]string)
+		for _, empID := range empIds {
+			empName, err := utils.GetEmployeeName(empID)
+			if err != nil {
+				log.Error("Invalid Employee ID")
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Employee ID"})
+				return
+			}
+			employeeNames[empID] = empName
+		}
+
+		// Create EmployeeData instances for each employee
+		employeesList := make([]models.EmployeeData, 0)
+		for _, empID := range empIds {
+			employeeData := models.EmployeeData{
+				AppraisalID:     appraisal.ID,
+				TossEmpID:       empID,
+				EmployeeName:    employeeNames[empID],
+				Designation:     1,
+				DesignationName: "Employee",
+				AppraisalStatus: true,
+			}
+			employeesList = append(employeesList, employeeData)
+
+			// // Save EmployeeData to the database
+			// err := r.Db.Create(&employeeData).Error
+			// if err != nil {
+			// 	log.Error(err.Error())
+			// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save employee data"})
+			// 	return
+			// }
+		}
+
+		// Append EmployeeData to Appraisal
+		appraisal.EmployeesList = employeesList
+
 		kpis := make([]models.Kpi, 0)
 
-		empIds, err := utils.GetEmployeesId(uint16(appraisal.AppraisalForID))
+		empIds, err = utils.GetEmployeesId(uint16(appraisal.AppraisalForID))
 		if err != nil {
 			log.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee ids"})
