@@ -90,16 +90,16 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 
 	switch appraisal.AppraisalForName {
 	case constants.ASSIGN_TYPE_TEAM:
-		errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.AppraisalForID, appraisal.SupervisorID)
+		errCode, name, err := utils.VerifyTeamAndSupervisorID(appraisal.SelectedFieldID, appraisal.SupervisorID)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(errCode, gin.H{"error": err.Error()})
 			return
 		}
-
+		appraisal.SelectedFieldNames = name
 		kpis := make([]models.Kpi, 0)
 
-		empIds, err := utils.GetEmployeesId(uint16(appraisal.AppraisalForID))
+		empIds, err := utils.GetEmployeesId(uint16(appraisal.SelectedFieldID))
 		if err != nil {
 			log.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee ids"})
@@ -118,7 +118,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			Where(`(kpis.selected_assign_id = ? AND assign_types.assign_type = ?)
 			OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)
 			OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)`,
-				appraisal.AppraisalForID, constants.ASSIGN_TYPE_TEAM, empIds, constants.ASSIGN_TYPE_INDIVIDUAL, roleIds, constants.ASSIGN_TYPE_ROLE)
+				appraisal.SelectedFieldID, constants.ASSIGN_TYPE_TEAM, empIds, constants.ASSIGN_TYPE_INDIVIDUAL, roleIds, constants.ASSIGN_TYPE_ROLE)
 		err = db.Model(&models.Kpi{}).Order("id ASC").Find(&kpis).Error
 		if err != nil {
 			log.Error(err.Error())
@@ -173,14 +173,15 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 
 	case constants.ASSIGN_TYPE_INDIVIDUAL:
-		errCode, err := utils.VerifyIndividualAndSupervisorID(appraisal.AppraisalForID, appraisal.SupervisorID)
+		errCode, name, err := utils.VerifyIndividualAndSupervisorID(appraisal.SelectedFieldID, appraisal.SupervisorID)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(errCode, gin.H{"error": err.Error()})
 			return
 		}
+		appraisal.SelectedFieldNames = name
 		kpis := make([]models.Kpi, 0)
-		if err := r.Db.Where("assign_type_id = ? AND selected_assign_id = ?", appraisal.AppraisalFor, appraisal.AppraisalForID).Find(&kpis).Error; err != nil {
+		if err := r.Db.Where("assign_type_id = ? AND selected_assign_id = ?", appraisal.AppraisalFor, appraisal.SelectedFieldID).Find(&kpis).Error; err != nil {
 			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "An error occurred while retrieving KPIs"})
 			return
@@ -194,7 +195,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		for _, kpi := range kpis {
 			appraisalKpi := models.AppraisalKpi{
 				AppraisalID: appraisal.ID,
-				EmployeeID:  appraisal.AppraisalForID,
+				EmployeeID:  appraisal.SelectedFieldID,
 				KpiID:       kpi.ID,
 				Status:      "pending",
 			}
@@ -203,29 +204,30 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 
 	case constants.ASSIGN_TYPE_ROLE:
-		errCode, err := utils.CheckRoleExists(appraisal.AppraisalForID)
+		errCode, name, err := utils.CheckRoleExists(appraisal.SelectedFieldID)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(errCode, gin.H{"error": err.Error()})
 			return
 		}
+		appraisal.SelectedFieldNames = name
 
 		kpis := make([]models.Kpi, 0)
-		if err := r.Db.Where("assign_type_id = ? AND selected_assign_id = ?", appraisal.AppraisalFor, appraisal.AppraisalForID).Find(&kpis).Error; err != nil {
+		if err := r.Db.Where("assign_type_id = ? AND selected_assign_id = ?", appraisal.AppraisalFor, appraisal.SelectedFieldID).Find(&kpis).Error; err != nil {
 			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "An error occurred while retrieving KPIs"})
 			return
 		}
 
-		if len(kpis) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi does not exists for the Role"})
-			return
-		}
+		// if len(kpis) == 0 {
+		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi does not exists for the Role"})
+		// 	return
+		// }
 
 		for _, kpi := range kpis {
 			appraisalKpi := models.AppraisalKpi{
 				AppraisalID: appraisal.ID,
-				EmployeeID:  appraisal.AppraisalForID,
+				EmployeeID:  appraisal.SelectedFieldID,
 				KpiID:       kpi.ID,
 				Status:      "pending",
 			}
@@ -379,28 +381,31 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 
 	switch appraisal.AppraisalForName {
 	case constants.ASSIGN_TYPE_TEAM:
-		errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.AppraisalForID, appraisal.SupervisorID)
+		errCode, name, err := utils.VerifyTeamAndSupervisorID(appraisal.SelectedFieldID, appraisal.SupervisorID)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(errCode, gin.H{"error": err.Error()})
 			return
 		}
+		appraisal.SelectedFieldNames = name
 
 	case constants.ASSIGN_TYPE_INDIVIDUAL:
-		errCode, err := utils.VerifyIndividualAndSupervisorID(appraisal.AppraisalForID, appraisal.SupervisorID)
+		errCode, name, err := utils.VerifyIndividualAndSupervisorID(appraisal.SelectedFieldID, appraisal.SupervisorID)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(errCode, gin.H{"error": err.Error()})
 			return
 		}
+		appraisal.SelectedFieldNames = name
 
 	case constants.ASSIGN_TYPE_ROLE:
-		errCode, err := utils.CheckRoleExists(appraisal.AppraisalForID)
+		errCode, name, err := utils.CheckRoleExists(appraisal.SelectedFieldID)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(errCode, gin.H{"error": err.Error()})
 			return
 		}
+		appraisal.SelectedFieldNames = name
 	}
 
 	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
