@@ -231,12 +231,22 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			return
 		}
 
+		// Get the role ID for the employee
+		roleIDs, err := utils.GetRolesID([]uint16{uint16(appraisal.AppraisalForID)})
+		if err != nil {
+			log.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
+			return
+		}
+
+		roleID := roleIDs[0] // Retrieve the RoleID for the employee (assuming there's only one role ID for each employee)
+
 		// Create EmployeeData instance
 		employeeData := models.EmployeeData{
 			AppraisalID:     appraisal.ID,
 			TossEmpID:       appraisal.AppraisalForID,
 			EmployeeName:    empName,
-			Designation:     1,
+			Designation:     roleID, // Assign the RoleID as Designation
 			DesignationName: "Employee",
 			AppraisalStatus: true,
 		}
