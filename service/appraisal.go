@@ -108,12 +108,12 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		empIds, err := utils.GetEmployeesId(uint16(appraisal.AppraisalForID))
 		if err != nil {
 			log.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee ids"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee IDs"})
 			return
 		}
 
-		// Fetch employee names for each employee ID
-		employeeNames := make(map[uint16]string)
+		// Fetch employee names and role IDs for each employee ID
+		employeeDataList := make([]models.EmployeeData, 0)
 		for _, empID := range empIds {
 			empName, err := utils.GetEmployeeName(empID)
 			if err != nil {
@@ -121,56 +121,54 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Employee ID"})
 				return
 			}
-			employeeNames[empID] = empName
-		}
 
-		// Create EmployeeData instances for each employee
-		employeesList := make([]models.EmployeeData, 0)
-		for _, empID := range empIds {
+			roleIDs, err := utils.GetRolesID([]uint16{empID})
+			if err != nil {
+				log.Error(err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
+				return
+			}
+
+			roleID := roleIDs[0] // Retrieve the RoleID for the employee (assuming there's only one role ID for each employee)
+
 			employeeData := models.EmployeeData{
 				AppraisalID:     appraisal.ID,
 				TossEmpID:       empID,
-				EmployeeName:    employeeNames[empID],
-				Designation:     1,
+				EmployeeName:    empName,
+				Designation:     roleID, // Assign the RoleID as Designation
 				DesignationName: "Employee",
 				AppraisalStatus: true,
 			}
-			employeesList = append(employeesList, employeeData)
+			employeeDataList = append(employeeDataList, employeeData)
 		}
 
 		// Append EmployeeData to Appraisal
-		appraisal.EmployeesList = employeesList
+		appraisal.EmployeesList = employeeDataList
 
 		kpis := make([]models.Kpi, 0)
 
-		empIds, err = utils.GetEmployeesId(uint16(appraisal.AppraisalForID))
-		if err != nil {
-			log.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee ids"})
-			return
-		}
 		roleIds, err := utils.GetRolesID(empIds)
-
 		if err != nil {
 			log.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch roles ids"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
 			return
 		}
 
 		db := r.Db.Model(&models.Kpi{})
 		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
 			Where(`(kpis.selected_assign_id = ? AND assign_types.assign_type = ?)
-			OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)
-			OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)`,
+				OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)
+				OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)`,
 				appraisal.AppraisalForID, constants.ASSIGN_TYPE_TEAM, empIds, constants.ASSIGN_TYPE_INDIVIDUAL, roleIds, constants.ASSIGN_TYPE_ROLE)
 		err = db.Model(&models.Kpi{}).Order("id ASC").Find(&kpis).Error
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			return
 		}
 
 		if len(kpis) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi does not exists for the team"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "KPI does not exist for the team"})
 			return
 		}
 
@@ -192,6 +190,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch team employees"})
 					return
 				}
+
 				// Filter the teamEmployeeIDs based on empIds (employees that satisfy the condition)
 				filteredEmployeeIDs := make([]uint16, 0)
 				for _, empID := range teamEmployeeIDs {
@@ -202,6 +201,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 						}
 					}
 				}
+
 				// Assign the KPI to individual employees that satisfy the condition
 				for _, employeeID := range filteredEmployeeIDs {
 					appraisalKpi := models.AppraisalKpi{
@@ -213,7 +213,6 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 					appraisal.AppraisalKpis = append(appraisal.AppraisalKpis, appraisalKpi)
 				}
 			}
-
 		}
 
 	case constants.ASSIGN_TYPE_INDIVIDUAL:
