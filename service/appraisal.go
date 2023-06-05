@@ -274,7 +274,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 
 		if len(kpis) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi does not exist for the Individual"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Kpi does not exist for the Individual"})
 			return
 		}
 
@@ -489,7 +489,7 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 		}
 
 		if !employeeIDExists {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "No KPI found against this Employee"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "No KPI found against this Employee"})
 			return
 		}
 
