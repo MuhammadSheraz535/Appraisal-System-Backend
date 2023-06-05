@@ -131,12 +131,18 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 
 			roleID := roleIDs[0] // Retrieve the RoleID for the employee (assuming there's only one role ID for each employee)
 
+			designationName, err := utils.GetDesignationName(uint16(roleID))
+			if err != nil {
+				log.Error(err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
+				return
+			}
 			employeeData := models.EmployeeData{
 				AppraisalID:     appraisal.ID,
 				TossEmpID:       empID,
 				EmployeeName:    empName,
 				Designation:     roleID, // Assign the RoleID as Designation
-				DesignationName: "Employee",
+				DesignationName: designationName,
 				AppraisalStatus: true,
 			}
 			employeeDataList = append(employeeDataList, employeeData)
@@ -241,13 +247,20 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 
 		roleID := roleIDs[0] // Retrieve the RoleID for the employee (assuming there's only one role ID for each employee)
 
+		designationName, err := utils.GetDesignationName(uint16(roleID))
+		if err != nil {
+			log.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
+			return
+		}
+
 		// Create EmployeeData instance
 		employeeData := models.EmployeeData{
 			AppraisalID:     appraisal.ID,
 			TossEmpID:       appraisal.AppraisalForID,
 			EmployeeName:    empName,
 			Designation:     roleID, // Assign the RoleID as Designation
-			DesignationName: "Employee",
+			DesignationName: designationName,
 			AppraisalStatus: true,
 		}
 

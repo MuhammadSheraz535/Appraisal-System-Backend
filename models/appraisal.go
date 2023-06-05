@@ -34,7 +34,7 @@ type AppraisalKpi struct {
 	AppraisalID uint16 `gorm:"not null" json:"-"`
 	EmployeeID  uint16 `gorm:"not null" json:"employee_id" binding:"required"`
 	KpiID       uint16 `gorm:"not null" json:"kpi_id" binding:"required"`
-	Kpi         Kpi    `json:"-"`
+	Kpi         Kpi
 	Status      string `gorm:"not null" json:"status" binding:"required"`
 }
 
