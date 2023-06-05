@@ -25,16 +25,16 @@ type AssignType struct {
 
 type Kpi struct {
 	CommonModel
-	KpiName            string                  `gorm:"size:100;not null" json:"kpi_name" validate:"required,min=3,max=30"`
-	KpiDescription     string                  `gorm:"not null" json:"kpi_description" validate:"required"`
-	AssignTypeID       uint16                  `gorm:"not null" json:"assign_type_id" validate:"required"`
+	KpiName            string                  `gorm:"size:100;not null;default:''" json:"kpi_name" validate:"required,min=3,max=30"`
+	KpiDescription     string                  `gorm:"not null;default:''" json:"kpi_description" validate:"required"`
+	AssignTypeID       uint16                  `gorm:"not null;default:0" json:"assign_type_id" validate:"required"`
 	AssignTypeName     string                  `json:"assign_type_name,omitempty"`
-	SelectedAssignID   uint16                  `gorm:"not null" json:"selected_assign_id" validate:"required"`
+	SelectedAssignID   uint16                  `gorm:"not null;default:0" json:"selected_assign_id" validate:"required"`
 	SelectedAssignName string                  `json:"selected_assign_name,omitempty"`
 	AssignType         AssignType              `gorm:"references:AssignTypeId;foreignKey:AssignTypeID" json:"-"`
-	KpiTypeStr         string                  `gorm:"not null" json:"kpi_type" validate:"required"`
+	KpiTypeStr         string                  `gorm:"not null;default:''" json:"kpi_type" validate:"required"`
 	KpiType            KpiType                 `gorm:"references:KpiType;foreignKey:KpiTypeStr" json:"-"`
-	KpiWeight          uint8                   `gorm:"not null" json:"kpi_weight" validate:"required"`
+	KpiWeight          uint8                   `gorm:"not null;default:0" json:"kpi_weight" validate:"required"`
 	ApplicableFor      pq.StringArray          `gorm:"type:text[];not null" json:"applicable_for" validate:"required"`
 	Statement          string                  `json:"statement,omitempty"`
 	Statements         []MultiStatementKpiData `gorm:"foreignKey:KpiID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"statements,omitempty"`
@@ -42,9 +42,9 @@ type Kpi struct {
 
 type MultiStatementKpiData struct {
 	CommonModel
-	KpiID     uint16 `gorm:"not null" json:"-"`
-	Statement string `gorm:"not null" json:"statement" validate:"required"`
-	Weightage uint8  `gorm:"not null" json:"weightage" validate:"required"`
+	KpiID     uint16 `gorm:"not null;default:0" json:"-"`
+	Statement string `gorm:"not null;default:''" json:"statement" validate:"required"`
+	Weightage uint8  `gorm:"not null;default:0" json:"weightage" validate:"required"`
 	// CorrectAnswer string `gorm:"not null" json:"correct_answer" validate:"required"`
 }
 

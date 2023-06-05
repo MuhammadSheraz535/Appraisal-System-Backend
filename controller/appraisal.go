@@ -44,7 +44,7 @@ func CreateAppraisal(db *gorm.DB, appraisal *models.Appraisal) (*models.Appraisa
 func GetAppraisalByID(db *gorm.DB, appraisal *models.Appraisal, id uint64) error {
 	log.Info("Getting appraisal by ID")
 
-	err := db.Model(&models.Appraisal{}).Preload("AppraisalFlow").Preload("AppraisalFlow.FlowSteps").Preload("AppraisalKpis").Where("id = ?", id).First(&appraisal).Error
+	err := db.Model(&models.Appraisal{}).Preload("AppraisalFlow").Preload("AppraisalFlow.FlowSteps").Preload("AppraisalKpis").Preload("EmployeesList").Where("id = ?", id).First(&appraisal).Error
 	if err != nil {
 		log.Error(err.Error())
 		return err
@@ -56,7 +56,7 @@ func GetAppraisalByID(db *gorm.DB, appraisal *models.Appraisal, id uint64) error
 func GetAllAppraisals(db *gorm.DB, appraisal *[]models.Appraisal) (err error) {
 	log.Info("Getting all appraisals")
 
-	err = db.Model(models.Appraisal{}).Preload("AppraisalFlow").Preload("AppraisalFlow.FlowSteps").Preload("AppraisalKpis").Order("id ASC").Find(&appraisal).Error
+	err = db.Model(&models.Appraisal{}).Preload("AppraisalFlow").Preload("AppraisalFlow.FlowSteps").Preload("AppraisalKpis").Preload("EmployeesList").Order("id ASC").Find(&appraisal).Error
 	if err != nil {
 		return err
 	}
@@ -121,6 +121,32 @@ func UpdateAppraisal(db *gorm.DB, appraisal *models.Appraisal) (*models.Appraisa
 			appraisal.AppraisalKpis[k].ID = existingAppraisalKpis[k].ID
 		}
 	}
+
+	// Retrieve existing EmployeeData for the existing Appraisal
+	var existingEmployeeData []models.EmployeeData
+	if err := db.Model(&models.EmployeeData{}).Find(&existingEmployeeData, "appraisal_id = ?", appraisal.ID).Error; err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	// Delete remaining EmployeeData if the number of employees is reduced
+	if len(existingEmployeeData) > len(appraisal.EmployeesList) {
+		deletedEmployeeData := existingEmployeeData[len(appraisal.EmployeesList):]
+		for _, employeeData := range deletedEmployeeData {
+			if err := db.Delete(&employeeData).Error; err != nil {
+				log.Error(err.Error())
+				return nil, err
+			}
+		}
+	}
+
+	// Assign EmployeeData IDs to the request EmployeeData
+	for i := range appraisal.EmployeesList {
+		if i < len(existingEmployeeData) {
+			appraisal.EmployeesList[i].ID = existingEmployeeData[i].ID
+		}
+	}
+
 	err := db.Session(&gorm.Session{FullSaveAssociations: true}).Where("id = ?", appraisal.ID).Save(&appraisal).Error
 	if err != nil {
 		log.Error(err.Error())

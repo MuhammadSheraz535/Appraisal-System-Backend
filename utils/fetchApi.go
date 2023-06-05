@@ -41,7 +41,7 @@ func GetRolesID(empIds []uint16) ([]uint16, error) {
 		}
 
 		var employee struct {
-			RoleID uint16 `json:"empRole"` // Struct for unmarshaling the JSON response
+			RoleID uint16 `json:"empDesignation"` // Struct for unmarshaling the JSON response
 		}
 
 		if err := json.Unmarshal(responseBody, &employee); err != nil {
@@ -230,4 +230,42 @@ func VerifyIndividualAndSupervisorID(indId, supervisorID uint16) (int, string, e
 
 	return 0, empName, nil // Return the list of employee IDs
 
+}
+
+func GetDesignationName(DesignationID uint16) (string, error) {
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL") // Get the TOSS base URL from environment variable
+	method := http.MethodGet                  // HTTP method for sending the request
+
+	url := tossBaseUrl + "/api/Designation/" + strconv.FormatUint(uint64(DesignationID), 10) // Construct the URL for fetching designation details based on designation ID
+
+	resp, err := SendRequest(method, url, nil) // Send the HTTP request to the specified URL
+	if err != nil {
+		log.Error(err.Error())
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		errMsg := fmt.Sprintf("failed to get designation name for designation ID %d. status code: %d", DesignationID, resp.StatusCode)
+		log.Error(errMsg)
+		return "", errors.New(errMsg) // Return an error if the response status code is not OK
+	}
+
+	responseBody, err := io.ReadAll(resp.Body) // Read the response body
+	if err != nil {
+		log.Error(err.Error())
+		return "", err // Return an error if there's an issue reading the response body
+	}
+
+	var designation struct {
+		DesignationID   uint16 `json:"designationId"`
+		DesignationName string `json:"designationName"` // Struct for unmarshaling the JSON response
+	}
+
+	if err := json.Unmarshal(responseBody, &designation); err != nil {
+		log.Error(err.Error())
+		return "", err // Return an error if there's an issue unmarshaling the JSON response
+	}
+
+	return designation.DesignationName, nil // Return the designation name
 }
