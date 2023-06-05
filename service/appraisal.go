@@ -172,7 +172,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 
 		if len(kpis) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "KPI does not exist for the team"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "KPI does not exist for the team"})
 			return
 		}
 
