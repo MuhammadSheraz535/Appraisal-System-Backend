@@ -87,7 +87,6 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		return
 	}
 	_, name, err := checkAssignType(r.Db, uint16(appraisal.AppraisalFor))
-
 	if err != nil {
 		log.Error("invalid assign type")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
@@ -97,15 +96,16 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 
 	switch appraisal.AppraisalForName {
 	case constants.ASSIGN_TYPE_TEAM:
-		errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.AppraisalForID, appraisal.SupervisorID)
+		errCode, name, err := utils.VerifyTeamAndSupervisorID(appraisal.SelectedFieldID, appraisal.SupervisorID)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(errCode, gin.H{"error": err.Error()})
 			return
 		}
+		appraisal.SelectedFieldNames = name
+		kpis := make([]models.Kpi, 0)
 
-		// Get the individual employee IDs for the team
-		empIds, err := utils.GetEmployeesId(uint16(appraisal.AppraisalForID))
+		empIds, err := utils.GetEmployeesId(uint16(appraisal.SelectedFieldID))
 		if err != nil {
 			log.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee IDs"})
@@ -143,15 +143,13 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				EmployeeName:    empName,
 				Designation:     roleID, // Assign the RoleID as Designation
 				DesignationName: designationName,
-				AppraisalStatus: true,
+				AppraisalStatus: "pending",
 			}
 			employeeDataList = append(employeeDataList, employeeData)
 		}
 
 		// Append EmployeeData to Appraisal
 		appraisal.EmployeesList = employeeDataList
-
-		kpis := make([]models.Kpi, 0)
 
 		roleIds, err := utils.GetRolesID(empIds)
 		if err != nil {
@@ -163,9 +161,9 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		db := r.Db.Model(&models.Kpi{})
 		db = db.Joins("JOIN assign_types ON assign_types.id = kpis.assign_type_id").
 			Where(`(kpis.selected_assign_id = ? AND assign_types.assign_type = ?)
-				OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)
-				OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)`,
-				appraisal.AppraisalForID, constants.ASSIGN_TYPE_TEAM, empIds, constants.ASSIGN_TYPE_INDIVIDUAL, roleIds, constants.ASSIGN_TYPE_ROLE)
+			OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)
+			OR (kpis.selected_assign_id IN (?) AND assign_types.assign_type = ?)`,
+				appraisal.SelectedFieldID, constants.ASSIGN_TYPE_TEAM, empIds, constants.ASSIGN_TYPE_INDIVIDUAL, roleIds, constants.ASSIGN_TYPE_ROLE)
 		err = db.Model(&models.Kpi{}).Order("id ASC").Find(&kpis).Error
 		if err != nil {
 			log.Error(err.Error())
@@ -222,7 +220,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 
 	case constants.ASSIGN_TYPE_INDIVIDUAL:
-		errCode, err := utils.VerifyIndividualAndSupervisorID(appraisal.AppraisalForID, appraisal.SupervisorID)
+		errCode, name, err := utils.VerifyIndividualAndSupervisorID(appraisal.SelectedFieldID, appraisal.SupervisorID)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(errCode, gin.H{"error": err.Error()})
@@ -230,7 +228,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 
 		// Fetch employee name
-		empName, err := utils.GetEmployeeName(appraisal.AppraisalForID)
+		empName, err := utils.GetEmployeeName(appraisal.AppraisalFor)
 		if err != nil {
 			log.Error("Invalid Employee ID")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Employee ID"})
@@ -238,7 +236,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 
 		// Get the role ID for the employee
-		roleIDs, err := utils.GetRolesID([]uint16{uint16(appraisal.AppraisalForID)})
+		roleIDs, err := utils.GetRolesID([]uint16{uint16(appraisal.AppraisalFor)})
 		if err != nil {
 			log.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
@@ -257,18 +255,19 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		// Create EmployeeData instance
 		employeeData := models.EmployeeData{
 			AppraisalID:     appraisal.ID,
-			TossEmpID:       appraisal.AppraisalForID,
+			TossEmpID:       appraisal.AppraisalFor,
 			EmployeeName:    empName,
 			Designation:     roleID, // Assign the RoleID as Designation
 			DesignationName: designationName,
-			AppraisalStatus: true,
+			AppraisalStatus: "pending",
 		}
 
 		// Append EmployeeData to Appraisal
 		appraisal.EmployeesList = []models.EmployeeData{employeeData}
 
+		appraisal.SelectedFieldNames = name
 		kpis := make([]models.Kpi, 0)
-		if err := r.Db.Where("assign_type_id = ? AND selected_assign_id = ?", appraisal.AppraisalFor, appraisal.AppraisalForID).Find(&kpis).Error; err != nil {
+		if err := r.Db.Where("assign_type_id = ? AND selected_assign_id = ?", appraisal.AppraisalFor, appraisal.SelectedFieldID).Find(&kpis).Error; err != nil {
 			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "An error occurred while retrieving KPIs"})
 			return
@@ -282,7 +281,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		for _, kpi := range kpis {
 			appraisalKpi := models.AppraisalKpi{
 				AppraisalID: appraisal.ID,
-				EmployeeID:  appraisal.AppraisalForID,
+				EmployeeID:  appraisal.SelectedFieldID,
 				KpiID:       kpi.ID,
 				Status:      "pending",
 			}
@@ -290,29 +289,30 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 
 	case constants.ASSIGN_TYPE_ROLE:
-		errCode, err := utils.CheckRoleExists(appraisal.AppraisalForID)
+		errCode, name, err := utils.CheckRoleExists(appraisal.SelectedFieldID)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(errCode, gin.H{"error": err.Error()})
 			return
 		}
+		appraisal.SelectedFieldNames = name
 
 		kpis := make([]models.Kpi, 0)
-		if err := r.Db.Where("assign_type_id = ? AND selected_assign_id = ?", appraisal.AppraisalFor, appraisal.AppraisalForID).Find(&kpis).Error; err != nil {
+		if err := r.Db.Where("assign_type_id = ? AND selected_assign_id = ?", appraisal.AppraisalFor, appraisal.SelectedFieldID).Find(&kpis).Error; err != nil {
 			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "An error occurred while retrieving KPIs"})
 			return
 		}
 
-		if len(kpis) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi does not exists for the Role"})
-			return
-		}
+		// if len(kpis) == 0 {
+		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi does not exists for the Role"})
+		// 	return
+		// }
 
 		for _, kpi := range kpis {
 			appraisalKpi := models.AppraisalKpi{
 				AppraisalID: appraisal.ID,
-				EmployeeID:  appraisal.AppraisalForID,
+				EmployeeID:  appraisal.SelectedFieldID,
 				KpiID:       kpi.ID,
 				Status:      "pending",
 			}
@@ -473,7 +473,7 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 	// Check if the provided employee IDs exist in the AppraisalKpis table
 	for _, ed := range appraisal.EmployeesList {
 
-		errCode, err := utils.CheckRoleExists(ed.Designation)
+		errCode, _, err := utils.CheckRoleExists(ed.Designation)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(errCode, gin.H{"error": err.Error()})
@@ -514,28 +514,31 @@ func (r *AppraisalService) UpdateAppraisal(c *gin.Context) {
 
 	switch appraisal.AppraisalForName {
 	case constants.ASSIGN_TYPE_TEAM:
-		errCode, err := utils.VerifyTeamAndSupervisorID(appraisal.AppraisalForID, appraisal.SupervisorID)
+		errCode, name, err := utils.VerifyTeamAndSupervisorID(appraisal.SelectedFieldID, appraisal.SupervisorID)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(errCode, gin.H{"error": err.Error()})
 			return
 		}
+		appraisal.SelectedFieldNames = name
 
 	case constants.ASSIGN_TYPE_INDIVIDUAL:
-		errCode, err := utils.VerifyIndividualAndSupervisorID(appraisal.AppraisalForID, appraisal.SupervisorID)
+		errCode, name, err := utils.VerifyIndividualAndSupervisorID(appraisal.SelectedFieldID, appraisal.SupervisorID)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(errCode, gin.H{"error": err.Error()})
 			return
 		}
+		appraisal.SelectedFieldNames = name
 
 	case constants.ASSIGN_TYPE_ROLE:
-		errCode, err := utils.CheckRoleExists(appraisal.AppraisalForID)
+		errCode, name, err := utils.CheckRoleExists(appraisal.SelectedFieldID)
 		if err != nil {
 			log.Error(err.Error())
 			c.JSON(errCode, gin.H{"error": err.Error()})
 			return
 		}
+		appraisal.SelectedFieldNames = name
 	}
 
 	err = checkAppraisalType(r.Db, appraisal.AppraisalTypeStr)
