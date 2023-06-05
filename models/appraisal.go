@@ -16,7 +16,7 @@ type Appraisal struct {
 	SelectedFieldNames string         `json:"appraisal_for_name,omitempty"`
 	AssignType         AssignType     `gorm:"references:AssignTypeId;foreignKey:AppraisalFor" json:"-"`
 	Status             *bool          `gorm:"not null;default:false" json:"status" binding:"required"`
-	AppraisalKpis      []AppraisalKpi `gorm:"foreignKey:AppraisalID;not null" json:"appraisal_kpis" binding:"required"`
+	AppraisalKpis      []AppraisalKpi `gorm:"foreignKey:AppraisalID;not null" json:"appraisal_kpis"`
 	EmployeesList      []EmployeeData `gorm:"foreignKey:AppraisalID" json:"employee_data,omitempty"`
 }
 
