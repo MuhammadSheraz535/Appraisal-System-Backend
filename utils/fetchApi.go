@@ -41,7 +41,7 @@ func GetRolesID(empIds []uint16) ([]uint16, error) {
 		}
 
 		var employee struct {
-			RoleID uint16 `json:"empRole"` // Struct for unmarshaling the JSON response
+			RoleID uint16 `json:"empDesignation"` // Struct for unmarshaling the JSON response
 		}
 
 		if err := json.Unmarshal(responseBody, &employee); err != nil {
