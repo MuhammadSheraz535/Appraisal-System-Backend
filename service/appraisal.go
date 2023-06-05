@@ -143,7 +143,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				EmployeeName:    empName,
 				Designation:     roleID, // Assign the RoleID as Designation
 				DesignationName: designationName,
-				AppraisalStatus: true,
+				AppraisalStatus: "pending",
 			}
 			employeeDataList = append(employeeDataList, employeeData)
 		}
@@ -261,7 +261,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			EmployeeName:    empName,
 			Designation:     roleID, // Assign the RoleID as Designation
 			DesignationName: designationName,
-			AppraisalStatus: true,
+			AppraisalStatus: "pending",
 		}
 
 		// Append EmployeeData to Appraisal

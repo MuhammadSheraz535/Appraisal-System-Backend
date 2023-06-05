@@ -26,7 +26,7 @@ type EmployeeData struct {
 	EmployeeName    string `json:"employee_name,omitempty"`
 	Designation     uint16 `gorm:"not null" json:"designation_id"`
 	DesignationName string `json:"designation_name,omitempty"`
-	AppraisalStatus bool   `gorm:"not null" json:"appraisal_status"`
+	AppraisalStatus string `gorm:"not null" json:"appraisal_status"`
 }
 
 type AppraisalKpi struct {
