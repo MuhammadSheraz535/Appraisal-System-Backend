@@ -228,7 +228,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 
 		// Fetch employee name
-		empName, err := utils.GetEmployeeName(appraisal.AppraisalFor)
+		empName, err := utils.GetEmployeeName(appraisal.SelectedFieldID)
 		if err != nil {
 			log.Error("Invalid Employee ID")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Employee ID"})
@@ -236,7 +236,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 
 		// Get the role ID for the employee
-		roleIDs, err := utils.GetRolesID([]uint16{uint16(appraisal.AppraisalFor)})
+		roleIDs, err := utils.GetRolesID([]uint16{uint16(appraisal.SelectedFieldID)})
 		if err != nil {
 			log.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
@@ -304,10 +304,10 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			return
 		}
 
-		// if len(kpis) == 0 {
-		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi does not exists for the Role"})
-		// 	return
-		// }
+		if len(kpis) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi does not exists for the Role"})
+			return
+		}
 
 		for _, kpi := range kpis {
 			appraisalKpi := models.AppraisalKpi{
