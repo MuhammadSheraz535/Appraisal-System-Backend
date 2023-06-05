@@ -126,27 +126,30 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 			return
 		}
 	}
-	// check appraisal type exists
-	err = checkAppraisalType(r.Db, appraisalFlow.AppraisalTypeStr)
-	if err != nil {
-		log.Error("invalid appraisal type")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal type"})
-		return
-	}
-
+	// check employee id exist
 	errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(errCode, gin.H{"error": err.Error()})
 		return
 	}
-
-	teamErr, err := utils.CheckTeamAgainstToss(uint16(appraisalFlow.TeamId))
+	//check Assign type exist
+	assignType, name, err := checkAssignType(r.Db, uint16(appraisalFlow.AssignTypeID))
 	if err != nil {
-		log.Error(err.Error())
-		c.JSON(teamErr, gin.H{"error": err.Error()})
+		log.Error("invalid assign type")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
 		return
 	}
+	appraisalFlow.AssignTypeName = name
+
+	//Check team role and individual
+	errorCode, name, err := utils.VerifyIdAgainstTossApis(appraisalFlow.SelectedAssignID, string(assignType.AssignType))
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(errorCode, gin.H{"error": err.Error()})
+		return
+	}
+	appraisalFlow.SelectedAssignName = name
 
 	dbAppraisalFlow, err := controller.CreateAppraisalFlow(r.Db, &appraisalFlow)
 	if err != nil {
@@ -261,28 +264,30 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 		}
 	}
 
-	// check appraisal type exists
-	err = checkAppraisalType(r.Db, appraisalFlow.AppraisalTypeStr)
-	if err != nil {
-		log.Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appraisal type"})
-		return
-	}
-	appraisalFlow.ID = uint16(id)
-
+	// check employee id exist
 	errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(errCode, gin.H{"error": err.Error()})
 		return
 	}
-
-	teamErr, err := utils.CheckTeamAgainstToss(uint16(appraisalFlow.TeamId))
+	//check Assign type exist
+	assignType, name, err := checkAssignType(r.Db, uint16(appraisalFlow.AssignTypeID))
 	if err != nil {
-		log.Error(err.Error())
-		c.JSON(teamErr, gin.H{"error": err.Error()})
+		log.Error("invalid assign type")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid assign type"})
 		return
 	}
+	appraisalFlow.AssignTypeName = name
+
+	//Check team role and individual
+	errorCode, name, err := utils.VerifyIdAgainstTossApis(appraisalFlow.SelectedAssignID, string(assignType.AssignType))
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(errorCode, gin.H{"error": err.Error()})
+		return
+	}
+	appraisalFlow.SelectedAssignName = name
 
 	// calling controller update method
 	err = controller.UpdateAppraisalFlow(r.Db, &appraisalFlow)
