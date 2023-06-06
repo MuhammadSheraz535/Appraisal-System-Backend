@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -186,28 +187,17 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				}
 				appraisal.AppraisalKpis = append(appraisal.AppraisalKpis, appraisalKpi)
 			}
+			// Get the individual employee IDs for the team
+			teamEmployeeIDs, err := utils.GetEmployeesId(kpi.SelectedAssignID)
+			if err != nil {
+				log.Error(err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch team employees"})
+				return
+			}
 			if kpi.AssignTypeName == constants.ASSIGN_TYPE_TEAM {
-				// Get the individual employee IDs for the team
-				teamEmployeeIDs, err := utils.GetEmployeesId(kpi.SelectedAssignID)
-				if err != nil {
-					log.Error(err)
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch team employees"})
-					return
-				}
 
-				// Filter the teamEmployeeIDs based on empIds (employees that satisfy the condition)
-				filteredEmployeeIDs := make([]uint16, 0)
-				for _, empID := range teamEmployeeIDs {
-					for _, id := range empIds {
-						if empID == id {
-							filteredEmployeeIDs = append(filteredEmployeeIDs, empID)
-							break
-						}
-					}
-				}
-
-				// Assign the KPI to individual employees that satisfy the condition
-				for _, employeeID := range filteredEmployeeIDs {
+				// Assign the KPI to individual employees of the team
+				for _, employeeID := range teamEmployeeIDs {
 					appraisalKpi := models.AppraisalKpi{
 						AppraisalID: appraisal.ID,
 						EmployeeID:  employeeID,
@@ -297,6 +287,15 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 		appraisal.SelectedFieldNames = name
 
+		// Get the individual employee IDs for the team
+		roleEmployeeIDs, err := utils.AssignRoleKpi(appraisal.SelectedFieldID)
+		fmt.Println(roleEmployeeIDs)
+		if err != nil {
+			log.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch team employees"})
+			return
+		}
+
 		kpis := make([]models.Kpi, 0)
 		if err := r.Db.Where("assign_type_id = ? AND selected_assign_id = ?", appraisal.AppraisalFor, appraisal.SelectedFieldID).Find(&kpis).Error; err != nil {
 			log.Error(err.Error())
@@ -308,16 +307,17 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi does not exists for the Role"})
 			return
 		}
-
 		for _, kpi := range kpis {
-			appraisalKpi := models.AppraisalKpi{
-				AppraisalID: appraisal.ID,
-				EmployeeID:  appraisal.SelectedFieldID,
-				KpiID:       kpi.ID,
-				Status:      "pending",
+			// Assign the KPI to individual employees of the team
+			for _, employeeID := range roleEmployeeIDs {
+				appraisalKpi := models.AppraisalKpi{
+					AppraisalID: appraisal.ID,
+					EmployeeID:  employeeID,
+					KpiID:       kpi.ID,
+					Status:      "pending",
+				}
+				appraisal.AppraisalKpis = append(appraisal.AppraisalKpis, appraisalKpi)
 			}
-			appraisal.AppraisalKpis = append(appraisal.AppraisalKpis, appraisalKpi)
-
 		}
 
 	}
