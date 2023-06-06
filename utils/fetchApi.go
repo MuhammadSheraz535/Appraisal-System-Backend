@@ -320,3 +320,50 @@ func AssignRoleKpi(DesignationID uint16) ([]uint16, error) {
 	return employeeIds, nil
 
 }
+
+func GetEmployeeIDsByDesignation(designation uint16) ([]uint16, error) {
+	tossBaseURL := os.Getenv("TOSS_BASE_URL") // Get the TOSS base URL from the environment variable
+	method := http.MethodGet                  // HTTP method for sending the request
+
+	url := tossBaseURL + "/api/Employee/GetAllEmployeesInfo?Status=1&PageSize=10000&Designation=" + strconv.Itoa(int(designation))
+
+	resp, err := SendRequest(method, url, nil) // Send the HTTP request to the specified URL
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		errMsg := fmt.Sprintf("failed to get employee IDs for designation '%d'. status code: %d", designation, resp.StatusCode)
+		log.Error(errMsg)
+		return nil, errors.New(errMsg) // Return an error if the response status code is not OK
+	}
+
+	responseBody, err := io.ReadAll(resp.Body) // Read the response body
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err // Return an error if there's an issue reading the response body
+	}
+
+	type EmployeeInfo struct {
+		ID   uint16 `json:"id"`
+		Name string `json:"name"`
+	}
+
+	var response struct {
+		EmployeeInfo []EmployeeInfo `json:"employeeInfo"`
+	}
+
+	if err := json.Unmarshal(responseBody, &response); err != nil {
+		log.Error(err.Error())
+		return nil, err // Return an error if there's an issue unmarshaling the JSON response
+	}
+
+	employeeIDs := make([]uint16, 0, len(response.EmployeeInfo))
+	for _, employee := range response.EmployeeInfo {
+		employeeIDs = append(employeeIDs, employee.ID) // Append the employee ID to the slice
+	}
+
+	return employeeIDs, nil // Return the list of employee IDs
+}
