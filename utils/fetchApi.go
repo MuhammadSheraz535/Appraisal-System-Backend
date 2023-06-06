@@ -314,11 +314,9 @@ func AssignRoleKpi(DesignationID uint16) ([]uint16, error) {
 	}
 
 	if len(employeeIds) == 0 {
-		return nil, errors.New("Employee does not exist against this role")
+		return nil, errors.New("employee does not exist against this role")
 	}
 
 	return employeeIds, nil
-
-	
 
 }
