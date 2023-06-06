@@ -278,6 +278,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			appraisal.AppraisalKpis = append(appraisal.AppraisalKpis, appraisalKpi)
 		}
 
+		// Modify the Case ROLE section
 	case constants.ASSIGN_TYPE_ROLE:
 		errCode, name, err := utils.CheckRoleExists(appraisal.SelectedFieldID)
 		if err != nil {
@@ -304,7 +305,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		}
 
 		if len(kpis) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Kpi does not exists for the Role"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "KPI does not exist for the Role"})
 			return
 		}
 		for _, kpi := range kpis {
@@ -319,7 +320,6 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				appraisal.AppraisalKpis = append(appraisal.AppraisalKpis, appraisalKpi)
 			}
 		}
-
 	}
 
 	// check appraisal type exists
