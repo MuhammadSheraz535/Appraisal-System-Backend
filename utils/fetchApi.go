@@ -270,57 +270,6 @@ func GetDesignationName(DesignationID uint16) (string, error) {
 	return designation.DesignationName, nil // Return the designation name
 }
 
-func AssignRoleKpi(DesignationID uint16) ([]uint16, error) {
-	tossBaseUrl := os.Getenv("TOSS_BASE_URL") // Get the TOSS base URL from environment variable
-	method := http.MethodGet
-	url := fmt.Sprintf("%s/api/Employee/GetAllEmployeesInfo?Designation=%d&PageSize=100&Status=1", tossBaseUrl, DesignationID) // Construct the URL for fetching designation details based on designation ID
-
-	resp, err := SendRequest(method, url, nil) // Send the HTTP request to the specified URL
-	if err != nil {
-		log.Error(err.Error())
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		errMsg := fmt.Sprintf("failed to get designation name for designation ID %d. status code: %d", DesignationID, resp.StatusCode)
-		log.Error(errMsg)
-		return nil, errors.New(errMsg) // Return an error if the response status code is not OK
-	}
-
-	responseBody, err := io.ReadAll(resp.Body) // Read the response body
-	if err != nil {
-		log.Error(err.Error())
-		return nil, err // Return an error if there's an issue reading the response body
-	}
-
-	var data struct {
-		EmployeeInfo []struct {
-			EmployeeId uint16 `json:"id"`
-			Role       string `json:"designation"`
-		} `json:"employeeInfo"`
-	}
-
-	if err := json.Unmarshal(responseBody, &data); err != nil {
-		log.Error(err.Error())
-		return nil, err // Return an error if there's an issue unmarshaling the JSON response
-	}
-
-	employeeIds := make([]uint16, 0, len(data.EmployeeInfo))
-	for _, employee := range data.EmployeeInfo {
-		if employee.EmployeeId != 0 {
-			employeeIds = append(employeeIds, employee.EmployeeId)
-		}
-	}
-
-	if len(employeeIds) == 0 {
-		return nil, errors.New("employee does not exist against this role")
-	}
-
-	return employeeIds, nil
-
-}
-
 func GetEmployeeIDsByDesignation(designation uint16) ([]uint16, error) {
 	tossBaseURL := os.Getenv("TOSS_BASE_URL") // Get the TOSS base URL from the environment variable
 	method := http.MethodGet                  // HTTP method for sending the request
