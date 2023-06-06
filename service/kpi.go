@@ -361,6 +361,8 @@ func (s *KPIService) GetAllKPIs(c *gin.Context) {
 	assignType := c.Query("assign_type")
 	kpiType := c.Query("kpi_type")
 	teamId := c.Query("team_id")
+	roleId := c.Query("role_id")
+	employeeId := c.Query("employee_id")
 
 	if kpiName != "" {
 		db = db.Where("kpi_name LIKE ?", "%"+kpiName+"%")
@@ -372,6 +374,12 @@ func (s *KPIService) GetAllKPIs(c *gin.Context) {
 
 	if kpiType != "" {
 		db = db.Where("kpi_type_str = ?", kpiType)
+	}
+	if roleId != "" {
+		db = db.Where("assign_type_name = ? AND selected_assign_id = ?", constants.ASSIGN_TYPE_ROLE, roleId)
+	}
+	if employeeId != "" {
+		db = db.Where("assign_type_name = ? AND selected_assign_id = ?", constants.ASSIGN_TYPE_INDIVIDUAL, employeeId)
 	}
 
 	if teamId != "" {
