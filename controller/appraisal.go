@@ -44,7 +44,7 @@ func CreateAppraisal(db *gorm.DB, appraisal *models.Appraisal) (*models.Appraisa
 func GetAppraisalByID(db *gorm.DB, appraisal *models.Appraisal, id uint64) error {
 	log.Info("Getting appraisal by ID")
 
-err := db.Model(&models.AppraisalKpi{}).Preload("Kpi").Preload("Kpi.Statements").Where("appraisal_id = ?", id).Find(&appraisal).Error
+	err := db.Model(&models.AppraisalKpi{}).Preload("Kpi").Preload("Kpi.Statements").Where("appraisal_id = ?", id).Find(&appraisal).Error
 	if err != nil {
 		log.Error(err.Error())
 		return err
@@ -55,14 +55,12 @@ err := db.Model(&models.AppraisalKpi{}).Preload("Kpi").Preload("Kpi.Statements")
 func GetAppraisalKpisByEmpID(db *gorm.DB, appraisalKpi *[]models.AppraisalKpi, id uint64) error {
 	log.Info("Getting appraisalkpis by employeeid")
 
-	err := db.Model(&models.AppraisalKpi{}).
+	if err := db.Model(&models.AppraisalKpi{}).
 		Preload("Kpi").
 		Preload("Kpi.Statements").
 		Joins("JOIN appraisals ON appraisals.id = appraisal_kpis.appraisal_id").
 		Where("appraisal_kpis.appraisal_id = ? AND appraisals.status = ?", id, true).
-		Find(&appraisalKpi).Error
-
-	if err != nil {
+		Find(&appraisalKpi).Error; err != nil {
 		log.Error(err.Error())
 		return err
 	}

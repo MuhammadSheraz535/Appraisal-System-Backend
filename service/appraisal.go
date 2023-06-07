@@ -686,7 +686,7 @@ func (r *AppraisalService) GetAppraisalKpisByEmpID(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Error("appraisal record not found against the given id")
-			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
+			c.JSON(http.StatusNotFound, gin.H{})
 			return
 		}
 
