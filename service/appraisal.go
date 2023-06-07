@@ -186,17 +186,11 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				}
 				appraisal.AppraisalKpis = append(appraisal.AppraisalKpis, appraisalKpi)
 			}
-			// Get the individual employee IDs for the team
-			teamEmployeeIDs, err := utils.GetEmployeesId(kpi.SelectedAssignID)
-			if err != nil {
-				log.Error(err)
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch team employees"})
-				return
-			}
+
 			if kpi.AssignTypeName == constants.ASSIGN_TYPE_TEAM {
 
 				// Assign the KPI to individual employees of the team
-				for _, employeeID := range teamEmployeeIDs {
+				for _, employeeID := range empIds {
 					appraisalKpi := models.AppraisalKpi{
 						AppraisalID: appraisal.ID,
 						EmployeeID:  employeeID,
@@ -206,6 +200,30 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 					appraisal.AppraisalKpis = append(appraisal.AppraisalKpis, appraisalKpi)
 				}
 			}
+			if kpi.AssignTypeName == constants.ASSIGN_TYPE_ROLE {
+
+				for _, employeeID := range empIds {
+					roleIDs, err := utils.GetRolesID([]uint16{employeeID})
+					if err != nil {
+						log.Error(err)
+						c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
+						return
+					}
+					roleID := roleIDs[0] // Assuming there's only one role ID for each employee
+
+					if roleID == kpi.SelectedAssignID {
+						appraisalKpi := models.AppraisalKpi{
+							AppraisalID: appraisal.ID,
+							EmployeeID:  employeeID,
+							KpiID:       kpi.ID,
+							Status:      "pending",
+						}
+						appraisal.AppraisalKpis = append(appraisal.AppraisalKpis, appraisalKpi)
+					}
+				}
+
+			}
+
 		}
 
 	case constants.ASSIGN_TYPE_INDIVIDUAL:
