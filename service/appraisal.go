@@ -131,7 +131,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 
 			roleID := roleIDs[0] // Retrieve the RoleID for the employee (assuming there's only one role ID for each employee)
 
-			designationName, err := utils.GetDesignationName(uint16(roleID))
+			designationName, err := utils.GetDesignationName(roleID)
 			if err != nil {
 				log.Error(err)
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
@@ -434,6 +434,34 @@ func (r *AppraisalService) GetAppraisalByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, response)
+}
+func (r *AppraisalService) GetAppraisalKpiByID(c *gin.Context) {
+	log.Info("Initializing GetAppraisalByID handler function...")
+
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
+	var appraisal_kpi []models.AppraisalKpi
+
+	//Adding query parameters for employees id
+	db := r.Db.Model(&models.AppraisalKpi{})
+	employeeid := c.Query("employee_id")
+	if employeeid != "" {
+		db = db.Where("employee_id = ?", employeeid)
+	}
+
+	err := controller.GetAppraisalKpiByID(db, &appraisal_kpi, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error("appraisal record not found against the given id")
+			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
+			return
+		}
+
+		log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, appraisal_kpi)
 }
 
 func (r *AppraisalService) GetAllAppraisals(c *gin.Context) {
