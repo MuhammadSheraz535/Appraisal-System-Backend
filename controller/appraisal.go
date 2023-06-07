@@ -52,10 +52,10 @@ func GetAppraisalByID(db *gorm.DB, appraisal *models.Appraisal, id uint64) error
 
 	return nil
 }
-func GetAppraisalKpiByID(db *gorm.DB, appraisal *[]models.AppraisalKpi, id uint64) error {
+func GetAppraisalKpiByID(db *gorm.DB, appraisalKpi *[]models.AppraisalKpi, id uint64) error {
 	log.Info("Getting appraisal by ID")
 
-	err := db.Model(&models.AppraisalKpi{}).Preload("Kpi").Preload("Kpi.Statements").Where("appraisal_id = ?", id).Find(&appraisal).Error
+	err := db.Model(&models.AppraisalKpi{}).Preload("Kpi").Preload("Kpi.Statements").Where("employee_id = ?", id).Find(&appraisalKpi).Error
 	if err != nil {
 		log.Error(err.Error())
 		return err

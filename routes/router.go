@@ -90,11 +90,6 @@ func NewRouter() *gin.Engine {
 		appraisalFlows.DELETE("/:id", af.DeleteAppraisalFlow)
 	}
 
-	appraisalskpi := v1.Group("/appraisalskpi")
-	{
-		appraisalskpi.GET("/:id", a.GetAppraisalKpiByID)
-
-	}
 	appraisals := v1.Group("/appraisals")
 	{
 		appraisals.POST("", a.CreateAppraisal)
@@ -102,6 +97,7 @@ func NewRouter() *gin.Engine {
 		appraisals.GET("/:id", a.GetAppraisalByID)
 		appraisals.PUT("/:id", a.UpdateAppraisal)
 		appraisals.DELETE("/:id", a.DeleteAppraisal)
+		appraisals.GET("/employees/:emp_id/appraisal_kpis", a.GetAppraisalKpiByID)
 	}
 
 	return router
