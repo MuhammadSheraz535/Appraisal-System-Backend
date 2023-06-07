@@ -435,27 +435,6 @@ func (r *AppraisalService) GetAppraisalByID(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, response)
 }
-func (r *AppraisalService) GetAppraisalKpiByID(c *gin.Context) {
-	log.Info("Initializing GetAppraisalByID handler function...")
-
-	id, _ := strconv.ParseUint(c.Param("emp_id"), 0, 64)
-	var appraisalKpi []models.AppraisalKpi
-
-	err := controller.GetAppraisalKpiByID(r.Db, &appraisalKpi, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("appraisal record not found against the given id")
-			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
-			return
-		}
-
-		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, appraisalKpi)
-}
 
 func (r *AppraisalService) GetEmployeeDataByAppraisalID(c *gin.Context) {
 	log.Info("Initializing GetEmployeeDataByAppraisalID handler function...")
@@ -716,4 +695,33 @@ func checkAppraisalType(db *gorm.DB, appraisal_type string) error {
 	}
 
 	return nil
+}
+
+func (r *AppraisalService) GetAppraisalKpisByEmpID(c *gin.Context) {
+	log.Info("Initializing GetAppraisalkpisByEmpID handler function...")
+
+	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
+	var appraisalKpi []models.AppraisalKpi
+
+	//Adding query parameters for employees id
+	db := r.Db.Model(&models.AppraisalKpi{})
+	employeeid := c.Query("employee_id")
+	if employeeid != "" {
+		db = db.Where("employee_id = ?", employeeid)
+	}
+
+	err := controller.GetAppraisalKpisByEmpID(db, &appraisalKpi, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error("appraisal record not found against the given id")
+			c.JSON(http.StatusNotFound, gin.H{})
+			return
+		}
+
+		log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, appraisalKpi)
 }
