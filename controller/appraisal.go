@@ -70,6 +70,21 @@ func GetAppraisalKpiByID(db *gorm.DB, appraisalKpi *[]models.AppraisalKpi, id ui
 	return nil
 }
 
+func GetEmployeeDataByAppraisalID(db *gorm.DB, employeeData *[]models.EmployeeData, id uint64) error { // Change the parameter to a pointer to a slice
+	log.Info("Getting EmployeeData by Appraisal ID")
+
+	err := db.Model(&models.EmployeeData{}).
+		Joins("JOIN appraisals ON appraisals.id = employee_data.appraisal_id").
+		Where("employee_data.appraisal_id", id).
+		Find(employeeData).Error
+
+	if err != nil {
+		log.Error(err.Error())
+		return err
+	}
+
+	return nil
+}
 
 func GetAllAppraisals(db *gorm.DB, appraisal *[]models.Appraisal) (err error) {
 	log.Info("Getting all appraisals")

@@ -22,7 +22,7 @@ type Appraisal struct {
 
 type EmployeeData struct {
 	CommonModel
-	AppraisalID     uint16 `gorm:"not null;default:0" json:"-"`
+	AppraisalID     uint16 `gorm:"not null;default:0" json:"appraisal_id"`
 	TossEmpID       uint16 `gorm:"not null;default:0" json:"emp_id" binding:"required"`
 	EmployeeName    string `gorm:"default:''" json:"employee_name,omitempty"`
 	Designation     uint16 `gorm:"not null;default:0" json:"designation_id"`
