@@ -435,13 +435,13 @@ func (r *AppraisalService) GetAppraisalByID(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, response)
 }
-func (r *AppraisalService) GetAppraisalKpiByID(c *gin.Context) {
-	log.Info("Initializing GetAppraisalByID handler function...")
+func (r *AppraisalService) GetAppraisalKpisByEmpID(c *gin.Context) {
+	log.Info("Initializing GetAppraisalkpisByEmpID handler function...")
 
 	id, _ := strconv.ParseUint(c.Param("emp_id"), 0, 64)
 	var appraisalKpi []models.AppraisalKpi
 
-	err := controller.GetAppraisalKpiByID(r.Db, &appraisalKpi, id)
+	err := controller.GetAppraisalKpisByEmpID(r.Db, &appraisalKpi, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Error("appraisal record not found against the given id")
