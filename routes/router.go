@@ -36,6 +36,9 @@ func NewRouter() *gin.Engine {
 		}))
 	}
 
+	// Authorization middlewares
+	// router.Use(middlewares.VerifyToken(), middlewares.ValidateJWTClaims)
+
 	ec := service.NewEmployeeService()
 	roleController := service.NewRoleService()
 	sc := service.NewSupervisorService()
