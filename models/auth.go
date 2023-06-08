@@ -13,6 +13,7 @@ type TokenInfo struct {
 	DesignationID uint16
 	Designation   string
 	SupervisorID  uint16
+	Supervisor    string
 	Department    string
 	EmpImagePath  string
 	EmpRoleID     uint16

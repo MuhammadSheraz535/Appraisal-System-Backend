@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
+	"github.com/mrehanabbasi/appraisal-system-backend/utils"
 )
 
 func VerifyToken() gin.HandlerFunc {
@@ -87,12 +88,19 @@ func ValidateJWTClaims(c *gin.Context) {
 		err := errors.New("failed to cast custom jwt claims to the desired type")
 		log.Error(err.Error())
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
 	}
 
 	empID, _ := strconv.ParseUint(tossClaims.EmpID, 10, 16)
 	designationID, _ := strconv.ParseUint(tossClaims.Designation, 10, 16)
 	supID, _ := strconv.ParseUint(tossClaims.Supervisor, 10, 16)
 	roleID, _ := strconv.ParseUint(tossClaims.Role, 10, 16)
+	supName, err := utils.GetSupervisorName(uint16(supID))
+	if err != nil {
+		log.Error(err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	tokenInfo := models.TokenInfo{
 		EmpID:         uint16(empID),
@@ -100,6 +108,7 @@ func ValidateJWTClaims(c *gin.Context) {
 		DesignationID: uint16(designationID),
 		Designation:   tossClaims.EmpDesignation,
 		SupervisorID:  uint16(supID),
+		Supervisor:    supName,
 		Department:    tossClaims.Department,
 		EmpImagePath:  tossClaims.EmpImagePath,
 		EmpRoleID:     uint16(roleID),
