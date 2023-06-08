@@ -12,6 +12,7 @@ import (
 	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/gin-gonic/gin"
+	"github.com/mrehanabbasi/appraisal-system-backend/constants"
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"github.com/mrehanabbasi/appraisal-system-backend/utils"
@@ -114,5 +115,5 @@ func ValidateJWTClaims(c *gin.Context) {
 		EmpRoleID:     uint16(roleID),
 	}
 
-	c.Set("tossData", tokenInfo)
+	c.Set(constants.TOKEN_DATA, tokenInfo)
 }
