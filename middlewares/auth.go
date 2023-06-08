@@ -43,7 +43,6 @@ func VerifyToken() gin.HandlerFunc {
 		log.Error("failed to set up the jwt validator: ", err.Error())
 		return func(c *gin.Context) {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "failed to set up the jwt validator"})
-			return
 		}
 	}
 
@@ -78,8 +77,8 @@ func ValidateJWTClaims(c *gin.Context) {
 	claims, ok := c.Request.Context().Value(jwtmiddleware.ContextKey{}).(*validator.ValidatedClaims)
 	if !ok {
 		err := errors.New("failed to validate jwt claims")
-		log.Error(err.Error)
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error})
+		log.Error(err.Error())
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
