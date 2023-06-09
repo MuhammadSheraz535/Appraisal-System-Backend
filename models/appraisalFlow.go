@@ -15,7 +15,7 @@ type AppraisalFlow struct {
 	SelectedAssignID   uint16        `gorm:"not null;default:0" json:"selected_assign_id" validate:"required"`
 	SelectedAssignName string        `json:"selected_assign_name,omitempty"`
 	AssignType         AssignType    `gorm:"references:AssignTypeId;foreignKey:AssignTypeID" json:"-"`
-	CreatedBy          uint16        `json:"created_by" gorm:"not null;default:0" validate:"required"`
+	CreatedBy          uint16        `json:"created_by" gorm:"not null;default:0"`
 	IsActive           *bool         `json:"is_active" gorm:"not null;default:true" validate:"required"`
 	AppraisalTypeStr   string        `json:"appraisal_type" gorm:"not null;default:''" validate:"required"`
 	AppraisalType      AppraisalType `json:"-" gorm:"references:AppraisalType;foreignKey:AppraisalTypeStr"`
