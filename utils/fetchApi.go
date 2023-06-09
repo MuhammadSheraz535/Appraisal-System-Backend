@@ -367,7 +367,7 @@ func GetProjectDetailsByEmployeeID(employeeID uint16) ([]ProjectResponse, error)
 	return projectDetails, nil
 }
 
-type Employee struct {
+type EmployeeImage struct {
 	EmployeeImage string `json:"employeeImage"`
 }
 
@@ -391,10 +391,10 @@ func GetEmployeeImageByID(employeeID uint64) (string, error) {
 		return "", err
 	}
 
-	var employee Employee
-	if err := json.Unmarshal(responseBody, &employee); err != nil {
+	var employeeImage EmployeeImage
+	if err := json.Unmarshal(responseBody, &employeeImage); err != nil {
 		return "", err
 	}
 
-	return employee.EmployeeImage, nil
+	return employeeImage.EmployeeImage, nil
 }

@@ -283,7 +283,8 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 
 		employeeImage, err := utils.GetEmployeeImageByID(uint64(appraisal.SelectedFieldID))
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
+			return
 		}
 
 		projectDetails, err := utils.GetProjectDetailsByEmployeeID(appraisal.SelectedFieldID)
@@ -379,7 +380,8 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			}
 			employeeImage, err := utils.GetEmployeeImageByID(uint64(empID))
 			if err != nil {
-				log.Fatal(err)
+				log.Error(err)
+				return
 			}
 
 			projectDetails, err := utils.GetProjectDetailsByEmployeeID(empID)
@@ -479,13 +481,7 @@ func (r *AppraisalService) GetAppraisalByID(c *gin.Context) {
 
 	var appraisal models.Appraisal
 	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("appraisal record not found against the given id")
-			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
-			return
-		}
-
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -508,19 +504,13 @@ func (r *AppraisalService) GetEmployeeDataByAppraisalID(c *gin.Context) {
 	var employeeData []models.EmployeeData
 	db := r.Db.Model(&models.EmployeeData{})
 
-	TossEmpID := c.Query("toss_emp_id")
-	if TossEmpID != "" {
-		db = db.Where("toss_emp_id = ?", TossEmpID)
+	tossEmpId := c.Query("toss_emp_id")
+	if tossEmpId != "" {
+		db = db.Where("toss_emp_id = ?", tossEmpId)
 	}
 
 	err := controller.GetEmployeeDataByAppraisalID(db, &employeeData, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("appraisal record not found against the given id")
-			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
-			return
-		}
-
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -730,13 +720,7 @@ func (r *AppraisalService) DeleteAppraisal(c *gin.Context) {
 	appraisal.ID = uint16(id)
 
 	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("appraisal record not found against the given id")
-			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
-			return
-		}
-
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -776,13 +760,7 @@ func (r *AppraisalService) GetAppraisalKpisByEmpID(c *gin.Context) {
 	}
 
 	err := controller.GetAppraisalKpisByEmpID(db, &appraisalKpi, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("appraisal record not found against the given id")
-			c.JSON(http.StatusNotFound, gin.H{})
-			return
-		}
-
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
