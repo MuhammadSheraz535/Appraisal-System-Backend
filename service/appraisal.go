@@ -283,7 +283,8 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 
 		employeeImage, err := utils.GetEmployeeImageByID(uint64(appraisal.SelectedFieldID))
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
+			return
 		}
 
 		projectDetails, err := utils.GetProjectDetailsByEmployeeID(appraisal.SelectedFieldID)
@@ -379,7 +380,8 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			}
 			employeeImage, err := utils.GetEmployeeImageByID(uint64(empID))
 			if err != nil {
-				log.Fatal(err)
+				log.Error(err)
+				return
 			}
 
 			projectDetails, err := utils.GetProjectDetailsByEmployeeID(empID)
