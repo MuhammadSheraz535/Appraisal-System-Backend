@@ -501,7 +501,7 @@ func (r *AppraisalService) GetAppraisalByID(c *gin.Context) {
 		Appraisal: appraisal,
 	}
 
-	c.JSON(http.StatusCreated, response)
+	c.JSON(http.StatusOK, response)
 }
 
 func (r *AppraisalService) GetEmployeeDataByAppraisalID(c *gin.Context) {
