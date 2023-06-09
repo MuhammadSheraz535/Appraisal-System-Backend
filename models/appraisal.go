@@ -26,6 +26,8 @@ type EmployeeData struct {
 	TossEmpID       uint16 `gorm:"not null;default:0" json:"emp_id" binding:"required"`
 	EmployeeName    string `gorm:"default:''" json:"employee_name,omitempty"`
 	EmployeeImage   string `gorm:"default:''" json:"employee_image,omitempty"`
+	TeamID          uint16 `gorm:"default:0" json:"team_id,omitempty"`
+	TeamName        string `gorm:"default:''" json:"team_name,omitempty"`
 	Designation     uint16 `gorm:"not null;default:0" json:"designation_id"`
 	DesignationName string `gorm:"default:''" json:"designation_name,omitempty"`
 	AppraisalStatus string `gorm:"not null;default:false" json:"appraisal_status"`

@@ -270,11 +270,27 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			log.Fatal(err)
 		}
 
+		projectDetails, err := utils.GetProjectDetailsByEmployeeID(appraisal.SelectedFieldID)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		var ProjecID uint16
+		var ProjectName string
+
+		for _, project := range projectDetails {
+			ProjecID = project.ProjectDetails.ProjectID
+			ProjectName = project.ProjectDetails.ProjectName
+		}
+
 		// Create EmployeeData instance
 		employeeData := models.EmployeeData{
 			AppraisalID:     appraisal.ID,
 			TossEmpID:       appraisal.AppraisalFor,
 			EmployeeName:    empName,
+			TeamID:          ProjecID,
+			TeamName:        ProjectName,
 			EmployeeImage:   employeeImage,
 			Designation:     roleID, // Assign the RoleID as Designation
 			DesignationName: designationName,
