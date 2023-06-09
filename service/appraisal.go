@@ -141,12 +141,14 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			employeeImage, err := utils.GetEmployeeImageByID(uint64(empID))
 			if err != nil {
 				log.Error(err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch employee image"})
 				return
 			}
 
 			projectDetails, err := utils.GetProjectDetailsByEmployeeID(empID)
 			if err != nil {
 				log.Error(err.Error())
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch project details"})
 				return
 			}
 
@@ -285,11 +287,13 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		employeeImage, err := utils.GetEmployeeImageByID(uint64(appraisal.SelectedFieldID))
 		if err != nil {
 			log.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch Employees Image"})
 			return
 		}
 
 		projectDetails, err := utils.GetProjectDetailsByEmployeeID(appraisal.SelectedFieldID)
 		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch Project Details"})
 			log.Error(err.Error())
 			return
 		}
@@ -382,12 +386,14 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			employeeImage, err := utils.GetEmployeeImageByID(uint64(empID))
 			if err != nil {
 				log.Error(err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch Employee Image"})
 				return
 			}
 
 			projectDetails, err := utils.GetProjectDetailsByEmployeeID(empID)
 			if err != nil {
 				log.Error(err.Error())
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch Project Details"})
 				return
 			}
 
