@@ -508,9 +508,9 @@ func (r *AppraisalService) GetEmployeeDataByAppraisalID(c *gin.Context) {
 	var employeeData []models.EmployeeData
 	db := r.Db.Model(&models.EmployeeData{})
 
-	TossEmpID := c.Query("toss_emp_id")
-	if TossEmpID != "" {
-		db = db.Where("toss_emp_id = ?", TossEmpID)
+	tossEmpId := c.Query("toss_emp_id")
+	if tossEmpId != "" {
+		db = db.Where("toss_emp_id = ?", tossEmpId)
 	}
 
 	err := controller.GetEmployeeDataByAppraisalID(db, &employeeData, id)
