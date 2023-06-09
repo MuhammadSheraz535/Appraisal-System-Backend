@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -318,6 +319,15 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			return
 		}
 
+		employeeID := uint64(201)
+
+		employeeImage, err := utils.GetEmployeeImageByID(employeeID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("Employee ID: %d, Employee Image: %s\n", employeeID, employeeImage)
+
 		employeeDataList := make([]models.EmployeeData, 0)
 		for _, empID := range employeeIDs {
 			empName, err := utils.GetEmployeeName(empID)
@@ -333,11 +343,21 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch designation name"})
 				return
 			}
+			// projectDetails, err := utils.GetProjectDetailsByEmployeeID(empID)
+			// if err != nil {
+			// 	log.Error(err.Error())
+			// 	return
+			// }
+			employeeImage, err := utils.GetEmployeeImageByID(uint64(empID))
+			if err != nil {
+				log.Fatal(err)
+			}
 
 			employeeData := models.EmployeeData{
 				AppraisalID:     appraisal.ID,
 				TossEmpID:       empID,
 				EmployeeName:    empName,
+				EmployeeImage:   employeeImage,
 				Designation:     uint16(appraisal.SelectedFieldID),
 				DesignationName: designationName,
 				AppraisalStatus: "pending",
