@@ -22,9 +22,12 @@ type Appraisal struct {
 
 type EmployeeData struct {
 	CommonModel
-	AppraisalID     uint16 `gorm:"not null;default:0" json:"-"`
+	AppraisalID     uint16 `gorm:"not null;default:0" json:"appraisal_id"`
 	TossEmpID       uint16 `gorm:"not null;default:0" json:"emp_id" binding:"required"`
 	EmployeeName    string `gorm:"default:''" json:"employee_name,omitempty"`
+	EmployeeImage   string `gorm:"default:''" json:"employee_image,omitempty"`
+	TeamID          uint16 `gorm:"default:0" json:"team_id,omitempty"`
+	TeamName        string `gorm:"default:''" json:"team_name,omitempty"`
 	Designation     uint16 `gorm:"not null;default:0" json:"designation_id"`
 	DesignationName string `gorm:"default:''" json:"designation_name,omitempty"`
 	AppraisalStatus string `gorm:"not null;default:false" json:"appraisal_status"`
@@ -32,10 +35,10 @@ type EmployeeData struct {
 
 type AppraisalKpi struct {
 	CommonModel
-	AppraisalID uint16 `gorm:"not null;default:0" json:"-"`
+	AppraisalID uint16 `gorm:"not null;default:0" json:"appraisal_id"`
 	EmployeeID  uint16 `gorm:"not null;default:0" json:"employee_id" binding:"required"`
 	KpiID       uint16 `gorm:"not null;default:0" json:"kpi_id" binding:"required"`
-	Kpi         Kpi    `json:"-"`
+	Kpi         Kpi    `json:"kpi"`
 	Status      string `gorm:"not null;default:''" json:"status" binding:"required"`
 }
 

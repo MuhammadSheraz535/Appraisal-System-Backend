@@ -100,6 +100,8 @@ func NewRouter() *gin.Engine {
 		appraisals.GET("/:id", a.GetAppraisalByID)
 		appraisals.PUT("/:id", a.UpdateAppraisal)
 		appraisals.DELETE("/:id", a.DeleteAppraisal)
+		appraisals.GET("/employees/:emp_id/appraisal_kpis", a.GetAppraisalKpisByEmpID)
+		appraisals.GET("/:id/employee_data", a.GetEmployeeDataByAppraisalID)
 	}
 
 	return router

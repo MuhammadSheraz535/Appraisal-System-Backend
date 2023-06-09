@@ -316,3 +316,85 @@ func GetEmployeeIDsByDesignation(designation uint16) ([]uint16, error) {
 
 	return employeeIDs, nil // Return the list of employee IDs
 }
+
+type ProjectResponse struct {
+	ProjectDetails struct {
+		ProjectID   uint16 `json:"projectId"`
+		ProjectName string `json:"projectName"`
+	} `json:"projectDetails"`
+	AllocateTo []struct {
+		EmployeeID uint16 `json:"employeeId"`
+		Name       string `json:"name"`
+	} `json:"allocateTo"`
+}
+
+func GetProjectDetailsByEmployeeID(employeeID uint16) ([]ProjectResponse, error) {
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL") // Get the TOSS base URL from environment variable
+	method := http.MethodGet                  // HTTP method for sending the request
+	url := tossBaseUrl + "/api/Project/GetAllProjects"
+
+	resp, err := SendRequest(method, url, nil) // Send the HTTP request to fetch all projects
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	var projects []ProjectResponse
+
+	if err := json.Unmarshal(responseBody, &projects); err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	var projectDetails []ProjectResponse
+
+	for _, project := range projects {
+		for _, allocateTo := range project.AllocateTo {
+			if allocateTo.EmployeeID == employeeID {
+				projectDetails = append(projectDetails, project)
+				break
+			}
+		}
+	}
+
+	return projectDetails, nil
+}
+
+type EmployeeImage struct {
+	EmployeeImage string `json:"employeeImage"`
+}
+
+func GetEmployeeImageByID(employeeID uint64) (string, error) {
+
+	tossBaseURL := os.Getenv("TOSS_BASE_URL") // Get the TOSS base URL from the environment variable
+	method := http.MethodGet                  // HTTP method for sending the request
+
+	url := tossBaseURL + "/api/Employee/" + strconv.FormatUint(uint64(employeeID), 10)
+
+	resp, err := SendRequest(method, url, nil) // Send the HTTP request to fetch all projects
+	if err != nil {
+		log.Error(err.Error())
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return "", err
+	}
+
+	var employeeImage EmployeeImage
+	if err := json.Unmarshal(responseBody, &employeeImage); err != nil {
+		return "", err
+	}
+
+	return employeeImage.EmployeeImage, nil
+}
