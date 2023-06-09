@@ -381,6 +381,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			if err != nil {
 				log.Fatal(err)
 			}
+
 			projectDetails, err := utils.GetProjectDetailsByEmployeeID(empID)
 			if err != nil {
 				log.Error(err.Error())
@@ -399,11 +400,11 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				AppraisalID:     appraisal.ID,
 				TossEmpID:       empID,
 				EmployeeName:    empName,
-				TeamID:          ProjectID,
-				TeamName:        ProjectName,
 				EmployeeImage:   employeeImage,
 				Designation:     uint16(appraisal.SelectedFieldID),
 				DesignationName: designationName,
+				TeamID:          ProjectID,
+				TeamName:        ProjectName,
 				AppraisalStatus: "pending",
 			}
 			employeeDataList = append(employeeDataList, employeeData)
