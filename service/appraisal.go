@@ -479,13 +479,7 @@ func (r *AppraisalService) GetAppraisalByID(c *gin.Context) {
 
 	var appraisal models.Appraisal
 	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("appraisal record not found against the given id")
-			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
-			return
-		}
-
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
