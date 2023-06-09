@@ -765,7 +765,7 @@ func checkAppraisalType(db *gorm.DB, appraisal_type string) error {
 func (r *AppraisalService) GetAppraisalKpisByEmpID(c *gin.Context) {
 	log.Info("Initializing GetAppraisalkpisByEmpID handler function...")
 
-	id, _ := strconv.ParseUint(c.Param("id"), 0, 64)
+	id, _ := strconv.ParseUint(c.Param("emp_id"), 0, 64)
 	var appraisalKpi []models.AppraisalKpi
 
 	//Adding query parameters for employees id
