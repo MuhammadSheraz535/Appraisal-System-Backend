@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -138,10 +137,16 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
 				return
 			}
+
+			employeeImage, err := utils.GetEmployeeImageByID(uint64(empID))
+			if err != nil {
+				log.Fatal(err)
+			}
 			employeeData := models.EmployeeData{
 				AppraisalID:     appraisal.ID,
 				TossEmpID:       empID,
 				EmployeeName:    empName,
+				EmployeeImage:   employeeImage,
 				Designation:     roleID, // Assign the RoleID as Designation
 				DesignationName: designationName,
 				AppraisalStatus: "pending",
@@ -260,11 +265,17 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			return
 		}
 
+		employeeImage, err := utils.GetEmployeeImageByID(uint64(appraisal.SelectedFieldID))
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// Create EmployeeData instance
 		employeeData := models.EmployeeData{
 			AppraisalID:     appraisal.ID,
 			TossEmpID:       appraisal.AppraisalFor,
 			EmployeeName:    empName,
+			EmployeeImage:   employeeImage,
 			Designation:     roleID, // Assign the RoleID as Designation
 			DesignationName: designationName,
 			AppraisalStatus: "pending",
@@ -318,15 +329,6 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "No employees found for the provided role"})
 			return
 		}
-
-		employeeID := uint64(201)
-
-		employeeImage, err := utils.GetEmployeeImageByID(employeeID)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Printf("Employee ID: %d, Employee Image: %s\n", employeeID, employeeImage)
 
 		employeeDataList := make([]models.EmployeeData, 0)
 		for _, empID := range employeeIDs {
