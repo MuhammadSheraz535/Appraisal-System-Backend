@@ -142,10 +142,26 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			if err != nil {
 				log.Fatal(err)
 			}
+
+			projectDetails, err := utils.GetProjectDetailsByEmployeeID(empID)
+			if err != nil {
+				log.Error(err.Error())
+				return
+			}
+
+			var ProjectID uint16
+			var ProjectName string
+
+			for _, project := range projectDetails {
+				ProjectID = project.ProjectDetails.ProjectID
+				ProjectName = project.ProjectDetails.ProjectName
+			}
 			employeeData := models.EmployeeData{
 				AppraisalID:     appraisal.ID,
 				TossEmpID:       empID,
 				EmployeeName:    empName,
+				TeamID:          ProjectID,
+				TeamName:        ProjectName,
 				EmployeeImage:   employeeImage,
 				Designation:     roleID, // Assign the RoleID as Designation
 				DesignationName: designationName,
@@ -276,11 +292,11 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			return
 		}
 
-		var ProjecID uint16
+		var ProjectID uint16
 		var ProjectName string
 
 		for _, project := range projectDetails {
-			ProjecID = project.ProjectDetails.ProjectID
+			ProjectID = project.ProjectDetails.ProjectID
 			ProjectName = project.ProjectDetails.ProjectName
 		}
 
@@ -289,7 +305,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			AppraisalID:     appraisal.ID,
 			TossEmpID:       appraisal.AppraisalFor,
 			EmployeeName:    empName,
-			TeamID:          ProjecID,
+			TeamID:          ProjectID,
 			TeamName:        ProjectName,
 			EmployeeImage:   employeeImage,
 			Designation:     roleID, // Assign the RoleID as Designation
@@ -361,20 +377,30 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch designation name"})
 				return
 			}
-			// projectDetails, err := utils.GetProjectDetailsByEmployeeID(empID)
-			// if err != nil {
-			// 	log.Error(err.Error())
-			// 	return
-			// }
 			employeeImage, err := utils.GetEmployeeImageByID(uint64(empID))
 			if err != nil {
 				log.Fatal(err)
+			}
+			projectDetails, err := utils.GetProjectDetailsByEmployeeID(empID)
+			if err != nil {
+				log.Error(err.Error())
+				return
+			}
+
+			var ProjectID uint16
+			var ProjectName string
+
+			for _, project := range projectDetails {
+				ProjectID = project.ProjectDetails.ProjectID
+				ProjectName = project.ProjectDetails.ProjectName
 			}
 
 			employeeData := models.EmployeeData{
 				AppraisalID:     appraisal.ID,
 				TossEmpID:       empID,
 				EmployeeName:    empName,
+				TeamID:          ProjectID,
+				TeamName:        ProjectName,
 				EmployeeImage:   employeeImage,
 				Designation:     uint16(appraisal.SelectedFieldID),
 				DesignationName: designationName,
