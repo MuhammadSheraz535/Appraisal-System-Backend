@@ -44,7 +44,37 @@ func CreateAppraisal(db *gorm.DB, appraisal *models.Appraisal) (*models.Appraisa
 func GetAppraisalByID(db *gorm.DB, appraisal *models.Appraisal, id uint64) error {
 	log.Info("Getting appraisal by ID")
 
-	err := db.Model(&models.Appraisal{}).Preload("AppraisalFlow").Preload("AppraisalFlow.FlowSteps").Preload("AppraisalKpis").Preload("EmployeesList").Where("id = ?", id).First(&appraisal).Error
+	err := db.Model(&models.Appraisal{}).Preload(clause.Associations).Preload("AppraisalKpis.Kpi.Statements").Where("id = ?", id).First(&appraisal).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+func GetAppraisalKpisByEmpID(db *gorm.DB, appraisalKpi *[]models.AppraisalKpi, id uint64) error {
+	log.Info("Getting appraisalkpis by employeeid")
+
+	if err := db.Model(&models.AppraisalKpi{}).
+		Preload(clause.Associations).
+		Joins("JOIN appraisals ON appraisals.id = appraisal_kpis.appraisal_id").
+		Where("appraisal_kpis.appraisal_id = ? AND appraisals.status = ?", id, true).
+		Find(&appraisalKpi).Error; err != nil {
+		log.Error(err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func GetEmployeeDataByAppraisalID(db *gorm.DB, employeeData *[]models.EmployeeData, id uint64) error { // Change the parameter to a pointer to a slice
+	log.Info("Getting EmployeeData by Appraisal ID")
+
+	err := db.Model(&models.EmployeeData{}).
+		Joins("JOIN appraisals ON appraisals.id = employee_data.appraisal_id").
+		Where("employee_data.appraisal_id", id).
+		Find(employeeData).Error
+
 	if err != nil {
 		log.Error(err.Error())
 		return err
@@ -56,7 +86,7 @@ func GetAppraisalByID(db *gorm.DB, appraisal *models.Appraisal, id uint64) error
 func GetAllAppraisals(db *gorm.DB, appraisal *[]models.Appraisal) (err error) {
 	log.Info("Getting all appraisals")
 
-	err = db.Model(&models.Appraisal{}).Preload("AppraisalFlow").Preload("AppraisalFlow.FlowSteps").Preload("AppraisalKpis").Preload("EmployeesList").Order("id ASC").Find(&appraisal).Error
+	err = db.Model(&models.Appraisal{}).Preload(clause.Associations).Preload("AppraisalKpis.Kpi.Statements").Order("id ASC").Find(&appraisal).Error
 	if err != nil {
 		return err
 	}
