@@ -104,6 +104,5 @@ func NewRouter() *gin.Engine {
 		appraisals.GET("/employees/:emp_id/appraisal_kpis", a.GetAppraisalKpisByEmpID)
 		appraisals.GET("/:id/employee_data", a.GetEmployeeDataByAppraisalID)
 	}
-
 	return router
 }
