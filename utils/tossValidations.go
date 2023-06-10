@@ -372,7 +372,6 @@ func GetRoleName(roleID uint16) (string, error) {
 
 	for _, role := range response.SystemRoles {
 		if role.Value == roleID {
-			fmt.Printf("Role name is %v", role.Label)
 			return role.Label, nil // Return the Role Name if the role ID matches
 		}
 
