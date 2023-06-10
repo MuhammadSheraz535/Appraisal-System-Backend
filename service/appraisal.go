@@ -791,7 +791,7 @@ func (r *AppraisalService) Score(c *gin.Context) {
 
 	// Retrieve the appraisal KPI data from the database
 	var appraisalKpi models.AppraisalKpi
-	err = r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("appraisal_id = ?", score.AppraisalKpiID).First(&appraisalKpi).Error
+	err = r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("id = ?", score.AppraisalKpiID).First(&appraisalKpi).Error
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -805,7 +805,7 @@ func (r *AppraisalService) Score(c *gin.Context) {
 		score.Score = 0
 
 	case constants.MEASURED_KPI_TYPE, constants.QUESTIONNAIRE_KPI_TYPE:
-		fmt.Println("KPI : ", appraisalKpi.Kpi.KpiTypeStr)
+		fmt.Println("KPI Type: ", appraisalKpi.Kpi.KpiTypeStr)
 		score.TextAnswer = ""
 	}
 
