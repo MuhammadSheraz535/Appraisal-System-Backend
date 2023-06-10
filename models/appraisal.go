@@ -33,10 +33,10 @@ type EmployeeData struct {
 type AppraisalKpi struct {
 	CommonModel
 	AppraisalID uint16 `gorm:"not null;default:0" json:"-"`
-	EmployeeID  uint16 `gorm:"not null;default:0" json:"employee_id" binding:"required"`
-	KpiID       uint16 `gorm:"not null;default:0" json:"kpi_id" binding:"required"`
-	Kpi         Kpi    `json:"-"`
-	Status      string `gorm:"not null;default:''" json:"status" binding:"required"`
+	EmployeeID  uint16 `gorm:"not null;default:0" json:"employee_id"`
+	KpiID       uint16 `gorm:"not null;default:0" json:"kpi_id"`
+	Kpi         Kpi    `json:"kpi"`
+	Status      string `gorm:"not null;default:''" json:"status"`
 }
 
 type AppraisalType struct {

@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"github.com/mrehanabbasi/appraisal-system-backend/utils"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type AppraisalService struct {
@@ -656,6 +658,51 @@ func (r *AppraisalService) DeleteAppraisal(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// :TODO: Score Implementation
+func (r *AppraisalService) Score(c *gin.Context) {
+	log.Info("Initializing Score handler function...")
+
+	var score models.Score
+
+	err := c.ShouldBindJSON(&score)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Retrieve the appraisal KPI data from the database
+	var appraisalKpi models.AppraisalKpi
+	err = r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("id = ?", score.AppraisalKpiID).First(&appraisalKpi).Error
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Check KPI type and set values accordingly
+	switch appraisalKpi.Kpi.KpiTypeStr {
+	case constants.FEEDBACK_KPI_TYPE, constants.OBSERVATORY_KPI_TYPE:
+		fmt.Println("KPI :", appraisalKpi.Kpi.KpiTypeStr)
+		score.Score = 0
+
+	case constants.MEASURED_KPI_TYPE, constants.QUESTIONNAIRE_KPI_TYPE:
+		fmt.Println("KPI : ", appraisalKpi.Kpi.KpiTypeStr)
+		score.TextAnswer = ""
+	}
+
+	// Save the score to the database or perform any necessary operations
+
+	scores, err := controller.Score(r.Db, &score)
+	if err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, scores)
 }
 
 func checkAppraisalType(db *gorm.DB, appraisal_type string) error {

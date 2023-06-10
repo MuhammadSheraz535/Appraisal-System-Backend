@@ -167,3 +167,16 @@ func DeleteAppraisal(db *gorm.DB, appraisal *models.Appraisal, id uint64) error 
 
 	return nil
 }
+
+//Create scores
+
+func Score(db *gorm.DB, score *models.Score) (*models.Score, error) {
+	log.Info("Creating Score in db...")
+
+	if err := db.Preload(clause.Associations).Create(&score).Error; err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	return score, nil
+}
