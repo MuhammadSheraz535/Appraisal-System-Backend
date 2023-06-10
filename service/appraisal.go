@@ -520,7 +520,7 @@ func (r *AppraisalService) GetEmployeeDataByAppraisalID(c *gin.Context) {
 	err := controller.GetEmployeeDataByAppraisalID(db, &employeeData, id)
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -770,7 +770,7 @@ func (r *AppraisalService) GetAppraisalKpisByEmpID(c *gin.Context) {
 	err := controller.GetAppraisalKpisByEmpID(db, &appraisalKpi, id)
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
