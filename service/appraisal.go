@@ -804,7 +804,7 @@ func (r *AppraisalService) Score(c *gin.Context) {
 		fmt.Println("KPI Type :", appraisalKpi.Kpi.KpiTypeStr)
 		score.Score = 0
 
-	case constants.MEASURED_KPI_TYPE, constants.QUESTIONNAIRE_KPI_TYPE:
+	case constants.QUESTIONNAIRE_KPI_TYPE:
 		fmt.Println("KPI Type: ", appraisalKpi.Kpi.KpiTypeStr)
 		if score.Score != 0 && score.Score != 1 {
 			errMsg := "Questionnaire Score should be either 0 or 1"
@@ -812,6 +812,10 @@ func (r *AppraisalService) Score(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
 			return
 		}
+		score.TextAnswer = ""
+
+	case constants.MEASURED_KPI_TYPE:
+		fmt.Println("KPI Type: ", appraisalKpi.Kpi.KpiTypeStr)
 		score.TextAnswer = ""
 	}
 
