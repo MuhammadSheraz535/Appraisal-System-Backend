@@ -15,6 +15,7 @@ import (
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"github.com/mrehanabbasi/appraisal-system-backend/utils"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type AppraisalService struct {
@@ -826,7 +827,7 @@ func (r *AppraisalService) Score(c *gin.Context) {
 	}
 
 	// Retrieve the appraisal KPI data from the database
-	err = r.Db.Model(&models.AppraisalKpi{}).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).First(&appraisalKpi).Error
+	err = r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).First(&appraisalKpi).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
