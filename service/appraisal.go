@@ -161,14 +161,14 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				ProjectID = project.ProjectDetails.ProjectID
 				ProjectName = project.ProjectDetails.ProjectName
 			}
-			baseurl := os.Getenv("IMAGE_URL")
+			baseurl := os.Getenv("TOSS_BASE_URL")
 			employeeData := models.EmployeeData{
 				AppraisalID:     appraisal.ID,
 				TossEmpID:       empID,
 				EmployeeName:    empName,
 				TeamID:          ProjectID,
 				TeamName:        ProjectName,
-				EmployeeImage:   baseurl + employeeImage,
+				EmployeeImage:   baseurl + "/" + employeeImage,
 				Designation:     roleID, // Assign the RoleID as Designation
 				DesignationName: designationName,
 				AppraisalStatus: "pending",
@@ -308,7 +308,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			ProjectID = project.ProjectDetails.ProjectID
 			ProjectName = project.ProjectDetails.ProjectName
 		}
-		baseurl := os.Getenv("IMAGE_URL")
+		baseurl := os.Getenv("TOSS_BASE_URL")
 		// Create EmployeeData instance
 		employeeData := models.EmployeeData{
 			AppraisalID:     appraisal.ID,
@@ -316,7 +316,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			EmployeeName:    empName,
 			TeamID:          ProjectID,
 			TeamName:        ProjectName,
-			EmployeeImage:   baseurl + employeeImage,
+			EmployeeImage:   baseurl + "/" + employeeImage,
 			Designation:     roleID, // Assign the RoleID as Designation
 			DesignationName: designationName,
 			AppraisalStatus: "pending",
@@ -407,12 +407,12 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				ProjectID = project.ProjectDetails.ProjectID
 				ProjectName = project.ProjectDetails.ProjectName
 			}
-			baseurl := os.Getenv("IMAGE_URL")
+			baseurl := os.Getenv("TOSS_BASE_URL")
 			employeeData := models.EmployeeData{
 				AppraisalID:     appraisal.ID,
 				TossEmpID:       empID,
 				EmployeeName:    empName,
-				EmployeeImage:   baseurl + employeeImage,
+				EmployeeImage:   baseurl + "/" + employeeImage,
 				Designation:     uint16(appraisal.SelectedFieldID),
 				DesignationName: designationName,
 				TeamID:          ProjectID,
