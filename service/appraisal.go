@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -817,7 +816,7 @@ func (r *AppraisalService) Score(c *gin.Context) {
 		return
 	}
 
-	var score models.Score
+	var score []models.Score
 
 	err = c.ShouldBindJSON(&score)
 	if err != nil {
@@ -838,29 +837,28 @@ func (r *AppraisalService) Score(c *gin.Context) {
 	}
 
 	// Check KPI type and set values accordingly
-	switch appraisalKpi.Kpi.KpiTypeStr {
-	case constants.FEEDBACK_KPI_TYPE, constants.OBSERVATORY_KPI_TYPE:
-		fmt.Println("KPI Type :", appraisalKpi.Kpi.KpiTypeStr)
-		score.Score = 0
+	for k:= range score {
+		switch appraisalKpi.Kpi.KpiTypeStr {
+		case constants.FEEDBACK_KPI_TYPE, constants.OBSERVATORY_KPI_TYPE:
+			score[k].Score = 0
 
-	case constants.QUESTIONNAIRE_KPI_TYPE:
-		fmt.Println("KPI Type: ", appraisalKpi.Kpi.KpiTypeStr)
-		if score.Score != 0 && score.Score != 1 {
-			errMsg := "Questionnaire Score should be either 0 or 1"
-			log.Error(errMsg)
-			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
-			return
+		case constants.QUESTIONNAIRE_KPI_TYPE:
+			if score[k].Score != 0 && score[k].Score != 1 {
+				errMsg := "Questionnaire Score should be either 0 or 1"
+				log.Error(errMsg)
+				c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+				return
+			}
+			score[k].TextAnswer = ""
+
+		case constants.MEASURED_KPI_TYPE:
+			score[k].TextAnswer = ""
 		}
-		score.TextAnswer = ""
 
-	case constants.MEASURED_KPI_TYPE:
-		fmt.Println("KPI Type: ", appraisalKpi.Kpi.KpiTypeStr)
-		score.TextAnswer = ""
 	}
-
 	// Save the score to the database or perform any necessary operations
 
-	scores, err := controller.Score(r.Db, &score)
+	scores, err := controller.Score(r.Db, score)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
