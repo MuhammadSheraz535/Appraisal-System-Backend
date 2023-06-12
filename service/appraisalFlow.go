@@ -127,12 +127,12 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 		}
 	}
 	// check employee id exist
-	errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
-	if err != nil {
-		log.Error(err.Error())
-		c.JSON(errCode, gin.H{"error": err.Error()})
-		return
-	}
+	// errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
+	// if err != nil {
+	// 	log.Error(err.Error())
+	// 	c.JSON(errCode, gin.H{"error": err.Error()})
+	// 	return
+	// }
 	//check Assign type exist
 	assignType, name, err := checkAssignType(r.Db, uint16(appraisalFlow.AssignTypeID))
 	if err != nil {
@@ -265,12 +265,12 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	}
 
 	// check employee id exist
-	errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
-	if err != nil {
-		log.Error(err.Error())
-		c.JSON(errCode, gin.H{"error": err.Error()})
-		return
-	}
+	// errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
+	// if err != nil {
+	// 	log.Error(err.Error())
+	// 	c.JSON(errCode, gin.H{"error": err.Error()})
+	// 	return
+	// }
 	//check Assign type exist
 	assignType, name, err := checkAssignType(r.Db, uint16(appraisalFlow.AssignTypeID))
 	if err != nil {
