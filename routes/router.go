@@ -96,7 +96,7 @@ func NewRouter() *gin.Engine {
 	appraisals := v1.Group("/appraisals")
 	{
 		appraisals.POST("", a.CreateAppraisal)
-		appraisals.POST("/score", a.Score)
+		appraisals.POST("/:id/employees/:emp_id/score", a.Score)
 		appraisals.GET("", a.GetAllAppraisals)
 		appraisals.GET("/:id", a.GetAppraisalByID)
 		appraisals.PUT("/:id", a.UpdateAppraisal)

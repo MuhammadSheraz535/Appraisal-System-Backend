@@ -168,9 +168,14 @@ func (r *AppraisalFlowService) GetAppraisalFlowByID(c *gin.Context) {
 
 	var appraisalFlow models.AppraisalFlow
 	err := controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
-	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Error(err.Error())
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+
 		return
 	}
 
