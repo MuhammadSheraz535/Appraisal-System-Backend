@@ -798,6 +798,92 @@ func (r *AppraisalService) GetAppraisalKpisByEmpID(c *gin.Context) {
 	c.JSON(http.StatusOK, appraisalKpi)
 }
 
+// func (r *AppraisalService) Score(c *gin.Context) {
+// 	log.Info("Initializing Score handler function...")
+
+// 	appraisalID := c.Param("id")
+// 	employeeID := c.Param("emp_id")
+
+// 	// Check if the employee ID exists
+// 	var appraisalKpi models.AppraisalKpi
+// 	if err := r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).First(&appraisalKpi).Error; err != nil {
+// 		if errors.Is(err, gorm.ErrRecordNotFound) {
+// 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+// 		} else {
+// 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		}
+// 		return
+// 	}
+
+// 	var score []models.Score
+
+// 	if err := c.ShouldBindJSON(&score); err != nil {
+// 		log.Error(err.Error())
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	// Check if the appraisal_kpi_id exists in the database
+// 	existingKpiIDs := make([]uint16, len(score))
+// 	for i, s := range score {
+// 		existingKpiIDs[i] = s.AppraisalKpiID
+// 	}
+
+// 	var existingKpis []models.AppraisalKpi
+// 	if err := r.Db.Model(&models.AppraisalKpi{}).Where("id IN ?", existingKpiIDs).Find(&existingKpis).Error; err != nil {
+// 		if errors.Is(err, gorm.ErrRecordNotFound) {
+// 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid appraisal_kpi_id(s)"})
+// 		} else {
+// 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		}
+// 		return
+// 	}
+
+// 	// Create a map of existing appraisal_kpi_id for faster lookup
+// 	existingKpiMap := make(map[uint16]bool)
+// 	for _, kpi := range existingKpis {
+// 		existingKpiMap[kpi.ID] = true
+// 	}
+
+// 	// Check KPI type and set values accordingly
+// 	for k := range score {
+// 		// Check if the appraisal_kpi_id exists in the database
+// 		if !existingKpiMap[score[k].AppraisalKpiID] {
+// 			errMsg := "Invalid appraisal_kpi_id"
+// 			log.Error(errMsg)
+// 			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+// 			return
+// 		}
+
+// 		switch appraisalKpi.Kpi.KpiTypeStr {
+// 		case constants.FEEDBACK_KPI_TYPE, constants.OBSERVATORY_KPI_TYPE:
+// 			score[k].Score = nil
+
+// 		case constants.QUESTIONNAIRE_KPI_TYPE:
+// 			if *score[k].Score != 0 && *score[k].Score != 1 {
+// 				errMsg := "Questionnaire Score should be either 0 or 1"
+// 				log.Error(errMsg)
+// 				c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+// 				return
+// 			}
+// 			score[k].TextAnswer = ""
+
+// 		case constants.MEASURED_KPI_TYPE:
+// 			score[k].TextAnswer = ""
+// 		}
+// 	}
+
+// 	// Save the score to the database or perform any necessary operations
+// 	scores, err := controller.Score(r.Db, score)
+// 	if err != nil {
+// 		log.Error(err.Error())
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusCreated, scores)
+// }
+
 func (r *AppraisalService) Score(c *gin.Context) {
 	log.Info("Initializing Score handler function...")
 
@@ -806,8 +892,7 @@ func (r *AppraisalService) Score(c *gin.Context) {
 
 	// Check if the employee ID exists
 	var appraisalKpi models.AppraisalKpi
-	err := r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).First(&appraisalKpi).Error
-	if err != nil {
+	if err := r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).First(&appraisalKpi).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
 		} else {
@@ -816,24 +901,59 @@ func (r *AppraisalService) Score(c *gin.Context) {
 		return
 	}
 
+	// Get all the appraisalKpi IDs for the given appraisalID and employeeID
+	var existingKpis []models.AppraisalKpi
+	if err := r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).Find(&existingKpis).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "No appraisal_kpi found for the given appraisal and employee_id"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	// Create a map of existing appraisal_kpi_id for faster lookup
+	existingKpiMap := make(map[uint16]bool)
+	for _, kpi := range existingKpis {
+		existingKpiMap[kpi.ID] = true
+	}
+
 	var score []models.Score
 
-	err = c.ShouldBindJSON(&score)
-	if err != nil {
+	if err := c.ShouldBindJSON(&score); err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	if len(score) != len(existingKpis) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Number of scores does not match the number of appraisal_kpi records"})
+		return
+	}
 
-	// Check KPI type and set values accordingly
+	// Check if the appraisal_kpi_id exists in the database and matches with the existing appraisal_kpi records
 	for k := range score {
-		switch appraisalKpi.Kpi.KpiTypeStr {
+		if !existingKpiMap[score[k].AppraisalKpiID] {
+			errMsg := "Invalid appraisal_kpi_id"
+			log.Error(errMsg)
+			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+			return
+		}
+
+		if score[k].AppraisalKpiID != existingKpis[k].ID {
+			errMsg := "appraisal_kpi_id and existing appraisal_kpi id does not match"
+			log.Error(errMsg)
+			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+			return
+		}
+		kpiType := existingKpis[k].Kpi.KpiTypeStr
+
+		switch kpiType {
 		case constants.FEEDBACK_KPI_TYPE, constants.OBSERVATORY_KPI_TYPE:
 			score[k].Score = nil
 
 		case constants.QUESTIONNAIRE_KPI_TYPE:
-			if *score[k].Score != 0 && *score[k].Score != 1 {
+			if score[k].Score != nil && (*score[k].Score != 0 && *score[k].Score != 1) {
 				errMsg := "Questionnaire Score should be either 0 or 1"
 				log.Error(errMsg)
 				c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
@@ -844,10 +964,8 @@ func (r *AppraisalService) Score(c *gin.Context) {
 		case constants.MEASURED_KPI_TYPE:
 			score[k].TextAnswer = ""
 		}
-
 	}
 	// Save the score to the database or perform any necessary operations
-
 	scores, err := controller.Score(r.Db, score)
 	if err != nil {
 		log.Error(err.Error())
