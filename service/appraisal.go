@@ -806,10 +806,10 @@ func (r *AppraisalService) Score(c *gin.Context) {
 
 	// Check if the employee ID exists
 	var appraisalKpi models.AppraisalKpi
-	err := r.Db.Model(&models.AppraisalKpi{}).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).First(&appraisalKpi).Error
+	err := r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).First(&appraisalKpi).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Appraiasl not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
@@ -825,19 +825,10 @@ func (r *AppraisalService) Score(c *gin.Context) {
 		return
 	}
 
-	// Retrieve the appraisal KPI data from the database
-	err = r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).First(&appraisalKpi).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		}
-		return
-	}
 
 	// Check KPI type and set values accordingly
-	for k:= range score {
+	for k := range score {
+
 		switch appraisalKpi.Kpi.KpiTypeStr {
 		case constants.FEEDBACK_KPI_TYPE, constants.OBSERVATORY_KPI_TYPE:
 			score[k].Score = 0
