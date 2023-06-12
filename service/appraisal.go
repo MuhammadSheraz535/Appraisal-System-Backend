@@ -828,13 +828,12 @@ func (r *AppraisalService) Score(c *gin.Context) {
 
 	// Check KPI type and set values accordingly
 	for k := range score {
-
 		switch appraisalKpi.Kpi.KpiTypeStr {
 		case constants.FEEDBACK_KPI_TYPE, constants.OBSERVATORY_KPI_TYPE:
-			score[k].Score = 0
+			score[k].Score = nil
 
 		case constants.QUESTIONNAIRE_KPI_TYPE:
-			if score[k].Score != 0 && score[k].Score != 1 {
+			if *score[k].Score != 0 && *score[k].Score != 1 {
 				errMsg := "Questionnaire Score should be either 0 or 1"
 				log.Error(errMsg)
 				c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
