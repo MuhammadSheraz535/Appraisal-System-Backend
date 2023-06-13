@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -842,18 +843,16 @@ func (r *AppraisalService) AddScore(c *gin.Context) {
 	}
 
 	// Check if the appraisal_kpi_id exists in the database and matches with the existing appraisal_kpi records
-	var found bool
 	for k := range score {
-		found = false
-		for _, existingKpi := range existingKpis {
-			if score[k].AppraisalKpiID == existingKpi.ID {
-				found = true
-				break
-			}
+		if !existingKpiMap[score[k].AppraisalKpiID] {
+			errMsg := fmt.Sprintf("invalid appraisal_kpi_id :%v", score[k].AppraisalKpiID)
+			log.Error(errMsg)
+			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+			return
 		}
 
-		if !found {
-			errMsg := "Invalid appraisal_kpi_id"
+		if score[k].AppraisalKpiID != existingKpis[k].ID {
+			errMsg := "appraisal_kpi_id and existing appraisal_kpi id does not match"
 			log.Error(errMsg)
 			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
 			return
