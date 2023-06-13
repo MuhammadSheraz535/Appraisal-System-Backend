@@ -798,7 +798,7 @@ func (r *AppraisalService) GetAppraisalKpisByEmpID(c *gin.Context) {
 	c.JSON(http.StatusOK, appraisalKpi)
 }
 
-func (r *AppraisalService) Score(c *gin.Context) {
+func (r *AppraisalService) AddScore(c *gin.Context) {
 	log.Info("Initializing Score handler function...")
 
 	appraisalID := c.Param("id")
@@ -837,7 +837,7 @@ func (r *AppraisalService) Score(c *gin.Context) {
 	}
 
 	if len(score) != len(existingKpis) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Number of scores does not match the number of appraisal_kpi records"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "number of scores does not match the number of appraisal_kpi records"})
 		return
 	}
 
@@ -866,7 +866,7 @@ func (r *AppraisalService) Score(c *gin.Context) {
 
 		case constants.QUESTIONNAIRE_KPI_TYPE:
 			if score[k].Score != nil && (*score[k].Score != 0 && *score[k].Score != 1) {
-				errMsg := "Questionnaire Score should be either 0 or 1"
+				errMsg := "questionnaire score should be either 0 or 1"
 				log.Error(errMsg)
 				c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
 				return
@@ -878,7 +878,7 @@ func (r *AppraisalService) Score(c *gin.Context) {
 		}
 	}
 	// Save the score to the database or perform any necessary operations
-	scores, err := controller.Score(r.Db, score)
+	scores, err := controller.AddScore(r.Db, score)
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
