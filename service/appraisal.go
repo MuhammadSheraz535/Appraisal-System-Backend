@@ -842,16 +842,18 @@ func (r *AppraisalService) Score(c *gin.Context) {
 	}
 
 	// Check if the appraisal_kpi_id exists in the database and matches with the existing appraisal_kpi records
+	var found bool
 	for k := range score {
-		if !existingKpiMap[score[k].AppraisalKpiID] {
-			errMsg := "Invalid appraisal_kpi_id"
-			log.Error(errMsg)
-			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
-			return
+		found = false
+		for _, existingKpi := range existingKpis {
+			if score[k].AppraisalKpiID == existingKpi.ID {
+				found = true
+				break
+			}
 		}
 
-		if score[k].AppraisalKpiID != existingKpis[k].ID {
-			errMsg := "appraisal_kpi_id and existing appraisal_kpi id does not match"
+		if !found {
+			errMsg := "Invalid appraisal_kpi_id"
 			log.Error(errMsg)
 			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
 			return
