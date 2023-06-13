@@ -818,11 +818,7 @@ func (r *AppraisalService) Score(c *gin.Context) {
 	// Get all the appraisalKpi IDs for the given appraisalID and employeeID
 	var existingKpis []models.AppraisalKpi
 	if err := r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).Find(&existingKpis).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "No appraisal_kpi found for the given appraisal and employee_id"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
