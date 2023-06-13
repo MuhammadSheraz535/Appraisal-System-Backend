@@ -742,9 +742,11 @@ func (r *AppraisalService) DeleteAppraisal(c *gin.Context) {
 	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error(err.Error())
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
 
 		} else {
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
@@ -753,6 +755,7 @@ func (r *AppraisalService) DeleteAppraisal(c *gin.Context) {
 
 	err = controller.DeleteAppraisal(r.Db, &appraisal, id)
 	if err != nil {
+		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -787,9 +790,11 @@ func (r *AppraisalService) GetAppraisalKpisByEmpID(c *gin.Context) {
 	err := controller.GetAppraisalKpisByEmpID(db, &appraisalKpi, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error("Appraisal record not found against the given id")
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
 
 		} else {
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
@@ -809,8 +814,10 @@ func (r *AppraisalService) AddScore(c *gin.Context) {
 	var appraisalKpi models.AppraisalKpi
 	if err := r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).First(&appraisalKpi).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error(err.Error())
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
 		} else {
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 		return
@@ -820,6 +827,7 @@ func (r *AppraisalService) AddScore(c *gin.Context) {
 	var existingKpis []models.AppraisalKpi
 	if err := r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).Find(&existingKpis).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Error(err.Error())
 		return
 	}
 
@@ -838,6 +846,7 @@ func (r *AppraisalService) AddScore(c *gin.Context) {
 	}
 
 	if len(score) != len(existingKpis) {
+		log.Error("number of scores does not match the number of appraisal_kpi records")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "number of scores does not match the number of appraisal_kpi records"})
 		return
 	}
@@ -861,7 +870,7 @@ func (r *AppraisalService) AddScore(c *gin.Context) {
 			}
 
 			if !found {
-				errMsg := "Invalid appraisal_kpi_id"
+				errMsg := "invalid appraisal_kpi_id"
 				log.Error(errMsg)
 				c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
 				return
