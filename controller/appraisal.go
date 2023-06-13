@@ -58,7 +58,7 @@ func GetAppraisalKpisByEmpID(db *gorm.DB, appraisalKpi *[]models.AppraisalKpi, i
 	var count int64
 
 	if err := db.Model(&models.AppraisalKpi{}).
-		Preload(clause.Associations).
+		Preload(clause.Associations).Preload("Kpi.Statements").
 		Joins("JOIN appraisals ON appraisals.id = appraisal_kpis.appraisal_id").
 		Where("appraisal_kpis.appraisal_id = ? AND appraisals.status = ?", id, true).
 		Find(&appraisalKpi).Count(&count).Error; err != nil {
