@@ -851,11 +851,21 @@ func (r *AppraisalService) AddScore(c *gin.Context) {
 			return
 		}
 
-		if score[k].AppraisalKpiID != existingKpis[k].ID {
-			errMsg := "appraisal_kpi_id and existing appraisal_kpi id does not match"
-			log.Error(errMsg)
-			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
-			return
+		for k := range score {
+			found := false
+			for _, existingKpi := range existingKpis {
+				if score[k].AppraisalKpiID == existingKpi.ID {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				errMsg := "Invalid appraisal_kpi_id"
+				log.Error(errMsg)
+				c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+				return
+			}
 		}
 		kpiType := existingKpis[k].Kpi.KpiTypeStr
 
