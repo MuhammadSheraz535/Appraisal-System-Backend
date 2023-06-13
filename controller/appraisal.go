@@ -56,7 +56,7 @@ func GetAppraisalKpisByEmpID(db *gorm.DB, appraisalKpi *[]models.AppraisalKpi, i
 	log.Info("Getting appraisalkpis by employeeid")
 
 	if err := db.Model(&models.AppraisalKpi{}).
-		Preload(clause.Associations).Preload("AppraisalKpis.Kpi.Statements").
+		Preload(clause.Associations).Preload("Kpi.Statements").
 		Joins("JOIN appraisals ON appraisals.id = appraisal_kpis.appraisal_id").
 		Where("appraisal_kpis.appraisal_id = ? AND appraisals.status = ?", id, true).
 		Find(&appraisalKpi).Error; err != nil {
