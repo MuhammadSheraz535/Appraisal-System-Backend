@@ -171,7 +171,7 @@ func (r *AppraisalFlowService) GetAppraisalFlowByID(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Error("appraisal flow record not found against the given id")
-			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal flow id"})
 
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -311,7 +311,7 @@ func (r *AppraisalFlowService) DeleteAppraisalFlow(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Error("Appraisal flow record not found against the given id")
-			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal flow id"})
 
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

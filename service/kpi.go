@@ -346,7 +346,7 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Error(err.Error())
-			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against kpi id"})
 
 		} else {
 			log.Error(err.Error())
