@@ -273,7 +273,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		// Get the role ID for the employee
 		roleIDs, err := utils.GetRolesID([]uint16{uint16(appraisal.SelectedFieldID)})
 		if err != nil {
-			log.Error(err)
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
 			return
 		}
@@ -282,14 +282,14 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 
 		designationName, err := utils.GetDesignationName(uint16(roleID))
 		if err != nil {
-			log.Error(err)
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
 			return
 		}
 
 		employeeImage, err := utils.GetEmployeeImageByID(uint64(appraisal.SelectedFieldID))
 		if err != nil {
-			log.Error(err)
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch Employees Image"})
 			return
 		}
@@ -493,6 +493,7 @@ func (r *AppraisalService) GetAppraisalByID(c *gin.Context) {
 	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error(err.Error())
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal id"})
 
 		} else {
@@ -527,6 +528,7 @@ func (r *AppraisalService) GetEmployeeDataByAppraisalID(c *gin.Context) {
 	err := controller.GetEmployeeDataByAppraisalID(db, &employeeData, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error(err.Error())
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against employee data"})
 
 		} else {
@@ -746,7 +748,7 @@ func (r *AppraisalService) DeleteAppraisal(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal id"})
 
 		} else {
-			log.Error(err.Error())
+			
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
@@ -817,7 +819,7 @@ func (r *AppraisalService) AddScore(c *gin.Context) {
 			log.Error(err.Error())
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal id"})
 		} else {
-			log.Error(err.Error())
+			
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 		return
