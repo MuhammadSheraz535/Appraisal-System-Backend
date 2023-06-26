@@ -55,13 +55,18 @@ func GetAppraisalByID(db *gorm.DB, appraisal *models.Appraisal, id uint64) error
 func GetAppraisalKpisByEmpID(db *gorm.DB, appraisalKpi *[]models.AppraisalKpi, id uint64) error {
 	log.Info("Getting appraisalkpis by employeeid")
 
+	var count int64
+
 	if err := db.Model(&models.AppraisalKpi{}).
 		Preload(clause.Associations).Preload("Kpi.Statements").
 		Joins("JOIN appraisals ON appraisals.id = appraisal_kpis.appraisal_id").
 		Where("appraisal_kpis.appraisal_id = ? AND appraisals.status = ?", id, true).
-		Find(&appraisalKpi).Error; err != nil {
+		Find(&appraisalKpi).Count(&count).Error; err != nil {
 		log.Error(err.Error())
 		return err
+	}
+	if count == 0 {
+		return gorm.ErrRecordNotFound
 	}
 
 	return nil
@@ -70,14 +75,18 @@ func GetAppraisalKpisByEmpID(db *gorm.DB, appraisalKpi *[]models.AppraisalKpi, i
 func GetEmployeeDataByAppraisalID(db *gorm.DB, employeeData *[]models.EmployeeData, id uint64) error { // Change the parameter to a pointer to a slice
 	log.Info("Getting EmployeeData by Appraisal ID")
 
+	var count int64
 	err := db.Model(&models.EmployeeData{}).
 		Joins("JOIN appraisals ON appraisals.id = employee_data.appraisal_id").
 		Where("employee_data.appraisal_id", id).
-		Find(employeeData).Error
+		Find(employeeData).Count(&count).Error
 
 	if err != nil {
 		log.Error(err.Error())
 		return err
+	}
+	if count == 0 {
+		return gorm.ErrRecordNotFound
 	}
 
 	return nil
@@ -196,4 +205,17 @@ func DeleteAppraisal(db *gorm.DB, appraisal *models.Appraisal, id uint64) error 
 	}
 
 	return nil
+}
+
+//Create scores
+
+func AddScore(db *gorm.DB, score []models.Score) ([]models.Score, error) {
+	log.Info("Creating Score in db...")
+
+	if err := db.Preload(clause.Associations).Create(&score).Error; err != nil {
+		log.Error(err.Error())
+		return nil, err
+	}
+
+	return score, nil
 }

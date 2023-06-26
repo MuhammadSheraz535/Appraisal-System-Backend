@@ -2,7 +2,9 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -13,6 +15,7 @@ import (
 	"github.com/mrehanabbasi/appraisal-system-backend/models"
 	"github.com/mrehanabbasi/appraisal-system-backend/utils"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type AppraisalService struct {
@@ -21,7 +24,6 @@ type AppraisalService struct {
 
 func NewAppraisalService() *AppraisalService {
 	db := database.DB
-	// TODO: Remove migration of Score to it's own service
 	err := db.AutoMigrate(&models.Appraisal{}, models.EmployeeData{}, models.AppraisalKpi{}, models.Score{})
 	if err != nil {
 		panic(err)
@@ -159,13 +161,14 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				ProjectID = project.ProjectDetails.ProjectID
 				ProjectName = project.ProjectDetails.ProjectName
 			}
+			baseurl := os.Getenv("TOSS_BASE_URL")
 			employeeData := models.EmployeeData{
 				AppraisalID:     appraisal.ID,
 				TossEmpID:       empID,
 				EmployeeName:    empName,
 				TeamID:          ProjectID,
 				TeamName:        ProjectName,
-				EmployeeImage:   employeeImage,
+				EmployeeImage:   baseurl + "/" + employeeImage,
 				Designation:     roleID, // Assign the RoleID as Designation
 				DesignationName: designationName,
 				AppraisalStatus: "pending",
@@ -270,7 +273,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 		// Get the role ID for the employee
 		roleIDs, err := utils.GetRolesID([]uint16{uint16(appraisal.SelectedFieldID)})
 		if err != nil {
-			log.Error(err)
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
 			return
 		}
@@ -279,14 +282,14 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 
 		designationName, err := utils.GetDesignationName(uint16(roleID))
 		if err != nil {
-			log.Error(err)
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch role IDs"})
 			return
 		}
 
 		employeeImage, err := utils.GetEmployeeImageByID(uint64(appraisal.SelectedFieldID))
 		if err != nil {
-			log.Error(err)
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch Employees Image"})
 			return
 		}
@@ -305,7 +308,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			ProjectID = project.ProjectDetails.ProjectID
 			ProjectName = project.ProjectDetails.ProjectName
 		}
-
+		baseurl := os.Getenv("TOSS_BASE_URL")
 		// Create EmployeeData instance
 		employeeData := models.EmployeeData{
 			AppraisalID:     appraisal.ID,
@@ -313,7 +316,7 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 			EmployeeName:    empName,
 			TeamID:          ProjectID,
 			TeamName:        ProjectName,
-			EmployeeImage:   employeeImage,
+			EmployeeImage:   baseurl + "/" + employeeImage,
 			Designation:     roleID, // Assign the RoleID as Designation
 			DesignationName: designationName,
 			AppraisalStatus: "pending",
@@ -404,12 +407,12 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 				ProjectID = project.ProjectDetails.ProjectID
 				ProjectName = project.ProjectDetails.ProjectName
 			}
-
+			baseurl := os.Getenv("TOSS_BASE_URL")
 			employeeData := models.EmployeeData{
 				AppraisalID:     appraisal.ID,
 				TossEmpID:       empID,
 				EmployeeName:    empName,
-				EmployeeImage:   employeeImage,
+				EmployeeImage:   baseurl + "/" + employeeImage,
 				Designation:     uint16(appraisal.SelectedFieldID),
 				DesignationName: designationName,
 				TeamID:          ProjectID,
@@ -488,9 +491,16 @@ func (r *AppraisalService) GetAppraisalByID(c *gin.Context) {
 
 	var appraisal models.Appraisal
 	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error(err.Error())
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal id"})
+
+		} else {
+			log.Error(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+
 		return
 	}
 
@@ -517,9 +527,16 @@ func (r *AppraisalService) GetEmployeeDataByAppraisalID(c *gin.Context) {
 	}
 
 	err := controller.GetEmployeeDataByAppraisalID(db, &employeeData, id)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error(err.Error())
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against employee data"})
+
+		} else {
+			log.Error(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+
 		return
 	}
 
@@ -727,14 +744,22 @@ func (r *AppraisalService) DeleteAppraisal(c *gin.Context) {
 	appraisal.ID = uint16(id)
 
 	err := controller.GetAppraisalByID(r.Db, &appraisal, id)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error(err.Error())
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal id"})
+
+		} else {
+			log.Error(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+
 		return
 	}
 
 	err = controller.DeleteAppraisal(r.Db, &appraisal, id)
 	if err != nil {
+		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -767,11 +792,120 @@ func (r *AppraisalService) GetAppraisalKpisByEmpID(c *gin.Context) {
 	}
 
 	err := controller.GetAppraisalKpisByEmpID(db, &appraisalKpi, id)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error("Appraisal record not found against the given id")
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal kpi id"})
+
+		} else {
+			log.Error(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+
+		return
+	}
+
+	c.JSON(http.StatusOK, appraisalKpi)
+}
+
+func (r *AppraisalService) AddScore(c *gin.Context) {
+	log.Info("Initializing Score handler function...")
+
+	appraisalID := c.Param("id")
+	employeeID := c.Param("emp_id")
+
+	// Check if the employee ID exists
+	var appraisalKpi models.AppraisalKpi
+	if err := r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).First(&appraisalKpi).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error(err.Error())
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal id"})
+		} else {
+			log.Error(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	// Get all the appraisalKpi IDs for the given appraisalID and employeeID
+	var existingKpis []models.AppraisalKpi
+	if err := r.Db.Model(&models.AppraisalKpi{}).Preload(clause.Associations).Where("appraisal_id = ? AND employee_id = ?", appraisalID, employeeID).Find(&existingKpis).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Error(err.Error())
+		return
+	}
+
+	// Create a map of existing appraisal_kpi_id for faster lookup
+	existingKpiMap := make(map[uint16]bool)
+	for _, kpi := range existingKpis {
+		existingKpiMap[kpi.ID] = true
+	}
+
+	var score []models.Score
+
+	if err := c.ShouldBindJSON(&score); err != nil {
+		log.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(score) != len(existingKpis) {
+		log.Error("number of scores does not match the number of appraisal_kpi records")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "number of scores does not match the number of appraisal_kpi records"})
+		return
+	}
+
+	// Check if the appraisal_kpi_id exists in the database and matches with the existing appraisal_kpi records
+	for k := range score {
+		if !existingKpiMap[score[k].AppraisalKpiID] {
+			errMsg := fmt.Sprintf("invalid appraisal_kpi_id :%v", score[k].AppraisalKpiID)
+			log.Error(errMsg)
+			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+			return
+		}
+
+		for k := range score {
+			found := false
+			for _, existingKpi := range existingKpis {
+				if score[k].AppraisalKpiID == existingKpi.ID {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				errMsg := "invalid appraisal_kpi_id"
+				log.Error(errMsg)
+				c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+				return
+			}
+		}
+		kpiType := existingKpis[k].Kpi.KpiTypeStr
+
+		switch kpiType {
+		case constants.FEEDBACK_KPI_TYPE, constants.OBSERVATORY_KPI_TYPE:
+			score[k].Score = nil
+
+		case constants.QUESTIONNAIRE_KPI_TYPE:
+			if score[k].Score != nil && (*score[k].Score != 0 && *score[k].Score != 1) {
+				errMsg := "questionnaire score should be either 0 or 1"
+				log.Error(errMsg)
+				c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+				return
+			}
+			score[k].TextAnswer = ""
+
+		case constants.MEASURED_KPI_TYPE:
+			score[k].TextAnswer = ""
+		}
+	}
+	// Save the score to the database or perform any necessary operations
+	scores, err := controller.AddScore(r.Db, score)
+	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, appraisalKpi)
+	c.JSON(http.StatusCreated, scores)
 }

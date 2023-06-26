@@ -2,9 +2,9 @@ package models
 
 type Score struct {
 	CommonModel
-	AppraisalKpiID uint64       `gorm:"not null" json:"appraisal_kpi_id"`
-	AppraisalKpi   AppraisalKpi `json:"-"`
-	EvaluatorID    uint64       `gorm:"not null" json:"evaluator_id"`
-	Score          uint32       `gorm:"not null" json:"score"`
-	TextAnswer     string       `gorm:"not null" json:"text_answer"`
+	AppraisalKpiID uint16       `gorm:"not null;default:0" json:"appraisal_kpi_id" validate:"required"`
+	AppraisalKpi   AppraisalKpi `json:"appraisal_kpi"`
+	EvaluatorID    uint16       `gorm:"not null;default:0" json:"evaluator_id"`
+	Score          *uint16      `json:"score,omitempty"`
+	TextAnswer     string       `gorm:";default:''"  json:"text_answer,omitempty"`
 }

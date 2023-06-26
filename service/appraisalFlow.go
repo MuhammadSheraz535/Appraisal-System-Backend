@@ -127,12 +127,12 @@ func (r *AppraisalFlowService) CreateAppraisalFlow(c *gin.Context) {
 		}
 	}
 	// check employee id exist
-	errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
-	if err != nil {
-		log.Error(err.Error())
-		c.JSON(errCode, gin.H{"error": err.Error()})
-		return
-	}
+	// errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
+	// if err != nil {
+	// 	log.Error(err.Error())
+	// 	c.JSON(errCode, gin.H{"error": err.Error()})
+	// 	return
+	// }
 	//check Assign type exist
 	assignType, name, err := checkAssignType(r.Db, uint16(appraisalFlow.AssignTypeID))
 	if err != nil {
@@ -171,12 +171,13 @@ func (r *AppraisalFlowService) GetAppraisalFlowByID(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Error("appraisal flow record not found against the given id")
-			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
-			return
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal flow id"})
+
+		} else {
+			log.Error(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
-		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -265,12 +266,12 @@ func (r *AppraisalFlowService) UpdateAppraisalFlow(c *gin.Context) {
 	}
 
 	// check employee id exist
-	errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
-	if err != nil {
-		log.Error(err.Error())
-		c.JSON(errCode, gin.H{"error": err.Error()})
-		return
-	}
+	// errCode, err := utils.CheckIndividualAgainstToss(uint16(appraisalFlow.CreatedBy))
+	// if err != nil {
+	// 	log.Error(err.Error())
+	// 	c.JSON(errCode, gin.H{"error": err.Error()})
+	// 	return
+	// }
 	//check Assign type exist
 	assignType, name, err := checkAssignType(r.Db, uint16(appraisalFlow.AssignTypeID))
 	if err != nil {
@@ -310,13 +311,14 @@ func (r *AppraisalFlowService) DeleteAppraisalFlow(c *gin.Context) {
 	err := controller.GetAppraisalFlowByID(r.Db, &appraisalFlow, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("appraisal flow record not found against the given id")
-			c.JSON(http.StatusNotFound, gin.H{"error": "record not found"})
-			return
+			log.Error("Appraisal flow record not found against the given id")
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal flow id"})
+
+		} else {
+			log.Error(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
-		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

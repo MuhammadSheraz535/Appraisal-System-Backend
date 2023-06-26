@@ -3,6 +3,7 @@
 package service
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -343,8 +344,15 @@ func (s *KPIService) GetKPIByID(c *gin.Context) {
 
 	kpi, err := controller.GetKPIByID(s.Db, id)
 	if err != nil {
-		log.Error(err.Error())
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error(err.Error())
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against kpi id"})
+
+		} else {
+			log.Error(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+
 		return
 	}
 
