@@ -61,8 +61,8 @@ func (r *RoleService) GetRoleByID(c *gin.Context) {
 	err := controller.GetRoleByID(r.Db, &role, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("Record not found")
-			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+			log.Error("No Role found against the provided id")
+			c.JSON(http.StatusNotFound, gin.H{"error": "No Role found against the provided id"})
 
 		} else {
 			log.Error(err.Error())
