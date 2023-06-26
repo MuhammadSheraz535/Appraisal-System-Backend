@@ -98,8 +98,8 @@ func (ec *EmployeeService) GetEmployee(c *gin.Context) {
 	err := controller.GetEmployee(ec.Db, &employee, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("Record not found")
-			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+			log.Error("No employee found against the provided id")
+			c.JSON(http.StatusNotFound, gin.H{"error": "No employee found against the provided id"})
 			return
 		}
 		log.Error(err.Error())
@@ -117,8 +117,8 @@ func (ec *EmployeeService) UpdateEmployee(c *gin.Context) {
 	err := controller.GetEmployee(ec.Db, &employee, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("Record not found")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Record not found"})
+			log.Error("No employee found for provided id")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "No employee found for provided id"})
 			return
 		}
 
