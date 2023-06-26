@@ -497,6 +497,7 @@ func (r *AppraisalService) GetAppraisalByID(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal id"})
 
 		} else {
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
@@ -532,6 +533,7 @@ func (r *AppraisalService) GetEmployeeDataByAppraisalID(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against employee data"})
 
 		} else {
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
@@ -748,7 +750,7 @@ func (r *AppraisalService) DeleteAppraisal(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal id"})
 
 		} else {
-			
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
@@ -819,7 +821,7 @@ func (r *AppraisalService) AddScore(c *gin.Context) {
 			log.Error(err.Error())
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal id"})
 		} else {
-			
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 		return

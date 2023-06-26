@@ -174,6 +174,7 @@ func (r *AppraisalFlowService) GetAppraisalFlowByID(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal flow id"})
 
 		} else {
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
@@ -314,6 +315,7 @@ func (r *AppraisalFlowService) DeleteAppraisalFlow(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found against appraisal flow id"})
 
 		} else {
+			log.Error(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
