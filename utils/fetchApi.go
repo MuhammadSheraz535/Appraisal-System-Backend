@@ -55,22 +55,28 @@ func GetRolesID(empIds []uint16) ([]uint16, error) {
 	return roleIDs, nil // Return the list of role IDs
 }
 
+type Employee struct {
+	ID                        uint16 `json:"id"`
+	EmployeeID                uint16 `json:"employeeId"`
+	EmployeeName              string `json:"employeeName"`
+	ProjectName               string `json:"projectName"`
+	ProjectStartedDate        string `json:"projectStartedDate"`
+	EmployeeProjectSupervisor string `json:"employeeProjectSupervisor"`
+}
+
+type ProjectResponse struct {
+	ProjectID        uint16     `json:"projectId"`
+	ProjectName      string     `json:"projectName"`
+	ProjectEmployees []Employee `json:"projectEmployees"`
+}
+
 func GetEmployeesId(teamID uint16) ([]uint16, error) {
-	type ProjectResponse struct {
-		ProjectDetails struct {
-			ProjectID    uint16 `json:"projectId"`
-			SupervisorID uint16 `json:"supervisorId"`
-		} `json:"projectDetails"`
-		AllocateTo []struct {
-			EmployeeID uint16 `json:"employeeId"`
-		} `json:"allocateTo"`
-	}
 
-	tossBaseUrl := os.Getenv("TOSS_BASE_URL")          // Get the TOSS base URL from environment variable
-	method := http.MethodGet                           // HTTP method for sending the request
-	url := tossBaseUrl + "/api/Project/GetAllProjects" // Construct the URL for fetching all projects
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
+	method := http.MethodGet
+	url := tossBaseUrl + "/api/Project/AllProjectsWithEmployeesList?IsActive=true"
 
-	resp, err := SendRequest(method, url, nil) // Send the HTTP request to fetch all projects
+	resp, err := SendRequest(method, url, nil)
 	if err != nil {
 		log.Error(err.Error())
 		return nil, err
@@ -83,7 +89,7 @@ func GetEmployeesId(teamID uint16) ([]uint16, error) {
 		return nil, err
 	}
 
-	var projects []ProjectResponse // Slice to store the unmarshaled project responses
+	var projects []ProjectResponse
 
 	if err := json.Unmarshal(responseBody, &projects); err != nil {
 		log.Error(err.Error())
@@ -93,24 +99,24 @@ func GetEmployeesId(teamID uint16) ([]uint16, error) {
 	var employeeIDs []uint16
 
 	for _, project := range projects {
-		if project.ProjectDetails.ProjectID == teamID { // Check if the project ID matches the provided team ID
-			for _, allocateTo := range project.AllocateTo {
-				if allocateTo.EmployeeID != project.ProjectDetails.SupervisorID {
-					employeeIDs = append(employeeIDs, allocateTo.EmployeeID) // Append employee ID to the slice if it's not the supervisor
+		if project.ProjectID == teamID {
+			for _, employee := range project.ProjectEmployees {
+				if employee.EmployeeProjectSupervisor != employee.EmployeeName {
+					employeeIDs = append(employeeIDs, employee.EmployeeID)
 				}
 			}
-			break // Break the loop as we found the matching project
+			break
 		}
 	}
 
-	return employeeIDs, nil // Return the list of employee IDs
+	return employeeIDs, nil
 }
 
 func VerifyTeamAndSupervisorID(teamID, supervisorID uint16) (int, string, error) {
 	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
 
 	method := http.MethodGet
-	url := tossBaseUrl + "/api/Project/GetAllProjects"
+	url := tossBaseUrl + "/api/Project/AllProjectsWithEmployeesList?IsActive=true"
 
 	resp, err := SendRequest(method, url, nil)
 	if err != nil {
@@ -125,63 +131,90 @@ func VerifyTeamAndSupervisorID(teamID, supervisorID uint16) (int, string, error)
 		return http.StatusInternalServerError, "", err
 	}
 
-	var projects []struct {
-		ProjectDetails struct {
-			ProjectID    uint16 `json:"projectId"`
-			SupervisorID uint16 `json:"supervisorId"`
-			TeamName     string `json:"projectName"`
-		} `json:"projectDetails"`
-	}
+	var projects []ProjectResponse
 
 	if err := json.Unmarshal(responseBody, &projects); err != nil {
 		log.Error(err.Error())
 		return http.StatusInternalServerError, "", err
 	}
-	var teamName string
-	foundteam, foundsupervisor := false, false
-	for _, project := range projects {
-		if project.ProjectDetails.ProjectID == teamID {
-			foundteam = true
-			if project.ProjectDetails.SupervisorID == supervisorID {
-				foundsupervisor = true
-				teamName = project.ProjectDetails.TeamName
 
-				break
+	var teamName string
+	foundTeam, foundSupervisor := false, false
+
+	for _, project := range projects {
+		if project.ProjectID == teamID {
+			foundTeam = true
+			for _, employee := range project.ProjectEmployees {
+				if employee.EmployeeProjectSupervisor == employee.EmployeeName && employee.EmployeeID == supervisorID {
+					foundSupervisor = true
+					teamName = project.ProjectName
+					break
+				}
 			}
 			break
 		}
 	}
 
-	if !foundteam {
-		err := errors.New("invalid selected team id")
+	if !foundTeam {
+		err := errors.New("invalid selected team ID")
 		log.Error(err.Error())
 		return http.StatusBadRequest, "", err
 	}
-	if !foundsupervisor {
-		err := errors.New("invalid selected supervisor id")
+
+	if !foundSupervisor {
+		err := errors.New("invalid selected supervisor ID")
 		log.Error(err.Error())
 		return http.StatusBadRequest, "", err
 	}
+
 	return 0, teamName, nil
 }
 
-func VerifyIndividualAndSupervisorID(indId, supervisorID uint16) (int, string, error) {
-	type ProjectResponse struct {
-		ProjectDetails struct {
-			SupervisorID uint16 `json:"supervisorId"`
-			TeamId       uint16 `json:"projectId"`
-		} `json:"projectDetails"`
-		AllocateTo []struct {
-			EmployeeID   uint16 `json:"employeeId"`
-			EmployeeName string `json:"name"`
-		} `json:"allocateTo"`
+func GetSupervisorName(SprID uint16) (string, error) {
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL") // Get the TOSS base URL from the environment variable
+	method := http.MethodGet                  // HTTP method for sending the request
+
+	url := tossBaseUrl + "/api/Project/AllProjectsWithEmployeesList?IsActive=true" // Construct the URL for fetching all projects
+
+	resp, err := SendRequest(method, url, nil) // Send the HTTP request to the specified URL
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		errMsg := "Failed to get supervisor name for supervisor ID: " + strconv.Itoa(int(SprID)) + ". Status code: " + strconv.Itoa(resp.StatusCode)
+		return "", errors.New(errMsg) // Return an error if the response status code is not OK
 	}
 
-	tossBaseUrl := os.Getenv("TOSS_BASE_URL")          // Get the TOSS base URL from environment variable
-	method := http.MethodGet                           // HTTP method for sending the request
-	url := tossBaseUrl + "/api/Project/GetAllProjects" // Construct the URL for fetching all projects
+	var projects []ProjectResponse
 
-	resp, err := SendRequest(method, url, nil) // Send the HTTP request to fetch all projects
+	responseBody, err := io.ReadAll(resp.Body) // Read the response body
+	if err != nil {
+		return "", err // Return an error if there's an issue reading the response body
+	}
+
+	if err := json.Unmarshal(responseBody, &projects); err != nil {
+		return "", err // Return an error if there's an issue unmarshaling the JSON response
+	}
+
+	for _, project := range projects {
+		for _, employee := range project.ProjectEmployees {
+			if employee.EmployeeID == SprID && employee.EmployeeName == employee.EmployeeProjectSupervisor {
+				return employee.EmployeeName, nil // Return the Supervisor Name if the supervisor ID and name match
+			}
+		}
+	}
+
+	return "", errors.New("supervisor not found") // Return an error if the supervisor ID is not found in the projects
+}
+
+func VerifyIndividualAndSupervisorID(indID, supervisorID uint16) (int, string, error) {
+	tossBaseUrl := os.Getenv("TOSS_BASE_URL")
+	method := http.MethodGet
+	url := tossBaseUrl + "/api/Project/AllProjectsWithEmployeesList?IsActive=true"
+
+	resp, err := SendRequest(method, url, nil)
 	if err != nil {
 		log.Error(err.Error())
 		return http.StatusInternalServerError, "", err
@@ -194,42 +227,44 @@ func VerifyIndividualAndSupervisorID(indId, supervisorID uint16) (int, string, e
 		return http.StatusInternalServerError, "", err
 	}
 
-	var projects []ProjectResponse // Slice to store the unmarshaled project responses
+	var projects []ProjectResponse
 
 	if err := json.Unmarshal(responseBody, &projects); err != nil {
 		log.Error(err.Error())
 		return http.StatusInternalServerError, "", err
 	}
-	var empName string
 
-	foundindividual, foundsupervisor := false, false
+	var empName string
+	foundIndividual, foundSupervisor := false, false
+
 	for _, project := range projects {
-		if project.ProjectDetails.SupervisorID == supervisorID {
-			foundsupervisor = true
-			for _, allocateTo := range project.AllocateTo {
-				if allocateTo.EmployeeID == indId {
-					foundindividual = true
-					empName = allocateTo.EmployeeName
-					break
-				}
+		for _, employee := range project.ProjectEmployees {
+			if employee.EmployeeID == supervisorID && employee.EmployeeName == employee.EmployeeProjectSupervisor {
+				empName = employee.EmployeeProjectSupervisor // Return the Supervisor Name if the supervisor ID and name match
+				foundSupervisor = true
 			}
-			break
+			if employee.EmployeeID == indID && empName == employee.EmployeeProjectSupervisor {
+				empName = employee.EmployeeName // Return the Individual's Name if the individual ID and supervisor name match
+				foundIndividual = true
+				break
+			}
+
 		}
 	}
 
-	if !foundsupervisor {
-		err := errors.New("invalid selected supervisor id")
-		log.Error(err.Error())
-		return http.StatusBadRequest, "", err
-	}
-	if !foundindividual {
-		err := errors.New("invalid selected individual id")
+	if !foundSupervisor {
+		err := errors.New("invalid selected supervisor ID")
 		log.Error(err.Error())
 		return http.StatusBadRequest, "", err
 	}
 
-	return 0, empName, nil // Return the list of employee IDs
+	if !foundIndividual {
+		err := errors.New("invalid selected individual ID")
+		log.Error(err.Error())
+		return http.StatusBadRequest, "", err
+	}
 
+	return 0, empName, nil
 }
 
 func GetDesignationName(DesignationID uint16) (string, error) {
@@ -316,22 +351,10 @@ func GetEmployeeIDsByDesignation(designation uint16) ([]uint16, error) {
 
 	return employeeIDs, nil // Return the list of employee IDs
 }
-
-type ProjectResponse struct {
-	ProjectDetails struct {
-		ProjectID   uint16 `json:"projectId"`
-		ProjectName string `json:"projectName"`
-	} `json:"projectDetails"`
-	AllocateTo []struct {
-		EmployeeID uint16 `json:"employeeId"`
-		Name       string `json:"name"`
-	} `json:"allocateTo"`
-}
-
 func GetProjectDetailsByEmployeeID(employeeID uint16) ([]ProjectResponse, error) {
 	tossBaseUrl := os.Getenv("TOSS_BASE_URL") // Get the TOSS base URL from environment variable
 	method := http.MethodGet                  // HTTP method for sending the request
-	url := tossBaseUrl + "/api/Project/GetAllProjects"
+	url := tossBaseUrl + "/api/Project/AllProjectsWithEmployeesList?IsActive=true"
 
 	resp, err := SendRequest(method, url, nil) // Send the HTTP request to fetch all projects
 	if err != nil {
@@ -356,8 +379,8 @@ func GetProjectDetailsByEmployeeID(employeeID uint16) ([]ProjectResponse, error)
 	var projectDetails []ProjectResponse
 
 	for _, project := range projects {
-		for _, allocateTo := range project.AllocateTo {
-			if allocateTo.EmployeeID == employeeID {
+		for _, employee := range project.ProjectEmployees {
+			if employee.EmployeeID == employeeID {
 				projectDetails = append(projectDetails, project)
 				break
 			}
