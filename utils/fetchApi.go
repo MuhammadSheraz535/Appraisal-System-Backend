@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	log "github.com/mrehanabbasi/appraisal-system-backend/logger"
 )
@@ -166,8 +167,8 @@ func VerifyTeamAndSupervisorID(teamID, supervisorID uint16) (int, string, error)
 		log.Error(err.Error())
 		return http.StatusBadRequest, "", err
 	}
-
-	return 0, teamName, nil
+	trimmedStr := strings.Trim(teamName, "\r\n")
+	return 0, trimmedStr, nil
 }
 
 func GetSupervisorName(SprID uint16) (string, error) {
