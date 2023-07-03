@@ -160,7 +160,8 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 
 			for _, project := range projectDetails {
 				ProjectID = project.ProjectID
-				ProjectName = strings.Trim(project.ProjectName,"\r\n") 
+				ProjectName = project.ProjectName
+				ProjectName = strings.Trim(ProjectName, "\r\n")
 			}
 			baseurl := os.Getenv("TOSS_BASE_URL")
 			employeeData := models.EmployeeData{
@@ -307,7 +308,8 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 
 		for _, project := range projectDetails {
 			ProjectID = project.ProjectID
-			ProjectName = strings.Trim(project.ProjectName,"\r\n") 
+			ProjectName = project.ProjectName
+			ProjectName = strings.Trim(ProjectName, "\r\n")
 		}
 		baseurl := os.Getenv("TOSS_BASE_URL")
 		// Create EmployeeData instance
@@ -406,7 +408,8 @@ func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
 
 			for _, project := range projectDetails {
 				ProjectID = project.ProjectID
-				ProjectName = strings.Trim(project.ProjectName,"\r\n") 
+				ProjectName = project.ProjectName
+				ProjectName = strings.Trim(ProjectName, "\r\n")
 			}
 			baseurl := os.Getenv("TOSS_BASE_URL")
 			employeeData := models.EmployeeData{
