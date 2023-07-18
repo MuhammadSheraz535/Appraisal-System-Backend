@@ -62,7 +62,7 @@ type Employee struct {
 	EmployeeName              string `json:"employeeName"`
 	ProjectName               string `json:"projectName"`
 	ProjectStartedDate        string `json:"projectStartedDate"`
-	EmployeeProjectSupervisor string `json:"employeeProjectSupervisor"`
+	EmployeeCurrentSupervisor string `json:"employeeCurrentSupervisor"`
 }
 
 type ProjectResponse struct {
@@ -102,7 +102,7 @@ func GetEmployeesId(teamID uint16) ([]uint16, error) {
 	for _, project := range projects {
 		if project.ProjectID == teamID {
 			for _, employee := range project.ProjectEmployees {
-				if employee.EmployeeProjectSupervisor != employee.EmployeeName {
+				if employee.EmployeeCurrentSupervisor != employee.EmployeeName {
 					employeeIDs = append(employeeIDs, employee.EmployeeID)
 				}
 			}
@@ -146,7 +146,7 @@ func VerifyTeamAndSupervisorID(teamID, supervisorID uint16) (int, string, error)
 		if project.ProjectID == teamID {
 			foundTeam = true
 			for _, employee := range project.ProjectEmployees {
-				if employee.EmployeeProjectSupervisor == employee.EmployeeName && employee.EmployeeID == supervisorID {
+				if employee.EmployeeCurrentSupervisor == employee.EmployeeName && employee.EmployeeID == supervisorID {
 					foundSupervisor = true
 					teamName = project.ProjectName
 					break
@@ -201,7 +201,7 @@ func GetSupervisorName(SprID uint16) (string, error) {
 
 	for _, project := range projects {
 		for _, employee := range project.ProjectEmployees {
-			if employee.EmployeeID == SprID && employee.EmployeeName == employee.EmployeeProjectSupervisor {
+			if employee.EmployeeID == SprID && employee.EmployeeName == employee.EmployeeCurrentSupervisor {
 				return employee.EmployeeName, nil // Return the Supervisor Name if the supervisor ID and name match
 			}
 		}
@@ -240,11 +240,11 @@ func VerifyIndividualAndSupervisorID(indID, supervisorID uint16) (int, string, e
 
 	for _, project := range projects {
 		for _, employee := range project.ProjectEmployees {
-			if employee.EmployeeID == supervisorID && employee.EmployeeName == employee.EmployeeProjectSupervisor {
-				empName = employee.EmployeeProjectSupervisor // Return the Supervisor Name if the supervisor ID and name match
+			if employee.EmployeeID == supervisorID && employee.EmployeeName == employee.EmployeeCurrentSupervisor {
+				empName = employee.EmployeeCurrentSupervisor // Return the Supervisor Name if the supervisor ID and name match
 				foundSupervisor = true
 			}
-			if employee.EmployeeID == indID && empName == employee.EmployeeProjectSupervisor {
+			if employee.EmployeeID == indID && empName == employee.EmployeeCurrentSupervisor {
 				empName = employee.EmployeeName // Return the Individual's Name if the individual ID and supervisor name match
 				foundIndividual = true
 				break
