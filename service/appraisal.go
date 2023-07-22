@@ -1,8 +1,10 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -31,6 +33,71 @@ func NewAppraisalService() *AppraisalService {
 	}
 
 	return &AppraisalService{Db: db}
+}
+
+//GetAllProjects endpoint implemented function
+
+func (r *AppraisalService) GetAllProjects(c *gin.Context) {
+	tossBaseURL := os.Getenv("TOSS_BASE_URL") // Get the TOSS base URL from the environment variable
+	apiURL := tossBaseURL + "/api/Project/AllProjectsWithEmployeesList?IsActive=true"
+	method := http.MethodGet                            // HTTP method for sending the request
+	resp, err := utils.SendRequest(method, apiURL, nil) // Send the HTTP request to the specified URL
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	fmt.Println("Response Body:", string(body))
+
+	// Update the unmarshaling target to a slice of models.Employees
+
+	var apiResponse []models.Employees
+	if err := json.Unmarshal(body, &apiResponse); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	fmt.Println("API Response:", apiResponse)
+
+	transformedResponse := make([]models.TransformedResponse, 0)
+
+	for _, project := range apiResponse {
+		// Find the supervisor information by looping through the employees and matching the "employeeName"
+		var supervisorName string
+		var supervisorID int
+		for _, employee := range project.AllocateTo {
+			if employee.Name == project.ProjectDetails.SupervisorName {
+				supervisorName = employee.Name
+				supervisorID = employee.EmployeeID
+				break
+			}
+		}
+
+		transformedProject := models.ProjectDetails{
+			ProjectName:    project.ProjectDetails.ProjectName,
+			ProjectID:      project.ProjectDetails.ProjectID,
+			SupervisorName: supervisorName,
+			SupervisorID:   supervisorID,
+		}
+
+		for _, employee := range project.AllocateTo {
+			transformedResponse = append(transformedResponse, models.TransformedResponse{
+				EmployeeID: employee.EmployeeID,
+				Name:       employee.Name,
+				Project:    transformedProject,
+			})
+		}
+	}
+
+	response := models.GetAllProject{
+		Projects: transformedResponse,
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (r *AppraisalService) CreateAppraisal(c *gin.Context) {
