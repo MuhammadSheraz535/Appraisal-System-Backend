@@ -37,6 +37,97 @@ func NewAppraisalService() *AppraisalService {
 
 //GetAllProjects endpoint implemented function
 
+// func (r *AppraisalService) GetAllProjects(c *gin.Context) {
+// 	tossBaseURL := os.Getenv("TOSS_BASE_URL") // Get the TOSS base URL from the environment variable
+// 	apiURL := tossBaseURL + "/api/Project/AllProjectsWithEmployeesList?IsActive=true"
+// 	method := http.MethodGet                            // HTTP method for sending the request
+// 	resp, err := utils.SendRequest(method, apiURL, nil) // Send the HTTP request to the specified URL
+// 	if err != nil {
+// 		log.Error(err.Error())
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+// 	defer resp.Body.Close()
+// 	body, err := ioutil.ReadAll(resp.Body)
+// 	if err != nil {
+// 		log.Error(err.Error())
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	// Update the unmarshaling target to a slice of models.Employees
+
+// 	var apiResponse []models.Employees
+// 	if err := json.Unmarshal(body, &apiResponse); err != nil {
+// 		log.Error(err.Error())
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	transformedResponse := make([]models.TransformedResponse, 0)
+// 	for _, project := range apiResponse {
+// 		// Create a map of supervisors for each project
+// 		supervisors := make(map[string]int)
+// 		for _, employee := range project.ProjectEmployees {
+// 			supervisorName := employee.EmployeeProjectSupervisor
+// 			supervisorID := employee.EmployeeID
+// 			if supervisorName != project.ProjectName {
+// 				supervisors[supervisorName] = supervisorID
+// 			}
+// 		}
+// 		// Find the supervisor with the most number of employees
+// 		supervisorName := ""
+// 		supervisorID := 0
+// 		maxEmployees := 0
+// 		for name, id := range supervisors {
+// 			employees := 0
+// 			for _, employee := range project.ProjectEmployees {
+// 				if employee.EmployeeProjectSupervisor == name {
+// 					employees++
+// 				}
+// 			}
+// 			if employees > maxEmployees {
+// 				supervisorName = name
+// 				supervisorID = id
+// 				maxEmployees = employees
+// 			}
+// 		}
+// 		// If no supervisor is found, use the project name as the supervisor name
+// 		if supervisorName == "" {
+// 			supervisorName = project.ProjectName
+// 		}
+
+// 		// Get the supervisor ID from the supervisorName (employeeProjectSupervisor)
+// 		for _, employee := range project.ProjectEmployees {
+// 			if employee.EmployeeName == supervisorName {
+// 				supervisorID = employee.EmployeeID
+// 				break
+// 			}
+// 		}
+
+// 		transformedProject := models.ProjectDetails{
+// 			ProjectName:    project.ProjectName,
+// 			ProjectID:      project.ProjectID,
+// 			SupervisorName: supervisorName,
+// 			SupervisorID:   supervisorID,
+// 		}
+
+// 		for _, employee := range project.ProjectEmployees {
+// 			transformedResponse = append(transformedResponse, models.TransformedResponse{
+// 				EmployeeID: employee.EmployeeID,
+// 				Name:       employee.EmployeeName,
+// 				Project:    transformedProject,
+// 			})
+// 		}
+// 	}
+
+// 	response := models.GetAllProject{
+// 		Projects: transformedResponse,
+// 	}
+
+// 	c.JSON(http.StatusOK, response)
+// }
+
 func (r *AppraisalService) GetAllProjects(c *gin.Context) {
 	tossBaseURL := os.Getenv("TOSS_BASE_URL") // Get the TOSS base URL from the environment variable
 	apiURL := tossBaseURL + "/api/Project/AllProjectsWithEmployeesList?IsActive=true"
@@ -64,7 +155,7 @@ func (r *AppraisalService) GetAllProjects(c *gin.Context) {
 		return
 	}
 
-	transformedResponse := make([]models.TransformedResponse, 0)
+	transformedResponse := make([]map[string]interface{}, 0)
 	for _, project := range apiResponse {
 		// Create a map of supervisors for each project
 		supervisors := make(map[string]int)
@@ -105,24 +196,28 @@ func (r *AppraisalService) GetAllProjects(c *gin.Context) {
 			}
 		}
 
-		transformedProject := models.ProjectDetails{
-			ProjectName:    project.ProjectName,
-			ProjectID:      project.ProjectID,
-			SupervisorName: supervisorName,
-			SupervisorID:   supervisorID,
+		transformedProject := map[string]interface{}{
+			"projectDetails": map[string]interface{}{
+				"projectName":               project.ProjectName,
+				"projectId":                 project.ProjectID,
+				"employeeProjectSupervisor": supervisorName,
+				"supervisorId":              supervisorID,
+			},
 		}
 
 		for _, employee := range project.ProjectEmployees {
-			transformedResponse = append(transformedResponse, models.TransformedResponse{
-				EmployeeID: employee.EmployeeID,
-				Name:       employee.EmployeeName,
-				Project:    transformedProject,
+			transformedResponse = append(transformedResponse, map[string]interface{}{
+				"AllocateTo": map[string]interface{}{
+					"employeeId": employee.EmployeeID,
+					"name":       employee.EmployeeName,
+				},
+				"projectDetails": transformedProject["projectDetails"],
 			})
 		}
 	}
 
-	response := models.GetAllProject{
-		Projects: transformedResponse,
+	response := map[string]interface{}{
+		"projects": transformedResponse,
 	}
 
 	c.JSON(http.StatusOK, response)
