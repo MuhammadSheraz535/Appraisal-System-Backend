@@ -69,28 +69,48 @@ func (r *AppraisalService) GetAllProjects(c *gin.Context) {
 	transformedResponse := make([]models.TransformedResponse, 0)
 
 	for _, project := range apiResponse {
-		// Find the supervisor information by looping through the employees and matching the "employeeName"
-		var supervisorName string
-		var supervisorID int
-		for _, employee := range project.AllocateTo {
-			if employee.Name == project.ProjectDetails.SupervisorName {
-				supervisorName = employee.Name
-				supervisorID = employee.EmployeeID
-				break
+		// Create a map of supervisors for each project
+		supervisors := make(map[string]int)
+		for _, employee := range project.ProjectEmployees {
+			supervisorName := employee.EmployeeProjectSupervisor
+			supervisorID := employee.EmployeeID
+			if supervisorName != project.ProjectName {
+				supervisors[supervisorName] = supervisorID
 			}
+		}
+		// Find the supervisor with the most number of employees
+		supervisorName := ""
+		supervisorID := 0
+		maxEmployees := 0
+		for name, id := range supervisors {
+			employees := 0
+			for _, employee := range project.ProjectEmployees {
+				if employee.EmployeeProjectSupervisor == name {
+					employees++
+				}
+			}
+			if employees > maxEmployees {
+				supervisorName = name
+				supervisorID = id
+				maxEmployees = employees
+			}
+		}
+		// If no supervisor is found, use the project name as the supervisor name
+		if supervisorName == "" {
+			supervisorName = project.ProjectName
 		}
 
 		transformedProject := models.ProjectDetails{
-			ProjectName:    project.ProjectDetails.ProjectName,
-			ProjectID:      project.ProjectDetails.ProjectID,
+			ProjectName:    project.ProjectName,
+			ProjectID:      project.ProjectID,
 			SupervisorName: supervisorName,
 			SupervisorID:   supervisorID,
 		}
 
-		for _, employee := range project.AllocateTo {
+		for _, employee := range project.ProjectEmployees {
 			transformedResponse = append(transformedResponse, models.TransformedResponse{
 				EmployeeID: employee.EmployeeID,
-				Name:       employee.Name,
+				Name:       employee.EmployeeName,
 				Project:    transformedProject,
 			})
 		}

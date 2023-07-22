@@ -48,27 +48,32 @@ type AppraisalType struct {
 }
 
 // Model for GetAllAppraisal Endpoint
-type Employees struct {
-	ProjectDetails ProjectDetails `json:"projectDetails"`
-	AllocateTo     []AllocateTo   `json:"projectEmployees"`
-}
 
-type ProjectDetails struct {
-	ProjectName    string `json:"projectName"`
-	ProjectID      int    `json:"projectId"`
-	SupervisorName string `json:"supervisorName"`
-	SupervisorID   int    `json:"supervisorId"`
+type Employees struct {
+	ProjectID        int          `json:"projectId"`
+	ProjectName      string       `json:"projectName"`
+	ProjectEmployees []AllocateTo `json:"projectEmployees"`
 }
 
 type AllocateTo struct {
-	EmployeeID int    `json:"employeeId"`
-	Name       string `json:"employeeName"`
+	EmployeeID                int    `json:"employeeId"`
+	EmployeeName              string `json:"employeeName"`
+	ProjectStartedDate        string `json:"projectStartedDate"`
+	EmployeeCurrentSupervisor string `json:"employeeCurrentSupervisor"`
+	EmployeeProjectSupervisor string `json:"employeeProjectSupervisor"`
 }
 
 type TransformedResponse struct {
 	EmployeeID int            `json:"employeeId"`
 	Name       string         `json:"name"`
 	Project    ProjectDetails `json:"project"`
+}
+
+type ProjectDetails struct {
+	ProjectName    string `json:"projectName"`
+	ProjectID      int    `json:"projectId"`
+	SupervisorName string `json:"employeeProjectSupervisor"`
+	SupervisorID   int    `json:"supervisorId"`
 }
 
 type GetAllProject struct {
