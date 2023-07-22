@@ -58,8 +58,6 @@ type Employees struct {
 type AllocateTo struct {
 	EmployeeID                int    `json:"employeeId"`
 	EmployeeName              string `json:"employeeName"`
-	ProjectStartedDate        string `json:"projectStartedDate"`
-	EmployeeCurrentSupervisor string `json:"employeeCurrentSupervisor"`
 	EmployeeProjectSupervisor string `json:"employeeProjectSupervisor"`
 }
 
