@@ -54,7 +54,6 @@ func (r *AppraisalService) GetAllProjects(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	fmt.Println("Response Body:", string(body))
 
 	// Update the unmarshaling target to a slice of models.Employees
 
@@ -64,7 +63,6 @@ func (r *AppraisalService) GetAllProjects(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	fmt.Println("API Response:", apiResponse)
 
 	transformedResponse := make([]models.TransformedResponse, 0)
 	for _, project := range apiResponse {
