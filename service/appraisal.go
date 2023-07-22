@@ -68,6 +68,7 @@ func (r *AppraisalService) GetAllProjects(c *gin.Context) {
 
 	transformedResponse := make([]models.TransformedResponse, 0)
 
+	// ...
 	for _, project := range apiResponse {
 		// Create a map of supervisors for each project
 		supervisors := make(map[string]int)
@@ -100,6 +101,14 @@ func (r *AppraisalService) GetAllProjects(c *gin.Context) {
 			supervisorName = project.ProjectName
 		}
 
+		// Get the supervisor ID from the supervisorName (employeeProjectSupervisor)
+		for _, employee := range project.ProjectEmployees {
+			if employee.EmployeeName == supervisorName {
+				supervisorID = employee.EmployeeID
+				break
+			}
+		}
+
 		transformedProject := models.ProjectDetails{
 			ProjectName:    project.ProjectName,
 			ProjectID:      project.ProjectID,
@@ -115,6 +124,7 @@ func (r *AppraisalService) GetAllProjects(c *gin.Context) {
 			})
 		}
 	}
+	// ...
 
 	response := models.GetAllProject{
 		Projects: transformedResponse,
