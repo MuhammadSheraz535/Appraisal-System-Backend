@@ -36,6 +36,7 @@ func NewAppraisalService() *AppraisalService {
 }
 
 func (r *AppraisalService) GetAllProjects(c *gin.Context) {
+	log.Info("Initializing GetAllProjects handler function...")
 	tossBaseURL := os.Getenv("TOSS_BASE_URL") // Get the TOSS base URL from the environment variable
 	apiURL := tossBaseURL + "/api/Project/AllProjectsWithEmployeesList?IsActive=true"
 	method := http.MethodGet                            // HTTP method for sending the request
