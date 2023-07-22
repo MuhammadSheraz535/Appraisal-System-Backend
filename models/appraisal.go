@@ -46,3 +46,31 @@ type AppraisalType struct {
 	CommonModel
 	AppraisalType string `gorm:"not null;unique;default:''" json:"appraisal_type"`
 }
+
+// Model for GetAllAppraisal Endpoint
+type Employees struct {
+	ProjectDetails ProjectDetails `json:"projectDetails"`
+	AllocateTo     []AllocateTo   `json:"projectEmployees"`
+}
+
+type ProjectDetails struct {
+	ProjectName    string `json:"projectName"`
+	ProjectID      int    `json:"projectId"`
+	SupervisorName string `json:"supervisorName"`
+	SupervisorID   int    `json:"supervisorId"`
+}
+
+type AllocateTo struct {
+	EmployeeID int    `json:"employeeId"`
+	Name       string `json:"employeeName"`
+}
+
+type TransformedResponse struct {
+	EmployeeID int            `json:"employeeId"`
+	Name       string         `json:"name"`
+	Project    ProjectDetails `json:"project"`
+}
+
+type GetAllProject struct {
+	Projects []TransformedResponse `json:"projects"`
+}
