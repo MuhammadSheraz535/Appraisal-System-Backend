@@ -43,12 +43,14 @@ func (r *AppraisalService) GetAllProjects(c *gin.Context) {
 	method := http.MethodGet                            // HTTP method for sending the request
 	resp, err := utils.SendRequest(method, apiURL, nil) // Send the HTTP request to the specified URL
 	if err != nil {
+		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -58,6 +60,7 @@ func (r *AppraisalService) GetAllProjects(c *gin.Context) {
 
 	var apiResponse []models.Employees
 	if err := json.Unmarshal(body, &apiResponse); err != nil {
+		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
