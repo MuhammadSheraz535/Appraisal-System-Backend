@@ -67,8 +67,6 @@ func (r *AppraisalService) GetAllProjects(c *gin.Context) {
 	fmt.Println("API Response:", apiResponse)
 
 	transformedResponse := make([]models.TransformedResponse, 0)
-
-	// ...
 	for _, project := range apiResponse {
 		// Create a map of supervisors for each project
 		supervisors := make(map[string]int)
@@ -124,7 +122,6 @@ func (r *AppraisalService) GetAllProjects(c *gin.Context) {
 			})
 		}
 	}
-	// ...
 
 	response := models.GetAllProject{
 		Projects: transformedResponse,
