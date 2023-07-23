@@ -281,11 +281,11 @@ func GetDesignationName(DesignationID uint16) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		errMsg := fmt.Sprintf("failed to get designation name for designation ID %d. status code: %d", DesignationID, resp.StatusCode)
-		log.Error(errMsg)
-		return "", errors.New(errMsg) // Return an error if the response status code is not OK
-	}
+	// if resp.StatusCode != http.StatusOK {
+	// 	errMsg := fmt.Sprintf("failed to get designation name for designation ID %d. status code: %d", DesignationID, resp.StatusCode)
+	// 	log.Error(errMsg)
+	// 	return "", errors.New(errMsg) // Return an error if the response status code is not OK
+	// }
 
 	responseBody, err := io.ReadAll(resp.Body) // Read the response body
 	if err != nil {
